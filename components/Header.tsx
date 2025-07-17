@@ -91,7 +91,7 @@ const Header = ({ transparent = false }: HeaderProps) => {
 							height={40}
 						/>
 						<span className="font-extrabold text-lg text-[#c3fb12]">
-							Padel Segria
+							Padel Segrià
 						</span>
 					</Link>
 				</div>
