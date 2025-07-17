@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { HeroSection } from "@/components/sections";
+import { HeroSection, ContactSection } from "@/components/sections";
 import Header from "@/components/Header";
 
 export default function Page() {
@@ -24,6 +24,8 @@ export default function Page() {
 						</Link>
 					</div>
 				</section>
+
+				<ContactSection />
 			</main>
 		</>
 	);

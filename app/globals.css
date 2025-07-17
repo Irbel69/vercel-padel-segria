@@ -15,7 +15,7 @@ progress::-webkit-progress-value {
 /* Padel Segria Custom Colors */
 :root {
 	--padel-primary: #e5f000; /* Bright Yellow */
-	--padel-secondary: #051c2c; /* Dark Navy Blue */
+	--padel-secondary: #000000; /* Dark Navy Blue */
 }
 
 /* Dotted background pattern for hero section */

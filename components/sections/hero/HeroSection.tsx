@@ -17,11 +17,27 @@ export default function HeroSection() {
 				<Image
 					src="/hero/background_ball_logo.png"
 					alt="Padel Ball Background"
-					width={900}
-					height={900}
-					className="object-contain w-[650px] sm:w-[700px] md:w-[950px] lg:w-[650px] xl:w-[750px] opacity-60 lg:opacity-80 blur-sm"
+					width={1200}
+					height={1200}
+					className="object-contain w-[650px] sm:w-[700px] md:w-[950px] lg:w-[900px] xl:w-[1100px] 2xl:w-[1200px] opacity-60 lg:opacity-70 blur-sm lg:blur-md"
 					priority
 				/>
+			</div>
+
+			{/* Tennis Player Image - Only visible on desktop */}
+			<div className="hidden lg:block absolute bottom-0 right-[5%] xl:right-[10%] 2xl:right-[15%] pointer-events-none z-10">
+				<div className="relative">
+					<Image
+						src="/hero/tennis_player.png"
+						alt="Tennis Player"
+						width={700}
+						height={1000}
+						className="object-contain h-[90vh] w-auto"
+						priority
+					/>
+					{/* Blur gradient at bottom of player image */}
+					<div className="absolute bottom-0 left-0 right-0 h-[100px] bg-gradient-to-t from-black to-transparent"></div>
+				</div>
 			</div>
 
 			{/* Main Content Container */}
