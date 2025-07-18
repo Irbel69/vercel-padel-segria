@@ -253,8 +253,9 @@ export function ContactSection() {
 					<div className="order-1 lg:order-2 space-y-8">
 						{/* Contact Information */}
 						<div className="space-y-6">
-							<div
-								className="flex items-center gap-4 p-4 rounded-xl"
+							<a
+								href="mailto:info@padelsegria.cat"
+								className="flex items-center gap-4 p-4 rounded-xl transition-all duration-300 hover:scale-[1.02]"
 								style={{
 									background: "rgba(255, 255, 255, 0.1)",
 									borderRadius: "16px",
@@ -262,6 +263,7 @@ export function ContactSection() {
 									backdropFilter: "blur(5px)",
 									WebkitBackdropFilter: "blur(5px)",
 									border: "1px solid rgba(255, 255, 255, 0.2)",
+									cursor: "pointer",
 								}}>
 								<div className="w-12 h-12 bg-padel-primary/20 rounded-xl flex items-center justify-center">
 									<Mail className="w-6 h-6 text-padel-primary" />
@@ -270,10 +272,11 @@ export function ContactSection() {
 									<p className="font-semibold text-white">Correu electrònic</p>
 									<p className="text-gray-300">info@padelsegria.cat</p>
 								</div>
-							</div>
+							</a>
 
-							<div
-								className="flex items-center gap-4 p-4 rounded-xl"
+							<a
+								href="tel:+34973123456"
+								className="flex items-center gap-4 p-4 rounded-xl transition-all duration-300 hover:scale-[1.02]"
 								style={{
 									background: "rgba(255, 255, 255, 0.1)",
 									borderRadius: "16px",
@@ -281,6 +284,7 @@ export function ContactSection() {
 									backdropFilter: "blur(5px)",
 									WebkitBackdropFilter: "blur(5px)",
 									border: "1px solid rgba(255, 255, 255, 0.2)",
+									cursor: "pointer",
 								}}>
 								<div className="w-12 h-12 bg-padel-primary/20 rounded-xl flex items-center justify-center">
 									<Phone className="w-6 h-6 text-padel-primary" />
@@ -289,7 +293,7 @@ export function ContactSection() {
 									<p className="font-semibold text-white">Telèfon</p>
 									<p className="text-gray-300">+34 973 123 456</p>
 								</div>
-							</div>
+							</a>
 
 							<div
 								className="flex items-center gap-4 p-4 rounded-xl"

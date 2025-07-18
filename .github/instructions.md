@@ -1,11 +1,9 @@
 # Padel Segria - Project Instructions
 
 ## Overview
-
 Padel Segria is a web platform for managing padel tournaments across the Segria province in Spain. The platform allows users to view tournaments, rankings, and manage their personal statistics.
 
 ## Development Priorities
-
 - **Phase 1 (Current Focus)**: Develop the landing page with all its sections
 - **Phase 2**: Implement user authentication and personal area features
 - **Phase 3**: Complete backend functionality and database integration
@@ -49,13 +47,11 @@ web/
 ## Design System
 
 ### Colors
-
 - Primary: #e5f000 (Bright Yellow)
 - Secondary: #051c2c (Dark Navy Blue)
 - Use shadcn's theming system for consistent application of these colors
 
 ### Components
-
 - Use shadcn components exclusively for UI elements
 - Extend shadcn components when necessary rather than creating new component types
 - Follow the component structure documented in the shadcn documentation
@@ -65,37 +61,31 @@ web/
 ### Landing Page
 
 #### Header
-
 - Implement using shadcn navigation component
 - Include links to main sections
 - Add login/register buttons for accessing the personal area
 
 #### Hero Section
-
 - Full-width banner with engaging headline and call-to-action
 - Include a featured upcoming tournament
 - Use shadcn card component for featured content
 
 #### Top Players
-
 - Display top 3 players with their avatars, names, and key stats
 - Use shadcn avatar and card components
 - Implement a "View All" link to the full rankings
 
 #### Rankings
-
 - Show global rankings in a compact table
 - Highlight user's own position when logged in
 - Use shadcn table component with pagination
 
 #### Contact Form ("Contacta'ns")
-
 - Implement form with name, email, subject, and message fields
 - Use shadcn form components with proper validation
 - Include reCAPTCHA integration to prevent spam
 
 #### Upcoming Events/Tournaments
-
 - Display in card grid format with date, location, and registration status
 - Use shadcn card component with hover effects
 - Include filtering options by date and location
@@ -103,25 +93,21 @@ web/
 ### Personal Area
 
 #### Dashboard
-
 - Overview of user's statistics and upcoming tournaments
 - Include notifications for new achievements or tournament registrations
 - Use shadcn card components for different info sections
 
 #### Performance Statistics
-
 - Chart showing performance over time
 - Table with detailed match statistics
 - Use shadcn components for data visualization
 
 #### Highlights
-
 - Display special achievements and notable plays
 - Include media (images/videos) when available
 - Use shadcn card and badge components
 
 #### User Rankings
-
 - Show personal ranking in different categories
 - Compare with previous periods
 - Use shadcn progress and badge components
@@ -129,19 +115,16 @@ web/
 ## API Implementation
 
 ### Contact Form
-
 - Implement an API route at `/api/contact` for form submission
 - Use email service (Resend.com) to deliver messages to admin email
 - Include proper validation and rate limiting
 
 ### User Statistics
-
 - Implement CRUD operations at `/api/user/statistics`
 - Only tournament managers can create/edit statistics
 - Regular users can only view their statistics
 
 ### Rankings
-
 - Implement read operations at `/api/rankings`
 - Calculate rankings periodically using a background job
 - Cache results for improved performance
@@ -158,23 +141,19 @@ web/
 ## Development Guidelines
 
 ### State Management
-
 - Use React hooks for local state
 - For global state, use Context API or Zustand
 
 ### API Requests
-
 - Use React Query for data fetching and caching
 - Implement proper loading and error states
 
 ### Performance Optimization
-
 - Implement code-splitting for large page components
 - Use Next.js Image component for optimized images
 - Cache API responses when appropriate
 
 ### Testing
-
 - Write unit tests for utility functions and components
 - Implement integration tests for key user flows
 - Use Cypress for end-to-end testing
