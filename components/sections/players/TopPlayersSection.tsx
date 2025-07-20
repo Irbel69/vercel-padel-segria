@@ -305,7 +305,7 @@ export function TopPlayersSection() {
 										<Button
 											size="lg"
 											className="w-full bg-padel-primary text-padel-secondary hover:bg-padel-primary/90 font-semibold py-4 transform hover:scale-105 transition-all duration-300 group">
-											<span className="mr-2">Veure tots els jugadors</span>
+											<span className="mr-2">Veure el meu progrés</span>
 											<ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
 										</Button>
 

@@ -4,8 +4,10 @@ import {
 	TopPlayersSection,
 	ContactSection,
 	RankingsSection,
+	EventsSection,
 } from "@/components/sections";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 export default function Page() {
 	return (
@@ -16,8 +18,11 @@ export default function Page() {
 				<HeroSection />
 				<TopPlayersSection /> {/* This section causes an hydration error */}
 				<RankingsSection /> {/* This section causes an hydration error */}
+				<EventsSection />
 				<ContactSection />
 			</main>
+
+			<Footer />
 		</>
 	);
 }
