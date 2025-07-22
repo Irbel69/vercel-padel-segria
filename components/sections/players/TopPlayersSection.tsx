@@ -123,7 +123,7 @@ export function TopPlayersSection() {
 	const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
 	return (
-		<section className="py-24 bg-dotted-pattern relative overflow-hidden">
+		<section className="py-24 relative overflow-hidden">
 			{/* Background decorative elements */}
 			<div className="absolute inset-0 overflow-hidden">
 				<div className="absolute -top-40 -right-40 w-80 h-80 bg-padel-primary/10 rounded-full blur-3xl" />
@@ -243,9 +243,6 @@ export function TopPlayersSection() {
 													);
 												})}
 											</div>
-
-											{/* Hover effect overlay */}
-											<div className="absolute inset-0 bg-gradient-to-t from-padel-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-[20px]"></div>
 										</CardContent>
 									</Card>
 								);
@@ -302,6 +299,7 @@ export function TopPlayersSection() {
 										</div>
 
 										{/* CTA Button */}
+
 										<Button
 											size="lg"
 											className="w-full bg-padel-primary text-padel-secondary hover:bg-padel-primary/90 font-semibold py-4 transform hover:scale-105 transition-all duration-300 group">
@@ -347,14 +345,14 @@ export function TopPlayersSection() {
 								<div className="flex flex-col sm:flex-row gap-3">
 									<Button
 										size="lg"
-										className="bg-padel-primary text-padel-secondary hover:bg-padel-primary/90 font-semibold flex-1">
+										className="bg-padel-primary text-padel-secondary hover:bg-padel-primary/90 font-semibold flex-1 py-2">
 										<Trophy className="w-4 h-4 mr-2" />
 										Uneix-te
 									</Button>
 									<Button
 										variant="outline"
 										size="lg"
-										className="bg-white/10 border-white/20 text-white hover:bg-white/20 font-semibold flex-1">
+										className="bg-white/10 border-white/20 text-white hover:bg-white/20 font-semibold flex-1 py-2">
 										<Users className="w-4 h-4 mr-2" />
 										Veure tots
 									</Button>

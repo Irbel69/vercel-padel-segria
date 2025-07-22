@@ -58,6 +58,7 @@ interface HeaderProps {
 const Header = ({ transparent = false }: HeaderProps) => {
 	const searchParams = useSearchParams();
 	const [isOpen, setIsOpen] = useState<boolean>(false);
+	const [hasScrolled, setHasScrolled] = useState<boolean>(false);
 	const path = searchParams.toString();
 	const isHomePage = path === "";
 
@@ -66,15 +67,36 @@ const Header = ({ transparent = false }: HeaderProps) => {
 		setIsOpen(false);
 	}, [searchParams]);
 
+	// Detect scroll position to change header background
+	useEffect(() => {
+		const handleScroll = () => {
+			const scrollPosition = window.scrollY;
+			if (scrollPosition > 20) {
+				setHasScrolled(true);
+			} else {
+				setHasScrolled(false);
+			}
+		};
+
+		window.addEventListener("scroll", handleScroll);
+		return () => window.removeEventListener("scroll", handleScroll);
+	}, []);
+
 	return (
 		<header
 			className={`${
 				isHomePage || transparent
-					? "bg-transparent absolute top-0 left-0 right-0 z-50"
+					? "fixed top-0 left-0 right-0 z-50 transition-all duration-300"
 					: "bg-base-200"
+			} ${
+				hasScrolled && (isHomePage || transparent)
+					? "bg-black/60 backdrop-blur-sm shadow-md border-b border-padel-primary/20"
+					: isHomePage || transparent
+					? "bg-transparent"
+					: ""
 			}`}>
 			<nav
-				className="container flex items-center justify-between px-8 py-4 mx-auto"
+				className="container flex items-center justify-between px-8 py-4 mx-auto transition-all duration-300"
 				aria-label="Global">
 				{/* Your logo/name on large screens */}
 				<div className="flex lg:flex-1">
