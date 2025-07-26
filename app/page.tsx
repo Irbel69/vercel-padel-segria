@@ -5,6 +5,7 @@ import {
 	ContactSection,
 	RankingsSection,
 	EventsSection,
+	EventsSectionErrorBoundary,
 } from "@/components/sections";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -18,7 +19,9 @@ export default function Page() {
 				<HeroSection />
 				<TopPlayersSection /> {/* This section causes an hydration error */}
 				<RankingsSection /> {/* This section causes an hydration error */}
-				<EventsSection />
+				<EventsSectionErrorBoundary>
+					<EventsSection />
+				</EventsSectionErrorBoundary>
 				<ContactSection />
 			</main>
 

@@ -109,12 +109,34 @@ const getStatusBadge = (status: Event["status"]) => {
 export function EventsSection() {
 	const [hoveredEvent, setHoveredEvent] = useState<number | null>(null);
 	const [isVisible, setIsVisible] = useState(false);
+	const [isLoaded, setIsLoaded] = useState(false);
 
 	useEffect(() => {
-		// Trigger animation when component mounts
-		const timer = setTimeout(() => setIsVisible(true), 100);
-		return () => clearTimeout(timer);
+		// Ensure the component is considered loaded first
+		setIsLoaded(true);
+
+		// Then trigger animation when component is fully loaded
+		const animationFrame = window.requestAnimationFrame(() => {
+			setIsVisible(true);
+		});
+		return () => window.cancelAnimationFrame(animationFrame);
 	}, []);
+
+	// Show a simple loading state if the component hasn't loaded yet
+	if (!isLoaded) {
+		return (
+			<section className="py-24 relative overflow-hidden">
+				<div className="container mx-auto px-4 relative z-10">
+					<div className="text-center mb-20">
+						<h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+							Propers Tornejos
+						</h2>
+						<div className="w-16 h-16 mx-auto mt-8 border-t-4 border-padel-primary border-solid rounded-full animate-spin"></div>
+					</div>
+				</div>
+			</section>
+		);
+	}
 
 	return (
 		<section className="py-24 relative overflow-hidden">
