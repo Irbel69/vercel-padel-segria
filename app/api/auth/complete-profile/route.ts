@@ -17,12 +17,40 @@ export async function POST(req: NextRequest) {
 			return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 		}
 
-		const { name, surname } = await req.json();
+		const {
+			name,
+			surname,
+			phone,
+			observations,
+			imageRightsAccepted,
+			privacyPolicyAccepted,
+		} = await req.json();
 
 		// Validate input
 		if (!name || !surname) {
 			return NextResponse.json(
 				{ error: "El nom i cognoms són obligatoris" },
+				{ status: 400 }
+			);
+		}
+
+		// Validate phone format (Spanish format with +34)
+		if (phone && !phone.match(/^\+34\s\d{3}\s\d{3}\s\d{3}$/)) {
+			return NextResponse.json(
+				{
+					error: "El format del telèfon no és vàlid. Utilitza: +34 XXX XXX XXX",
+				},
+				{ status: 400 }
+			);
+		}
+
+		// Validate required checkboxes
+		if (!imageRightsAccepted || !privacyPolicyAccepted) {
+			return NextResponse.json(
+				{
+					error:
+						"Has d'acceptar les condicions d'ús i autorització de drets d'imatge",
+				},
 				{ status: 400 }
 			);
 		}
@@ -41,6 +69,10 @@ export async function POST(req: NextRequest) {
 				.update({
 					name: name.trim(),
 					surname: surname.trim(),
+					phone: phone?.trim() || null,
+					observations: observations?.trim() || null,
+					image_rights_accepted: imageRightsAccepted,
+					privacy_policy_accepted: privacyPolicyAccepted,
 					updated_at: new Date().toISOString(),
 				})
 				.eq("id", user.id);
@@ -59,6 +91,10 @@ export async function POST(req: NextRequest) {
 				email: user.email!,
 				name: name.trim(),
 				surname: surname.trim(),
+				phone: phone?.trim() || null,
+				observations: observations?.trim() || null,
+				image_rights_accepted: imageRightsAccepted,
+				privacy_policy_accepted: privacyPolicyAccepted,
 			});
 
 			if (insertError) {

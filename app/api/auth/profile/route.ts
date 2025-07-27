@@ -21,11 +21,10 @@ export async function GET(req: NextRequest) {
 		const { data: userProfile, error: profileError } = await supabase
 			.from("users")
 			.select(
-				"id, email, name, surname, avatar_url, is_admin, score, matches_played, skill_level, trend, created_at"
+				"id, email, name, surname, phone, observations, avatar_url, is_admin, score, matches_played, skill_level, trend, image_rights_accepted, privacy_policy_accepted, created_at"
 			)
 			.eq("id", user.id)
 			.single();
-
 		if (profileError && profileError.code !== "PGRST116") {
 			// PGRST116 = no rows returned
 			console.error("Error fetching user profile:", profileError);

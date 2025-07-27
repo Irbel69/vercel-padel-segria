@@ -155,6 +155,14 @@ export default async function Dashboard() {
 								</p>
 								<p className="text-lg">{userProfile.email}</p>
 							</div>
+							{userProfile.phone && (
+								<div>
+									<p className="text-sm font-medium text-muted-foreground">
+										Telèfon
+									</p>
+									<p className="text-lg">{userProfile.phone}</p>
+								</div>
+							)}
 							<div>
 								<p className="text-sm font-medium text-muted-foreground">
 									Membre des de
@@ -172,6 +180,16 @@ export default async function Dashboard() {
 								</Badge>
 							</div>
 						</div>
+						{userProfile.observations && (
+							<div className="pt-4 border-t">
+								<p className="text-sm font-medium text-muted-foreground mb-2">
+									Observacions
+								</p>
+								<p className="text-sm bg-muted p-3 rounded-lg">
+									{userProfile.observations}
+								</p>
+							</div>
+						)}
 					</CardContent>
 				</Card>
 				<Card className="col-span-3">

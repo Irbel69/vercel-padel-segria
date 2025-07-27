@@ -7,6 +7,8 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Card,
 	CardContent,
@@ -20,6 +22,10 @@ import config from "@/config";
 export default function CompleteProfile() {
 	const [name, setName] = useState("");
 	const [surname, setSurname] = useState("");
+	const [phone, setPhone] = useState("+34 ");
+	const [observations, setObservations] = useState("");
+	const [imageRightsAccepted, setImageRightsAccepted] = useState(false);
+	const [privacyPolicyAccepted, setPrivacyPolicyAccepted] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 	const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 	const router = useRouter();
@@ -46,6 +52,17 @@ export default function CompleteProfile() {
 					router.push("/dashboard");
 					return;
 				}
+
+				// Pre-fill existing data if partial profile exists
+				if (data.user?.profile) {
+					const profile = data.user.profile;
+					if (profile.name) setName(profile.name);
+					if (profile.surname) setSurname(profile.surname);
+					if (profile.phone) setPhone(profile.phone);
+					if (profile.observations) setObservations(profile.observations);
+					setImageRightsAccepted(profile.image_rights_accepted || false);
+					setPrivacyPolicyAccepted(profile.privacy_policy_accepted || false);
+				}
 			} catch (error) {
 				console.error("Error checking profile:", error);
 			}
@@ -56,11 +73,49 @@ export default function CompleteProfile() {
 		checkAuth();
 	}, [router, supabase.auth]);
 
+	// Format phone number as user types
+	const formatPhoneNumber = (value: string) => {
+		// Remove all non-digits except +
+		const cleaned = value.replace(/[^\d+]/g, "");
+
+		// Ensure it starts with +34
+		if (!cleaned.startsWith("+34")) {
+			return "+34 ";
+		}
+
+		// Extract the number part after +34
+		const numberPart = cleaned.slice(3);
+
+		// Format as +34 XXX XXX XXX
+		if (numberPart.length <= 3) {
+			return `+34 ${numberPart}`;
+		} else if (numberPart.length <= 6) {
+			return `+34 ${numberPart.slice(0, 3)} ${numberPart.slice(3)}`;
+		} else {
+			return `+34 ${numberPart.slice(0, 3)} ${numberPart.slice(
+				3,
+				6
+			)} ${numberPart.slice(6, 9)}`;
+		}
+	};
+
+	const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const formatted = formatPhoneNumber(e.target.value);
+		setPhone(formatted);
+	};
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
 		if (!name.trim() || !surname.trim()) {
-			toast.error("Si us plau, omple tots els camps");
+			toast.error("Si us plau, omple el nom i cognoms");
+			return;
+		}
+
+		if (!imageRightsAccepted || !privacyPolicyAccepted) {
+			toast.error(
+				"Has d'acceptar les condicions d'ús i autorització de drets d'imatge"
+			);
 			return;
 		}
 
@@ -75,9 +130,12 @@ export default function CompleteProfile() {
 				body: JSON.stringify({
 					name: name.trim(),
 					surname: surname.trim(),
+					phone: phone.trim() === "+34 " ? null : phone.trim(),
+					observations: observations.trim() || null,
+					imageRightsAccepted,
+					privacyPolicyAccepted,
 				}),
 			});
-
 			const data = await response.json();
 
 			if (response.ok) {
@@ -145,6 +203,78 @@ export default function CompleteProfile() {
 								required
 								disabled={isLoading}
 							/>
+						</div>
+
+						<div className="space-y-2">
+							<Label htmlFor="phone">Número de telèfon</Label>
+							<Input
+								id="phone"
+								type="tel"
+								value={phone}
+								onChange={handlePhoneChange}
+								placeholder="+34 XXX XXX XXX"
+								disabled={isLoading}
+							/>
+							<p className="text-xs text-muted-foreground">
+								Format: +34 XXX XXX XXX (opcional)
+							</p>
+						</div>
+
+						<div className="space-y-2">
+							<Label htmlFor="observations">Observacions</Label>
+							<Textarea
+								id="observations"
+								value={observations}
+								onChange={(e) => setObservations(e.target.value)}
+								placeholder="Observacions, al·lèrgies, necessitats especials, etc. (opcional)"
+								disabled={isLoading}
+								rows={3}
+							/>
+						</div>
+
+						<div className="space-y-4 pt-4">
+							<div className="flex items-start space-x-2">
+								<Checkbox
+									id="imageRights"
+									checked={imageRightsAccepted}
+									onCheckedChange={(checked) =>
+										setImageRightsAccepted(!!checked)
+									}
+									disabled={isLoading}
+								/>
+								<Label
+									htmlFor="imageRights"
+									className="text-sm leading-relaxed">
+									<span className="font-medium">
+										Autorització del dret d'imatge:
+									</span>{" "}
+									Que la imatge del meu fill o filla, en cas de l'escola de
+									nens/es, i la meva, en cas de l'escola d'adults, pugui
+									aparèixer en fotografies i vídeos corresponents a activitats
+									organitzades per Dakirol i publicades en la pàgina web i
+									xarxes socials de l'empresa.
+								</Label>
+							</div>
+
+							<div className="flex items-start space-x-2">
+								<Checkbox
+									id="privacyPolicy"
+									checked={privacyPolicyAccepted}
+									onCheckedChange={(checked) =>
+										setPrivacyPolicyAccepted(!!checked)
+									}
+									disabled={isLoading}
+								/>
+								<Label htmlFor="privacyPolicy" className="text-sm">
+									Accepto les{" "}
+									<a
+										href="/privacy"
+										target="_blank"
+										className="text-[#c3fb12] hover:underline">
+										polítiques d'ús i privacitat
+									</a>
+								</Label>
+							</div>
 						</div>
 
 						<Button
