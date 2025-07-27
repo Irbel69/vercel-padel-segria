@@ -11,36 +11,45 @@ import config from "@/config";
 // You can also add custom static UI elements like a Navbar, Sidebar, Footer, etc..
 // See https://shipfa.st/docs/tutorials/private-page
 export default async function LayoutPrivate({
-  children,
+	children,
 }: {
-  children: ReactNode;
+	children: ReactNode;
 }) {
-  const supabase = createClient();
+	const supabase = createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect(config.auth.loginUrl);
-  }
+	if (!user) {
+		redirect(config.auth.loginUrl);
+	}
 
-  return (
-    <SidebarProvider>
-      <AppSidebar />
-      <main className="flex-1">
-        <div className="flex h-16 items-center border-b px-4">
-          <SidebarTrigger />
-          <div className="ml-auto flex items-center space-x-4">
-            <span className="text-sm text-muted-foreground">
-              Welcome, {user.email}
-            </span>
-          </div>
-        </div>
-        <div className="flex-1 space-y-4 p-8 pt-6">
-          {children}
-        </div>
-      </main>
-    </SidebarProvider>
-  );
+	// Check if user has completed their profile
+	const { data: userProfile } = await supabase
+		.from("users")
+		.select("name, surname")
+		.eq("id", user.id)
+		.single();
+
+	if (!userProfile || !userProfile.name || !userProfile.surname) {
+		redirect("/complete-profile");
+	}
+
+	return (
+		<SidebarProvider>
+			<AppSidebar />
+			<main className="flex-1">
+				<div className="flex h-16 items-center border-b px-4">
+					<SidebarTrigger />
+					<div className="ml-auto flex items-center space-x-4">
+						<span className="text-sm text-muted-foreground">
+							Benvingut, {userProfile.name} {userProfile.surname}
+						</span>
+					</div>
+				</div>
+				<div className="flex-1 space-y-4 p-8 pt-6">{children}</div>
+			</main>
+		</SidebarProvider>
+	);
 }

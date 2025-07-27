@@ -1,0 +1,84 @@
+import { NextResponse, NextRequest } from "next/server";
+import { createClient } from "@/libs/supabase/server";
+
+export const dynamic = "force-dynamic";
+
+export async function POST(req: NextRequest) {
+	try {
+		const supabase = createClient();
+
+		// Get the current user
+		const {
+			data: { user },
+			error: authError,
+		} = await supabase.auth.getUser();
+
+		if (authError || !user) {
+			return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+		}
+
+		const { name, surname } = await req.json();
+
+		// Validate input
+		if (!name || !surname) {
+			return NextResponse.json(
+				{ error: "El nom i cognoms són obligatoris" },
+				{ status: 400 }
+			);
+		}
+
+		// Check if user already exists in users table
+		const { data: existingUser } = await supabase
+			.from("users")
+			.select("id, name, surname")
+			.eq("id", user.id)
+			.single();
+
+		if (existingUser) {
+			// User already has profile, update it
+			const { error: updateError } = await supabase
+				.from("users")
+				.update({
+					name: name.trim(),
+					surname: surname.trim(),
+					updated_at: new Date().toISOString(),
+				})
+				.eq("id", user.id);
+
+			if (updateError) {
+				console.error("Error updating user profile:", updateError);
+				return NextResponse.json(
+					{ error: "Error actualitzant el perfil" },
+					{ status: 500 }
+				);
+			}
+		} else {
+			// Create new user profile
+			const { error: insertError } = await supabase.from("users").insert({
+				id: user.id,
+				email: user.email!,
+				name: name.trim(),
+				surname: surname.trim(),
+			});
+
+			if (insertError) {
+				console.error("Error creating user profile:", insertError);
+				return NextResponse.json(
+					{ error: "Error creant el perfil" },
+					{ status: 500 }
+				);
+			}
+		}
+
+		return NextResponse.json(
+			{ message: "Perfil completat correctament" },
+			{ status: 200 }
+		);
+	} catch (error) {
+		console.error("Unexpected error:", error);
+		return NextResponse.json(
+			{ error: "Error intern del servidor" },
+			{ status: 500 }
+		);
+	}
+}
