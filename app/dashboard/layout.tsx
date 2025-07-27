@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/libs/supabase/server";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import ButtonAccount from "@/components/ButtonAccount";
 import config from "@/config";
 
 // This is a server-side component to ensure the user is logged in.
@@ -37,19 +38,41 @@ export default async function LayoutPrivate({
 	}
 
 	return (
-		<SidebarProvider>
-			<AppSidebar />
-			<main className="flex-1">
-				<div className="flex h-16 items-center border-b px-4">
-					<SidebarTrigger />
-					<div className="ml-auto flex items-center space-x-4">
-						<span className="text-sm text-muted-foreground">
-							Benvingut, {userProfile.name} {userProfile.surname}
-						</span>
-					</div>
+		<div className="min-h-screen bg-black relative overflow-hidden">
+			{/* Background decorative elements */}
+			<div className="absolute inset-0 overflow-hidden pointer-events-none">
+				<div className="absolute -top-40 -right-40 w-96 h-96 bg-padel-primary/10 rounded-full blur-3xl" />
+				<div className="absolute -bottom-40 -left-40 w-80 h-80 bg-padel-primary/5 rounded-full blur-3xl" />
+				<div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full">
+					<div className="absolute inset-0 bg-gradient-to-br from-transparent via-padel-primary/3 to-transparent" />
 				</div>
-				<div className="flex-1 space-y-4 p-8 pt-6">{children}</div>
-			</main>
-		</SidebarProvider>
+			</div>
+
+			<SidebarProvider>
+				<AppSidebar />
+				<main className="flex-1 relative z-10">
+					{/* Header */}
+					<div
+						className="flex h-16 items-center border-b px-4 lg:px-8"
+						style={{
+							background: "rgba(255, 255, 255, 0.05)",
+							borderColor: "rgba(255, 255, 255, 0.1)",
+							backdropFilter: "blur(10px)",
+							WebkitBackdropFilter: "blur(10px)",
+						}}>
+						<SidebarTrigger className="text-white hover:bg-white/10" />
+						<div className="ml-auto flex items-center space-x-4">
+							<span className="hidden sm:block text-sm text-white/70">
+								Benvingut, {userProfile.name} {userProfile.surname}
+							</span>
+							<ButtonAccount />
+						</div>
+					</div>
+
+					{/* Main content */}
+					<div className="flex-1 space-y-6 p-4 lg:p-8 pt-6">{children}</div>
+				</main>
+			</SidebarProvider>
+		</div>
 	);
 }

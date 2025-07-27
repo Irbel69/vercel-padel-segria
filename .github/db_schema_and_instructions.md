@@ -43,7 +43,10 @@ create table users (
 	skill_level integer not null default 0,
 	trend trend_status not null default 'same',
 	created_at timestamp with time zone default now(),
-	updated_at timestamp with time zone default now()
+	updated_at timestamp with time zone default now(),
+	observations text,
+	image_rights_accepted boolean not null default false,
+	privacy_policy_accepted boolean not null default false
 );
 ```
 

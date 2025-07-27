@@ -62,12 +62,21 @@ export function useUser(): UseUserReturn {
 
 	const signOut = async () => {
 		try {
+			setError(null); // Clear any previous errors
 			await supabase.auth.signOut();
 			setUser(null);
 			setProfile(null);
+
+			// Clear any stored user data from localStorage if needed
+			if (typeof window !== "undefined") {
+				localStorage.removeItem("supabase.auth.token");
+			}
 		} catch (err) {
 			console.error("Error signing out:", err);
 			setError("Error tancant sessió");
+			// Even if there's an error, try to clear the local state
+			setUser(null);
+			setProfile(null);
 		}
 	};
 
