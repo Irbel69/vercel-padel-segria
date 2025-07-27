@@ -30,8 +30,8 @@ const links: {
 	},
 ];
 
-// Define the Contact button component
-const ContactButton = ({
+// Define the Login button component
+const LoginButton = ({
 	isHomePage,
 	transparent,
 }: {
@@ -39,13 +39,26 @@ const ContactButton = ({
 	transparent?: boolean;
 }): JSX.Element => (
 	<Link
-		href="/contact"
+		href="/signin"
 		className={`${
 			isHomePage || transparent
 				? "bg-[#c3fb12] text-black hover:bg-white"
 				: "btn btn-primary"
-		} font-bold px-6 py-2 rounded-md flex items-center justify-center`}>
-		Contact
+		} font-bold px-6 py-2 rounded-md flex items-center justify-center gap-2`}>
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			fill="none"
+			viewBox="0 0 24 24"
+			strokeWidth={2}
+			stroke="currentColor"
+			className="w-5 h-5">
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275"
+			/>
+		</svg>
+		Àrea Personal
 	</Link>
 );
 
@@ -83,91 +96,93 @@ const Header = ({ transparent = false }: HeaderProps) => {
 	}, []);
 
 	return (
-		<header
-			className={`${
-				isHomePage || transparent
-					? "fixed top-0 left-0 right-0 z-50 transition-all duration-300"
-					: "bg-base-200"
-			} ${
-				hasScrolled && (isHomePage || transparent)
-					? "bg-black/60 backdrop-blur-sm shadow-md border-b border-padel-primary/20"
-					: isHomePage || transparent
-					? "bg-transparent"
-					: ""
-			}`}>
-			<nav
-				className="container flex items-center justify-between px-8 py-4 mx-auto transition-all duration-300"
-				aria-label="Global">
-				{/* Your logo/name on large screens */}
-				<div className="flex lg:flex-1">
-					<Link
-						className="flex items-center gap-2 shrink-0 "
-						href="/"
-						title={`${config.appName} homepage`}>
-						<Image
-							src="/logo_yellow.png"
-							alt={`${config.appName} logo`}
-							className="w-10 h-10"
-							priority={true}
-							width={40}
-							height={40}
-						/>
-						<span className="font-extrabold text-lg text-[#c3fb12]">
-							Padel Segrià
-						</span>
-					</Link>
-				</div>
-				{/* Burger button to open menu on mobile */}
-				<div className="flex lg:hidden">
-					<button
-						type="button"
-						className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5"
-						onClick={() => setIsOpen(true)}>
-						<span className="sr-only">Open main menu</span>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 24 24"
-							strokeWidth={1.5}
-							stroke="currentColor"
-							className="w-6 h-6 text-base-content">
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-							/>
-						</svg>
-					</button>
-				</div>
-
-				{/* Your links on large screens */}
-				<div className="hidden lg:flex lg:justify-center lg:gap-12 lg:items-center">
-					{links.map((link) => (
+		<>
+			<header
+				className={`${
+					isHomePage || transparent
+						? "fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+						: "bg-base-200"
+				} ${
+					hasScrolled && (isHomePage || transparent)
+						? "bg-black/60 backdrop-blur-sm shadow-md border-b border-padel-primary/20"
+						: isHomePage || transparent
+						? "bg-transparent"
+						: ""
+				}`}>
+				<nav
+					className="container flex items-center justify-between px-8 py-4 mx-auto transition-all duration-300"
+					aria-label="Global">
+					{/* Your logo/name on large screens */}
+					<div className="flex lg:flex-1">
 						<Link
-							href={link.href}
-							key={link.href}
-							className={`text-base font-medium ${
-								isHomePage || transparent
-									? "text-white hover:text-[#c3fb12]"
-									: "hover:text-[#c3fb12]"
-							} transition-colors`}
-							title={link.label}>
-							{link.label}
+							className="flex items-center gap-2 shrink-0 "
+							href="/"
+							title={`${config.appName} homepage`}>
+							<Image
+								src="/logo_yellow.png"
+								alt={`${config.appName} logo`}
+								className="w-10 h-10"
+								priority={true}
+								width={40}
+								height={40}
+							/>
+							<span className="font-extrabold text-lg text-[#c3fb12]">
+								Padel Segrià
+							</span>
 						</Link>
-					))}
-				</div>
+					</div>
+					{/* Burger button to open menu on mobile */}
+					<div className="flex lg:hidden">
+						<button
+							type="button"
+							className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5"
+							onClick={() => setIsOpen(true)}>
+							<span className="sr-only">Open main menu</span>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								fill="none"
+								viewBox="0 0 24 24"
+								strokeWidth={1.5}
+								stroke="currentColor"
+								className="w-6 h-6 text-base-content">
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+								/>
+							</svg>
+						</button>
+					</div>
 
-				{/* Contact button on large screens */}
-				<div className="hidden lg:flex lg:justify-end lg:flex-1">
-					<ContactButton isHomePage={isHomePage} transparent={transparent} />
-				</div>
-			</nav>
+					{/* Your links on large screens */}
+					<div className="hidden lg:flex lg:justify-center lg:gap-12 lg:items-center">
+						{links.map((link) => (
+							<Link
+								href={link.href}
+								key={link.href}
+								className={`text-base font-medium ${
+									isHomePage || transparent
+										? "text-white hover:text-[#c3fb12]"
+										: "hover:text-[#c3fb12]"
+								} transition-colors`}
+								title={link.label}>
+								{link.label}
+							</Link>
+						))}
+					</div>
 
-			{/* Mobile menu, show/hide based on menu state. */}
-			<div className={`relative z-50 ${isOpen ? "" : "hidden"}`}>
+					{/* Login button on large screens */}
+					<div className="hidden lg:flex lg:justify-end lg:flex-1">
+						<LoginButton isHomePage={isHomePage} transparent={transparent} />
+					</div>
+				</nav>
+			</header>
+
+			{/* Mobile menu, show/hide based on menu state. MOVED OUTSIDE HEADER */}
+			<div className={`fixed inset-0 z-[9999] ${isOpen ? "" : "hidden"}`}>
 				{/* Backdrop with dotted pattern and blur effect */}
 				<div
-					className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+					className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9998]"
 					style={{
 						backgroundImage: `radial-gradient(circle, rgba(229, 240, 0, 0.1) 1px, transparent 1px)`,
 						backgroundSize: "20px 20px",
@@ -177,7 +192,7 @@ const Header = ({ transparent = false }: HeaderProps) => {
 
 				{/* Mobile menu panel */}
 				<div
-					className="fixed inset-y-0 right-0 z-10 w-full sm:max-w-sm overflow-y-auto transform origin-right transition-all ease-in-out duration-500"
+					className="fixed inset-y-0 right-0 z-[9999] w-full sm:max-w-sm h-[100vh] overflow-y-auto transform origin-right transition-all ease-in-out duration-500"
 					style={{
 						background: `linear-gradient(135deg, rgba(5, 28, 44, 0.95) 0%, rgba(0, 0, 0, 0.95) 100%)`,
 						backdropFilter: "blur(20px)",
@@ -201,7 +216,7 @@ const Header = ({ transparent = false }: HeaderProps) => {
 						/>
 					</div>
 
-					<div className="relative z-10 p-6">
+					<div className="relative z-10 p-6 h-full flex flex-col">
 						{/* Header with logo and close button */}
 						<div className="flex items-center justify-between mb-12">
 							<Link
@@ -329,12 +344,12 @@ const Header = ({ transparent = false }: HeaderProps) => {
 							</div>
 						</div>
 
-						{/* Contact Button - Enhanced */}
+						{/* Login Button - Enhanced */}
 						<div className="space-y-6">
 							<div className="relative group">
 								<div className="absolute inset-0 bg-gradient-to-r from-padel-primary/20 to-padel-primary/40 rounded-2xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity duration-300" />
 								<Link
-									href="/contact"
+									href="/signin"
 									className="relative block w-full p-6 rounded-2xl text-center font-bold text-xl transition-all duration-300 group-hover:scale-105"
 									style={{
 										background: `linear-gradient(135deg, rgba(229, 240, 0, 0.9) 0%, rgba(229, 240, 0, 1) 100%)`,
@@ -342,27 +357,28 @@ const Header = ({ transparent = false }: HeaderProps) => {
 										boxShadow: "0 10px 30px rgba(229, 240, 0, 0.3)",
 									}}>
 									<div className="flex items-center justify-center gap-3">
-										<span>Contacta'ns</span>
 										<svg
 											xmlns="http://www.w3.org/2000/svg"
 											fill="none"
 											viewBox="0 0 24 24"
 											strokeWidth={2}
 											stroke="currentColor"
-											className="w-6 h-6 group-hover:translate-x-1 transition-transform duration-300">
+											className="w-6 h-6">
 											<path
 												strokeLinecap="round"
 												strokeLinejoin="round"
-												d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3"
+												d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"
 											/>
 										</svg>
+										<span>Àrea Personal</span>
 									</div>
 								</Link>
 							</div>
 
 							{/* Additional Menu Options */}
 							<div className="grid grid-cols-2 gap-4">
-								<button
+								<Link
+									href="/contact"
 									className="p-4 rounded-xl text-center transition-all duration-300 hover:scale-105"
 									style={{
 										background: "rgba(255, 255, 255, 0.05)",
@@ -379,14 +395,17 @@ const Header = ({ transparent = false }: HeaderProps) => {
 											<path
 												strokeLinecap="round"
 												strokeLinejoin="round"
-												d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+												d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
 											/>
 										</svg>
 									</div>
-									<span className="text-sm font-medium text-white">Login</span>
-								</button>
+									<span className="text-sm font-medium text-white">
+										Contact
+									</span>
+								</Link>
 
-								<button
+								<Link
+									href="/dashboard"
 									className="p-4 rounded-xl text-center transition-all duration-300 hover:scale-105"
 									style={{
 										background: "rgba(255, 255, 255, 0.05)",
@@ -403,12 +422,14 @@ const Header = ({ transparent = false }: HeaderProps) => {
 											<path
 												strokeLinecap="round"
 												strokeLinejoin="round"
-												d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275"
+												d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
 											/>
 										</svg>
 									</div>
-									<span className="text-sm font-medium text-white">Perfil</span>
-								</button>
+									<span className="text-sm font-medium text-white">
+										Dashboard
+									</span>
+								</Link>
 							</div>
 						</div>
 
@@ -426,7 +447,7 @@ const Header = ({ transparent = false }: HeaderProps) => {
 					</div>
 				</div>
 			</div>
-		</header>
+		</>
 	);
 };
 
