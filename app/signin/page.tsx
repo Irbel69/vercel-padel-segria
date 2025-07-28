@@ -60,7 +60,7 @@ export default function Login() {
 	};
 
 	return (
-		<main className="min-h-screen flex items-center justify-center relative overflow-hidden">
+		<main className="h-screen flex items-center justify-center relative overflow-hidden">
 			{/* Animated background */}
 			<AnimatedDottedBackground />
 
@@ -70,7 +70,7 @@ export default function Login() {
 				<div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[#c3fb12]/20 rounded-full blur-2xl" />
 			</div>
 
-			<div className="container px-4 py-16 relative z-10">
+			<div className="container px-4 relative z-10">
 				<div className="max-w-md mx-auto">
 					{/* Back to home */}
 					<div className="mb-6">
