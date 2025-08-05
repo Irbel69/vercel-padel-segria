@@ -1,25 +1,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/libs/supabase/client";
 import { User } from "@supabase/supabase-js";
-
-interface UserProfile {
-	id: string;
-	email: string;
-	name: string | null;
-	surname: string | null;
-	phone: string | null;
-	observations: string | null;
-	avatar_url: string | null;
-	is_admin: boolean;
-	score: number;
-	matches_played: number;
-	skill_level: number;
-	trend: "up" | "down" | "same";
-	image_rights_accepted: boolean;
-	privacy_policy_accepted: boolean;
-	created_at: string;
-	updated_at: string;
-}
+import type { UserProfile } from "@/types";
 
 interface UseUserReturn {
 	user: User | null;

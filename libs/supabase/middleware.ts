@@ -40,6 +40,8 @@ export async function updateSession(request: NextRequest) {
 	const protectedRoutes = ["/dashboard"];
 	// Routes that require profile completion
 	const profileRequiredRoutes = ["/dashboard"];
+	// Routes that require admin access
+	const adminRoutes = ["/dashboard/users", "/dashboard/analytics", "/dashboard/reports"];
 	// Public routes that authenticated users shouldn't access
 	const publicOnlyRoutes = ["/signin"];
 
@@ -47,6 +49,9 @@ export async function updateSession(request: NextRequest) {
 		url.pathname.startsWith(route)
 	);
 	const isProfileRequiredRoute = profileRequiredRoutes.some((route) =>
+		url.pathname.startsWith(route)
+	);
+	const isAdminRoute = adminRoutes.some((route) =>
 		url.pathname.startsWith(route)
 	);
 	const isPublicOnlyRoute = publicOnlyRoutes.some((route) =>
@@ -80,12 +85,18 @@ export async function updateSession(request: NextRequest) {
 	if (user && isProfileRequiredRoute && url.pathname !== "/complete-profile") {
 		const { data: userProfile } = await supabase
 			.from("users")
-			.select("name, surname")
+			.select("name, surname, is_admin")
 			.eq("id", user.id)
 			.single();
 
 		if (!userProfile || !userProfile.name || !userProfile.surname) {
 			url.pathname = "/complete-profile";
+			return NextResponse.redirect(url);
+		}
+
+		// Check admin access for admin routes
+		if (isAdminRoute && !userProfile.is_admin) {
+			url.pathname = "/dashboard";
 			return NextResponse.redirect(url);
 		}
 	}
