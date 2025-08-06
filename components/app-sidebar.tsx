@@ -70,6 +70,12 @@ const menuItems = [
 
 const adminItems = [
 	{
+		title: "Esdeveniments",
+		url: "/dashboard/admin/events",
+		icon: Calendar,
+		description: "Gestió de tornejos",
+	},
+	{
 		title: "Analítiques",
 		url: "/dashboard/analytics",
 		icon: BarChart3,

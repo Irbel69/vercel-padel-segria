@@ -17,9 +17,12 @@ import {
 	Clock,
 	Star,
 	Target,
+	ExternalLink,
 } from "lucide-react";
+import { openInMaps, getMapServiceName } from "@/lib/maps";
+import type { Event as EventType } from "@/types";
 
-interface Event {
+interface LegacyEvent {
 	id: number;
 	title: string;
 	date: string;
@@ -32,7 +35,7 @@ interface Event {
 	registrationDeadline: string;
 }
 
-const mockEvents: Event[] = [
+const mockEvents: LegacyEvent[] = [
 	{
 		id: 1,
 		title: "Torneig d'Estiu",
@@ -83,7 +86,7 @@ const mockEvents: Event[] = [
 	},
 ];
 
-const getStatusBadge = (status: Event["status"]) => {
+const getStatusBadge = (status: EventType["status"]) => {
 	switch (status) {
 		case "open":
 			return (
@@ -110,6 +113,36 @@ export function EventsSection() {
 	const [hoveredEvent, setHoveredEvent] = useState<number | null>(null);
 	const [isVisible, setIsVisible] = useState(false);
 	const [isLoaded, setIsLoaded] = useState(false);
+	const [events, setEvents] = useState<EventType[]>([]);
+	const [isLoadingEvents, setIsLoadingEvents] = useState(true);
+	const [error, setError] = useState<string | null>(null);
+
+	// Fetch real events data
+	useEffect(() => {
+		const fetchEvents = async () => {
+			try {
+				const response = await fetch("/api/events?limit=4");
+				if (!response.ok) {
+					// If API call fails, use mock data as fallback
+					console.warn("API call failed, using mock data");
+					setEvents([]);
+					setError("No s'han pogut carregar els esdeveniments");
+					return;
+				}
+
+				const data = await response.json();
+				setEvents(data.events || []);
+			} catch (error) {
+				console.error("Error fetching events:", error);
+				setError("Error carregant els esdeveniments");
+				setEvents([]);
+			} finally {
+				setIsLoadingEvents(false);
+			}
+		};
+
+		fetchEvents();
+	}, []);
 
 	useEffect(() => {
 		// Ensure the component is considered loaded first
@@ -121,6 +154,31 @@ export function EventsSection() {
 		});
 		return () => window.cancelAnimationFrame(animationFrame);
 	}, []);
+
+	// Function to handle maps redirection
+	const handleViewInMaps = (event: EventType, e: React.MouseEvent) => {
+		e.stopPropagation();
+		if (event.latitude && event.longitude) {
+			openInMaps(event.latitude, event.longitude, event.title);
+		}
+	};
+
+	// Convert EventType to display format for rendering
+	const displayEvents = events.length > 0 ? events : mockEvents.map((mockEvent): EventType => ({
+		id: mockEvent.id,
+		title: mockEvent.title,
+		date: mockEvent.date,
+		location: mockEvent.location,
+		latitude: null, // Mock events don't have real coordinates
+		longitude: null,
+		status: mockEvent.status as "open" | "closed" | "soon",
+		prizes: mockEvent.prizes,
+		max_participants: mockEvent.maxParticipants,
+		registration_deadline: mockEvent.registrationDeadline,
+		created_at: new Date().toISOString(),
+		updated_at: new Date().toISOString(),
+		current_participants: mockEvent.participants,
+	}));
 
 	// Show a simple loading state if the component hasn't loaded yet
 	if (!isLoaded) {
@@ -173,7 +231,7 @@ export function EventsSection() {
 
 					{/* Events */}
 					<div className="flex flex-col lg:flex-row lg:justify-between lg:items-center space-y-12 lg:space-y-0 lg:space-x-4">
-						{mockEvents.map((event, index) => (
+						{displayEvents.slice(0, 4).map((event, index) => (
 							<TooltipProvider key={event.id}>
 								<Tooltip>
 									<TooltipTrigger asChild>
@@ -237,13 +295,29 @@ export function EventsSection() {
 															<div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-2 text-sm text-gray-300">
 																<div className="flex items-center gap-1">
 																	<Calendar className="w-4 h-4 text-padel-primary/70" />
-																	<span>{event.date}</span>
+																	<span>{new Date(event.date).toLocaleDateString('ca-ES')}</span>
 																</div>
 																<div className="flex items-center gap-1">
 																	<MapPin className="w-4 h-4 text-padel-primary/70" />
 																	<span className="truncate text-xs lg:text-sm">
 																		{event.location}
 																	</span>
+																	{event.latitude && event.longitude && (
+																		<Tooltip>
+																			<TooltipTrigger asChild>
+																				<button
+																					onClick={(e) => handleViewInMaps(event, e)}
+																					className="ml-1 text-padel-primary hover:text-padel-primary/80 transition-colors duration-200 p-1 rounded hover:bg-white/10"
+																					aria-label={`Veure ${event.title} a ${getMapServiceName()}`}
+																				>
+																					<ExternalLink className="w-3 h-3" />
+																				</button>
+																			</TooltipTrigger>
+																			<TooltipContent>
+																				<p>Veure a {getMapServiceName()}</p>
+																			</TooltipContent>
+																		</Tooltip>
+																	)}
 																</div>
 															</div>
 														</div>
@@ -253,7 +327,7 @@ export function EventsSection() {
 															<div className="flex items-center gap-1 text-sm text-gray-400">
 																<Users className="w-4 h-4" />
 																<span>
-																	{event.participants}/{event.maxParticipants}{" "}
+																	{event.current_participants || 0}/{event.max_participants}{" "}
 																	participants
 																</span>
 															</div>
@@ -278,19 +352,13 @@ export function EventsSection() {
 											<div className="flex items-center gap-2">
 												<Trophy className="w-4 h-4 text-padel-primary" />
 												<span className="font-semibold text-padel-primary">
-													{event.prizes}
-												</span>
-											</div>
-											<div className="flex items-center gap-2">
-												<Target className="w-4 h-4 text-blue-400" />
-												<span className="text-sm">
-													Categories: {event.categories.join(", ")}
+													{event.prizes || "Premis per determinar"}
 												</span>
 											</div>
 											<div className="flex items-center gap-2">
 												<Clock className="w-4 h-4 text-orange-400" />
 												<span className="text-sm">
-													Límit inscripció: {event.registrationDeadline}
+													Límit inscripció: {new Date(event.registration_deadline).toLocaleDateString('ca-ES')}
 												</span>
 											</div>
 											{event.status === "open" && (
@@ -298,8 +366,19 @@ export function EventsSection() {
 													<Star className="w-4 h-4 text-yellow-400" />
 													<span className="text-sm font-medium">
 														Places disponibles:{" "}
-														{event.maxParticipants - event.participants}
+														{event.max_participants - (event.current_participants || 0)}
 													</span>
+												</div>
+											)}
+											{event.latitude && event.longitude && (
+												<div className="flex items-center gap-2 pt-2 border-t border-gray-700">
+													<MapPin className="w-4 h-4 text-padel-primary" />
+													<button
+														onClick={(e) => handleViewInMaps(event, e)}
+														className="text-sm text-padel-primary hover:text-padel-primary/80 transition-colors duration-200 underline"
+													>
+														Veure ubicació a {getMapServiceName()}
+													</button>
 												</div>
 											)}
 										</div>

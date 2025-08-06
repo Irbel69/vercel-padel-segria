@@ -26,7 +26,10 @@ export async function GET(req: NextRequest) {
 
 		if (profileError || !userProfile?.is_admin) {
 			return NextResponse.json(
-				{ error: "Accés denegat. Només els administradors poden accedir a aquesta informació." },
+				{
+					error:
+						"Accés denegat. Només els administradors poden accedir a aquesta informació.",
+				},
 				{ status: 403 }
 			);
 		}
@@ -41,10 +44,8 @@ export async function GET(req: NextRequest) {
 		const offset = (page - 1) * limit;
 
 		// Build query for users
-		let query = supabase
-			.from("users")
-			.select(
-				`
+		let query = supabase.from("users").select(
+			`
 				id,
 				email,
 				name,
@@ -57,8 +58,8 @@ export async function GET(req: NextRequest) {
 				created_at,
 				updated_at
 				`,
-				{ count: "exact" }
-			);
+			{ count: "exact" }
+		);
 
 		// Add search filter if provided
 		if (search) {

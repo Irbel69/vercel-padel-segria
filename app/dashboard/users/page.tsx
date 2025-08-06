@@ -3,25 +3,38 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@/hooks/use-user";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, Search, Users, Crown, User, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+	AlertCircle,
+	Search,
+	Users,
+	Crown,
+	User,
+	ChevronLeft,
+	ChevronRight,
+} from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { UserProfile, UsersListResponse } from "@/types";
 
 export default function UsersPage() {
 	const { user, profile, isLoading: userLoading } = useUser();
 	const [users, setUsers] = useState<UserProfile[]>([]);
-	const [pagination, setPagination] = useState<UsersListResponse['pagination'] | null>(null);
+	const [pagination, setPagination] = useState<
+		UsersListResponse["pagination"] | null
+	>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [search, setSearch] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
-	const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+	const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
+		null
+	);
 
 	// Redirect if not admin
 	useEffect(() => {
@@ -103,7 +116,9 @@ export default function UsersPage() {
 	};
 
 	const getInitials = (name: string | null, surname: string | null) => {
-		return `${name?.charAt(0) || ""}${surname?.charAt(0) || ""}`.toUpperCase() || "U";
+		return (
+			`${name?.charAt(0) || ""}${surname?.charAt(0) || ""}`.toUpperCase() || "U"
+		);
 	};
 
 	// Show loading while checking user permissions
@@ -162,7 +177,9 @@ export default function UsersPage() {
 					<CardTitle className="text-white flex items-center justify-between">
 						<span>Usuaris Registrats</span>
 						{pagination && (
-							<Badge variant="secondary" className="bg-padel-primary/20 text-padel-primary">
+							<Badge
+								variant="secondary"
+								className="bg-padel-primary/20 text-padel-primary">
 								{pagination.totalUsers} usuaris
 							</Badge>
 						)}
@@ -185,59 +202,69 @@ export default function UsersPage() {
 						<div className="text-center py-8">
 							<Users className="h-12 w-12 text-white/40 mx-auto mb-4" />
 							<p className="text-white/60">
-								{search ? "No s'han trobat usuaris" : "No hi ha usuaris registrats"}
+								{search
+									? "No s'han trobat usuaris"
+									: "No hi ha usuaris registrats"}
 							</p>
 						</div>
 					) : (
 						<div className="space-y-4">
 							{users.map((userData) => (
-								<div
+								<Link
 									key={userData.id}
-									className="flex items-center space-x-4 p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-									<Avatar className="h-12 w-12">
-										<AvatarImage src={userData.avatar_url || ""} />
-										<AvatarFallback className="bg-padel-primary/20 text-padel-primary">
-											{getInitials(userData.name, userData.surname)}
-										</AvatarFallback>
-									</Avatar>
+									href={`/dashboard/users/${userData.id}`}
+									className="block">
+									<div className="flex items-center space-x-4 p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer">
+										<Avatar className="h-12 w-12">
+											<AvatarImage src={userData.avatar_url || ""} />
+											<AvatarFallback className="bg-padel-primary/20 text-padel-primary">
+												{getInitials(userData.name, userData.surname)}
+											</AvatarFallback>
+										</Avatar>
 
-									<div className="flex-1 min-w-0">
-										<div className="flex items-center gap-2 mb-1">
-											<p className="text-white font-medium truncate">
-												{userData.name && userData.surname
-													? `${userData.name} ${userData.surname}`
-													: userData.email}
+										<div className="flex-1 min-w-0">
+											<div className="flex items-center gap-2 mb-1">
+												<p className="text-white font-medium truncate">
+													{userData.name && userData.surname
+														? `${userData.name} ${userData.surname}`
+														: userData.email}
+												</p>
+												{userData.is_admin && (
+													<Crown className="h-4 w-4 text-yellow-500" />
+												)}
+											</div>
+											<p className="text-white/60 text-sm truncate">
+												{userData.email}
 											</p>
-											{userData.is_admin && (
-												<Crown className="h-4 w-4 text-yellow-500" />
+											{userData.phone && (
+												<p className="text-white/40 text-xs">
+													{userData.phone}
+												</p>
 											)}
 										</div>
-										<p className="text-white/60 text-sm truncate">{userData.email}</p>
-										{userData.phone && (
-											<p className="text-white/40 text-xs">{userData.phone}</p>
-										)}
-									</div>
 
-									<div className="text-right space-y-1">
-										<div className="flex items-center gap-2">
-											<Badge
-												variant={userData.is_admin ? "default" : "secondary"}
-												className={
-													userData.is_admin
-														? "bg-yellow-500/20 text-yellow-400"
-														: "bg-white/10 text-white/70"
-												}>
-												{userData.is_admin ? "Admin" : "Usuari"}
-											</Badge>
-										</div>
-										<p className="text-white/40 text-xs">
-											Registrat: {formatDate(userData.created_at)}
-										</p>
-										<div className="text-white/60 text-xs">
-											Puntuació: {userData.score} | Partits: {userData.matches_played}
+										<div className="text-right space-y-1">
+											<div className="flex items-center gap-2">
+												<Badge
+													variant={userData.is_admin ? "default" : "secondary"}
+													className={
+														userData.is_admin
+															? "bg-yellow-500/20 text-yellow-400"
+															: "bg-white/10 text-white/70"
+													}>
+													{userData.is_admin ? "Admin" : "Usuari"}
+												</Badge>
+											</div>
+											<p className="text-white/40 text-xs">
+												Registrat: {formatDate(userData.created_at)}
+											</p>
+											<div className="text-white/60 text-xs">
+												Puntuació: {userData.score} | Partits:{" "}
+												{userData.matches_played}
+											</div>
 										</div>
 									</div>
-								</div>
+								</Link>
 							))}
 						</div>
 					)}

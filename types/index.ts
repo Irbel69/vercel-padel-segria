@@ -31,6 +31,56 @@ export interface UsersListResponse {
 	};
 }
 
+// Events/Tournaments related types
+export interface Event {
+	id: number;
+	title: string;
+	date: string;
+	location: string | null;
+	latitude: number | null;
+	longitude: number | null;
+	status: "open" | "soon" | "closed";
+	prizes: string | null;
+	max_participants: number;
+	registration_deadline: string;
+	created_at: string;
+	updated_at: string;
+	current_participants?: number;
+	user_registration_status?: "pending" | "confirmed" | "cancelled" | null;
+}
+
+export interface EventsListResponse {
+	events: Event[];
+	pagination: {
+		currentPage: number;
+		totalPages: number;
+		totalEvents: number;
+		hasMore: boolean;
+		limit: number;
+	};
+}
+
+export interface Registration {
+	id: number;
+	user_id: string;
+	event_id: number;
+	status: "pending" | "confirmed" | "cancelled";
+	registered_at: string;
+	event?: Event;
+	user?: UserProfile;
+}
+
+export interface CreateEventData {
+	title: string;
+	date: string;
+	location?: string;
+	latitude?: number;
+	longitude?: number;
+	prizes?: string;
+	max_participants: number;
+	registration_deadline: string;
+}
+
 // API Response types
 export interface ApiResponse<T = any> {
 	data?: T;

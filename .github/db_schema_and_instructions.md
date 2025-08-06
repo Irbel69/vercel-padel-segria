@@ -65,7 +65,9 @@ create table events (
 	 max_participants integer not null,
 	 registration_deadline date not null,
 	 created_at timestamp with time zone default now(),
-	 updated_at timestamp with time zone default now()
+	 updated_at timestamp with time zone default now(),
+	 latitude double precision,
+	 longitude double precision
 );
 ```
 
@@ -127,3 +129,15 @@ create table user_qualities (
 ## Copilot Context
 
 Include this document as context in all Copilot queries related to database operations to ensure consistency with the schema, naming conventions, and policies.
+
+## Current Database Tables
+
+As of August 5, 2025, the database contains the following tables:
+
+1. **users** - User authentication and profile information
+2. **events** - Tournament and event details with location coordinates
+3. **registrations** - Tracks user registrations to events
+4. **qualities** - Predefined qualities that can be assigned to users
+5. **user_qualities** - Links between users and their assigned qualities
+
+All tables have proper Row-Level Security (RLS) enabled for data protection.

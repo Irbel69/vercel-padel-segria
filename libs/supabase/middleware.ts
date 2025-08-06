@@ -41,7 +41,11 @@ export async function updateSession(request: NextRequest) {
 	// Routes that require profile completion
 	const profileRequiredRoutes = ["/dashboard"];
 	// Routes that require admin access
-	const adminRoutes = ["/dashboard/users", "/dashboard/analytics", "/dashboard/reports"];
+	const adminRoutes = [
+		"/dashboard/users",
+		"/dashboard/analytics",
+		"/dashboard/reports",
+	];
 	// Public routes that authenticated users shouldn't access
 	const publicOnlyRoutes = ["/signin"];
 
