@@ -232,22 +232,56 @@ export default function AdminEventsPage() {
 	};
 
 	const handleDelete = async (eventId: number) => {
+		// First simple confirmation
 		if (!confirm("Estàs segur que vols eliminar aquest esdeveniment?")) {
 			return;
 		}
 
 		try {
+			// Try to delete without force to check if there are registrations
 			const response = await fetch(`/api/admin/events/${eventId}`, {
 				method: "DELETE",
 			});
 
 			const data = await response.json();
 
-			if (!response.ok) {
-				throw new Error(data.error || "Error eliminant l'esdeveniment");
+			// If successful deletion (no registrations)
+			if (response.ok) {
+				fetchEvents(currentPage, search);
+				return;
 			}
 
-			fetchEvents(currentPage, search);
+			// If the tournament has registrations, show warning dialog
+			if (data.error === "tournament_has_registrations") {
+				const registrationsCount = data.registrations_count;
+				const confirmed = confirm(
+					`Aquest torneig té ${registrationsCount} inscripció${registrationsCount > 1 ? "s" : ""}.\n\n` +
+					"S'eliminaran també les reserves de tots els usuaris.\n" +
+					"Es recomana comunicar-ho als usuaris inscrits prèviament.\n\n" +
+					"Estàs segur que vols continuar amb l'eliminació?"
+				);
+
+				if (!confirmed) {
+					return;
+				}
+
+				// Force delete if confirmed
+				const forceResponse = await fetch(`/api/admin/events/${eventId}?force=true`, {
+					method: "DELETE",
+				});
+
+				const forceData = await forceResponse.json();
+
+				if (!forceResponse.ok) {
+					throw new Error(forceData.error || "Error eliminant l'esdeveniment");
+				}
+
+				fetchEvents(currentPage, search);
+				return;
+			}
+
+			// Handle other errors
+			throw new Error(data.error || "Error eliminant l'esdeveniment");
 		} catch (err) {
 			console.error("Error deleting event:", err);
 			setError(err instanceof Error ? err.message : "Error desconegut");

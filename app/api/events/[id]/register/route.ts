@@ -182,14 +182,14 @@ export async function DELETE(
 			);
 		}
 
-		// Cancelar la inscripción (marcar como cancelada en lugar de eliminar)
-		const { error: updateError } = await supabase
+		// Eliminar la inscripción completamente para permitir futuras inscripciones
+		const { error: deleteError } = await supabase
 			.from("registrations")
-			.update({ status: "cancelled" })
+			.delete()
 			.eq("id", existingRegistration.id);
 
-		if (updateError) {
-			console.error("Error cancelling registration:", updateError);
+		if (deleteError) {
+			console.error("Error deleting registration:", deleteError);
 			return NextResponse.json(
 				{ error: "Error cancel·lant la inscripció" },
 				{ status: 500 }

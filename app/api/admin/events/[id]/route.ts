@@ -272,35 +272,42 @@ export async function DELETE(
 			);
 		}
 
-		// Verificar si hay inscripciones confirmadas
-		const { count: confirmedRegistrations } = await supabase
+		// Verificar si hay inscripciones (de cualquier estado)
+		const { count: totalRegistrations } = await supabase
 			.from("registrations")
 			.select("*", { count: "exact", head: true })
-			.eq("event_id", eventId)
-			.eq("status", "confirmed");
+			.eq("event_id", eventId);
 
-		if (confirmedRegistrations && confirmedRegistrations > 0) {
+		// Obtener el parámetro force desde la query string
+		const url = new URL(request.url);
+		const force = url.searchParams.get("force") === "true";
+
+		// Si hay inscripciones y no se ha forzado la eliminación
+		if (totalRegistrations && totalRegistrations > 0 && !force) {
 			return NextResponse.json(
 				{
-					error:
-						"No es pot eliminar un esdeveniment amb inscripcions confirmades",
+					error: "tournament_has_registrations",
+					registrations_count: totalRegistrations,
+					message: "Aquest torneig té inscripcions. Utilitzeu el paràmetre 'force' per eliminar-lo.",
 				},
 				{ status: 400 }
 			);
 		}
 
-		// Eliminar todas las inscripciones primero
-		const { error: deleteRegistrationsError } = await supabase
-			.from("registrations")
-			.delete()
-			.eq("event_id", eventId);
+		// Eliminar todas las inscripciones primero (si las hay)
+		if (totalRegistrations && totalRegistrations > 0) {
+			const { error: deleteRegistrationsError } = await supabase
+				.from("registrations")
+				.delete()
+				.eq("event_id", eventId);
 
-		if (deleteRegistrationsError) {
-			console.error("Error deleting registrations:", deleteRegistrationsError);
-			return NextResponse.json(
-				{ error: "Error eliminant les inscripcions" },
-				{ status: 500 }
-			);
+			if (deleteRegistrationsError) {
+				console.error("Error deleting registrations:", deleteRegistrationsError);
+				return NextResponse.json(
+					{ error: "Error eliminant les inscripcions" },
+					{ status: 500 }
+				);
+			}
 		}
 
 		// Eliminar el evento
@@ -319,6 +326,7 @@ export async function DELETE(
 
 		return NextResponse.json({
 			message: "Esdeveniment eliminat amb èxit",
+			deleted_registrations: totalRegistrations || 0,
 		});
 	} catch (error) {
 		console.error("Error in DELETE /api/admin/events/[id]:", error);
