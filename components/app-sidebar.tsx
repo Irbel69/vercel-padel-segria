@@ -43,28 +43,10 @@ const menuItems = [
 		description: "Pàgina principal",
 	},
 	{
-		title: "Els meus Partits",
-		url: "/dashboard/matches",
-		icon: Trophy,
-		description: "Historial i estadístiques",
-	},
-	{
 		title: "Tornejos",
 		url: "/dashboard/tournaments",
 		icon: Target,
 		description: "Participa en competicions",
-	},
-	{
-		title: "Calendari",
-		url: "/dashboard/calendar",
-		icon: Calendar,
-		description: "Pròxims esdeveniments",
-	},
-	{
-		title: "Perfil",
-		url: "/dashboard/profile",
-		icon: User,
-		description: "Configuració personal",
 	},
 ];
 
@@ -76,22 +58,10 @@ const adminItems = [
 		description: "Gestió de tornejos",
 	},
 	{
-		title: "Analítiques",
-		url: "/dashboard/analytics",
-		icon: BarChart3,
-		description: "Estadístiques generals",
-	},
-	{
 		title: "Usuaris",
 		url: "/dashboard/users",
 		icon: Users,
 		description: "Gestió d'usuaris",
-	},
-	{
-		title: "Informes",
-		url: "/dashboard/reports",
-		icon: FileText,
-		description: "Informes detallats",
 	},
 ];
 
