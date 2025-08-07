@@ -25,9 +25,20 @@ export async function GET(req: NextRequest) {
 			)
 			.eq("id", user.id)
 			.single();
-		if (profileError && profileError.code !== "PGRST116") {
-			// PGRST116 = no rows returned
+
+		if (profileError) {
 			console.error("Error fetching user profile:", profileError);
+			if (profileError.code === "PGRST116") {
+				// User profile not found - return user without profile
+				return NextResponse.json({
+					user: {
+						id: user.id,
+						email: user.email,
+						profile: null,
+					},
+				});
+			}
+			// For other errors, return error
 			return NextResponse.json(
 				{ error: "Error obtenint el perfil" },
 				{ status: 500 }

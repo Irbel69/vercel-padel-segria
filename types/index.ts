@@ -87,3 +87,45 @@ export interface ApiResponse<T = any> {
 	error?: string;
 	message?: string;
 }
+
+// Matches related types
+export interface Match {
+	id: number;
+	event_id: number;
+	winner_pair: 1 | 2 | null;
+	match_date: string;
+	created_at: string;
+	updated_at: string;
+	user_matches?: UserMatch[];
+}
+
+export interface UserMatch {
+	position: number;
+	users: {
+		id: string;
+		name: string | null;
+		surname: string | null;
+		avatar_url: string | null;
+	};
+}
+
+export interface MatchPlayer {
+	id: string;
+	name: string | null;
+	surname: string | null;
+	avatar_url: string | null;
+	score?: number;
+}
+
+export interface CreateMatchData {
+	players: string[]; // Array of 4 user IDs
+	winner_pair?: 1 | 2;
+}
+
+export interface MatchesListResponse {
+	event: {
+		id: number;
+		title: string;
+	};
+	matches: Match[];
+}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useUser } from "@/hooks/use-user";
-import { redirect } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,12 +34,14 @@ import {
 	Eye,
 	ChevronLeft,
 	ChevronRight,
+	Swords,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { Event, EventsListResponse, CreateEventData } from "@/types";
 
 export default function AdminEventsPage() {
 	const { user, profile, isLoading: userLoading } = useUser();
+	const router = useRouter();
 	const [events, setEvents] = useState<Event[]>([]);
 	const [pagination, setPagination] = useState<
 		EventsListResponse["pagination"] | null
@@ -473,6 +475,18 @@ export default function AdminEventsPage() {
 										</div>
 
 										<div className="flex flex-row lg:flex-col gap-2 justify-end lg:ml-4">
+											<Button
+												variant="outline"
+												size="sm"
+												onClick={() =>
+													router.push(
+														`/dashboard/admin/events/${event.id}/matches`
+													)
+												}
+												className="bg-padel-primary/20 border-padel-primary/30 text-padel-primary hover:bg-padel-primary/30 flex-1 lg:flex-initial">
+												<Swords className="h-4 w-4" />
+												<span className="ml-1 sm:hidden">Partits</span>
+											</Button>
 											<Button
 												variant="outline"
 												size="sm"

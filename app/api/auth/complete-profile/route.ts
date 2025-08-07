@@ -56,11 +56,19 @@ export async function POST(req: NextRequest) {
 		}
 
 		// Check if user already exists in users table
-		const { data: existingUser } = await supabase
+		const { data: existingUser, error: existingUserError } = await supabase
 			.from("users")
 			.select("id, name, surname")
 			.eq("id", user.id)
 			.single();
+
+		if (existingUserError && existingUserError.code !== "PGRST116") {
+			console.error("Error checking existing user:", existingUserError);
+			return NextResponse.json(
+				{ error: "Error verificant l'usuari existent" },
+				{ status: 500 }
+			);
+		}
 
 		if (existingUser) {
 			// User already has profile, update it
@@ -99,10 +107,35 @@ export async function POST(req: NextRequest) {
 
 			if (insertError) {
 				console.error("Error creating user profile:", insertError);
-				return NextResponse.json(
-					{ error: "Error creant el perfil" },
-					{ status: 500 }
-				);
+				// If the error is duplicate key, it means the user was created in the meantime
+				if (insertError.code === "23505") {
+					// Try to update instead
+					const { error: fallbackUpdateError } = await supabase
+						.from("users")
+						.update({
+							name: name.trim(),
+							surname: surname.trim(),
+							phone: phone?.trim() || null,
+							observations: observations?.trim() || null,
+							image_rights_accepted: imageRightsAccepted,
+							privacy_policy_accepted: privacyPolicyAccepted,
+							updated_at: new Date().toISOString(),
+						})
+						.eq("id", user.id);
+
+					if (fallbackUpdateError) {
+						console.error("Error in fallback update:", fallbackUpdateError);
+						return NextResponse.json(
+							{ error: "Error actualitzant el perfil" },
+							{ status: 500 }
+						);
+					}
+				} else {
+					return NextResponse.json(
+						{ error: "Error creant el perfil" },
+						{ status: 500 }
+					);
+				}
 			}
 		}
 

@@ -22,11 +22,22 @@ export async function GET(req: NextRequest) {
 
 		if (data.user) {
 			// Check if user has completed their profile
-			const { data: userProfile } = await supabase
+			const { data: userProfile, error: profileError } = await supabase
 				.from("users")
 				.select("name, surname")
 				.eq("id", data.user.id)
 				.single();
+
+			if (profileError) {
+				console.error("Error fetching user profile:", profileError);
+				// If error fetching profile, likely user doesn't exist yet
+				if (profileError.code === "PGRST116") {
+					// User not found, redirect to complete profile
+					return NextResponse.redirect(requestUrl.origin + "/complete-profile");
+				}
+				// For other errors, still try to redirect to complete profile
+				return NextResponse.redirect(requestUrl.origin + "/complete-profile");
+			}
 
 			// If no profile or incomplete profile, redirect to complete profile
 			if (!userProfile || !userProfile.name || !userProfile.surname) {
