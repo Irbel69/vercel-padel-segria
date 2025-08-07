@@ -136,7 +136,7 @@ const PadelCourt = ({
 			<div className="w-80 h-60 bg-green-900/20 border-2 border-white/30 rounded-lg relative">
 				{/* Net - Vertical line (thick) representing the net */}
 				<div className="absolute top-0 bottom-0 left-1/2 w-1 bg-white/70 transform -translate-x-0.5"></div>
-				
+
 				{/* Service lines - Horizontal lines (thinner) */}
 				<div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white/30 transform -translate-y-0.5"></div>
 
@@ -542,9 +542,13 @@ export default function EventMatchesPage({
 								// Parella 1: posiciones 1 y 3 (izquierda)
 								// Parella 2: posiciones 2 y 4 (derecha)
 								const pair1 =
-									match.user_matches?.filter((um) => um.position === 1 || um.position === 3) || [];
+									match.user_matches?.filter(
+										(um) => um.position === 1 || um.position === 3
+									) || [];
 								const pair2 =
-									match.user_matches?.filter((um) => um.position === 2 || um.position === 4) || [];
+									match.user_matches?.filter(
+										(um) => um.position === 2 || um.position === 4
+									) || [];
 
 								return (
 									<div

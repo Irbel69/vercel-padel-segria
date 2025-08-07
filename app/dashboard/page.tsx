@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import ButtonAccount from "@/components/ButtonAccount";
+import { RankingsComponent } from "@/components/dashboard/RankingsComponent";
 import {
 	Activity,
 	CreditCard,
@@ -61,6 +62,49 @@ export default async function Dashboard() {
 
 	// Calculate skill level percentage for progress bar
 	const skillLevelPercentage = (userProfile.skill_level / 10) * 100;
+
+	// Calcular estadísticas del usuario basadas en partidos
+	const { data: userMatches, error: userMatchesError } = await supabase
+		.from("matches")
+		.select(
+			`
+			id,
+			winner_pair,
+			user_matches (
+				position,
+				user_id
+			)
+		`
+		)
+		.contains("user_matches", [{ user_id: user.id }]);
+
+	// Calcular estadísticas
+	let matchesPlayed = 0;
+	let matchesWon = 0;
+	let points = 0;
+
+	userMatches?.forEach((match) => {
+		const userMatch = match.user_matches?.find((um) => um.user_id === user.id);
+
+		if (userMatch) {
+			matchesPlayed++;
+
+			const userPosition = userMatch.position;
+			const isInPair1 = userPosition === 1 || userPosition === 3;
+			const isInPair2 = userPosition === 2 || userPosition === 4;
+			const userPair = isInPair1 ? 1 : isInPair2 ? 2 : null;
+
+			if (match.winner_pair && match.winner_pair === userPair) {
+				matchesWon++;
+				points += 10; // 10 puntos por victoria
+			} else if (match.winner_pair) {
+				points += 3; // 3 puntos por derrota
+			}
+		}
+	});
+
+	const winPercentage =
+		matchesPlayed > 0 ? Math.round((matchesWon / matchesPlayed) * 100) : 0;
 
 	// Get skill level badge
 	const getSkillLevelBadge = (level: number) => {
@@ -134,15 +178,13 @@ export default async function Dashboard() {
 						</div>
 					</CardHeader>
 					<CardContent>
-						<div className="text-3xl font-bold text-white mb-1">
-							{userProfile.score}
-						</div>
+						<div className="text-3xl font-bold text-white mb-1">{points}</div>
 						<p className="text-xs text-white/50">Punts acumulats</p>
 						<div className="mt-3 w-full bg-white/10 rounded-full h-2">
 							<div
 								className="bg-gradient-to-r from-padel-primary to-padel-primary/70 h-2 rounded-full transition-all duration-500"
 								style={{
-									width: `${Math.min((userProfile.score / 3000) * 100, 100)}%`,
+									width: `${Math.min((points / 3000) * 100, 100)}%`,
 								}}
 							/>
 						</div>
@@ -170,7 +212,7 @@ export default async function Dashboard() {
 					</CardHeader>
 					<CardContent>
 						<div className="text-3xl font-bold text-white mb-1">
-							{userProfile.matches_played}
+							{matchesPlayed}
 						</div>
 						<p className="text-xs text-white/50">Total de partits</p>
 						<div className="mt-3 flex items-center gap-2">
@@ -435,16 +477,20 @@ export default async function Dashboard() {
 						<CardContent className="space-y-4">
 							<div className="grid grid-cols-2 gap-4">
 								<div className="text-center">
-									<div className="text-2xl font-bold text-white">12</div>
+									<div className="text-2xl font-bold text-white">
+										{matchesWon}
+									</div>
 									<div className="text-xs text-white/50">Victòries</div>
 								</div>
 								<div className="text-center">
-									<div className="text-2xl font-bold text-white">3</div>
+									<div className="text-2xl font-bold text-white">
+										{matchesPlayed - matchesWon}
+									</div>
 									<div className="text-xs text-white/50">Derrotes</div>
 								</div>
 								<div className="text-center">
 									<div className="text-2xl font-bold text-padel-primary">
-										80%
+										{winPercentage}%
 									</div>
 									<div className="text-xs text-white/50">% Victòries</div>
 								</div>
@@ -457,6 +503,9 @@ export default async function Dashboard() {
 					</Card>
 				</div>
 			</div>
+
+			{/* Ranking Component */}
+			<RankingsComponent />
 
 			{/* Tabs Section */}
 			<Card
@@ -513,7 +562,7 @@ export default async function Dashboard() {
 											Partits Guanyats
 										</span>
 										<Badge className="bg-green-400/20 text-green-400 border-green-400/30">
-											Per implementar
+											{matchesWon} de {matchesPlayed}
 										</Badge>
 									</div>
 									<div className="flex items-center justify-between">
@@ -521,15 +570,15 @@ export default async function Dashboard() {
 											Percentatge de Victòries
 										</span>
 										<Badge className="bg-blue-400/20 text-blue-400 border-blue-400/30">
-											Per implementar
+											{winPercentage}%
 										</Badge>
 									</div>
 									<div className="flex items-center justify-between">
 										<span className="text-sm font-medium text-white/70">
-											Ranking Actual
+											Punts Totals
 										</span>
 										<Badge className="bg-purple-400/20 text-purple-400 border-purple-400/30">
-											Per implementar
+											{points} pts
 										</Badge>
 									</div>
 								</div>
@@ -548,8 +597,9 @@ export default async function Dashboard() {
 									Historial de Partits
 								</h3>
 								<p className="text-white/60 mb-4">
-									Encara no hi ha partits registrats. Comença a jugar per veure
-									les teves estadístiques aquí!
+									{matchesPlayed > 0
+										? `Has jugat ${matchesPlayed} partits i has guanyat ${matchesWon}.`
+										: "Encara no hi ha partits registrats. Comença a jugar per veure les teves estadístiques aquí!"}
 								</p>
 								<Button className="bg-padel-primary text-black hover:bg-padel-primary/90 font-semibold">
 									Reservar Pista

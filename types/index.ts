@@ -10,14 +10,25 @@ export interface UserProfile {
 	observations: string | null;
 	avatar_url: string | null;
 	is_admin: boolean;
-	score: number;
-	matches_played: number;
 	skill_level: number;
 	trend: "up" | "down" | "same";
 	image_rights_accepted: boolean;
 	privacy_policy_accepted: boolean;
 	created_at: string;
 	updated_at: string;
+}
+
+export interface RankingPlayer {
+	id: string;
+	name: string | null;
+	surname: string | null;
+	avatar_url: string | null;
+	points: number;
+	matches_played: number;
+	wins: number;
+	losses: number;
+	win_percentage: number;
+	rank: number;
 }
 
 export interface UsersListResponse {

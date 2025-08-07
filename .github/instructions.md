@@ -214,6 +214,20 @@ web/
 - Leverage Supabase authentication for user management
 - Use Supabase storage for media files (player photos, highlight videos)
 
+## Current Database Tables
+
+As of August 7, 2025, the database contains the following tables:
+
+1. **users** - User authentication and profile information
+2. **events** - Tournament and event details with location coordinates
+3. **registrations** - Tracks user registrations to events
+4. **qualities** - Predefined qualities that can be assigned to users
+5. **user_qualities** - Links between users and their assigned qualities
+6. **matches** - Tracks match details including winners and event association
+7. **user_matches** - Links users to matches with their positions
+
+All tables have proper Row-Level Security (RLS) enabled for data protection.
+
 Note: While the database structure is outlined here, initial development should focus on the landing page UI. Database implementation and backend functionality are considered secondary priorities and may be subject to future modifications.
 
 ## Deployment

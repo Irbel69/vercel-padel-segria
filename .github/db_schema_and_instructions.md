@@ -111,6 +111,37 @@ create table user_qualities (
 );
 ```
 
+### 6. matches
+
+Tracks match details including winners and event association.
+
+```sql
+create table matches (
+    id serial primary key,
+    event_id integer not null references events(id) on delete cascade,
+    winner_id uuid references users(id),
+    match_date timestamp with time zone default now(),
+    created_at timestamp with time zone default now(),
+    updated_at timestamp with time zone default now()
+);
+```
+
+### 7. user_matches
+
+Links users to matches with their positions.
+
+```sql
+create table user_matches (
+    id serial primary key,
+    user_id uuid not null references users(id) on delete cascade,
+    match_id integer not null references matches(id) on delete cascade,
+    position integer,
+    created_at timestamp with time zone default now(),
+    updated_at timestamp with time zone default now(),
+    unique (user_id, match_id)
+);
+```
+
 ### Explanation
 
 - **`qualities` table**: Contains the fixed list of qualities (e.g., Lideratge, Potència, etc.).
@@ -132,12 +163,14 @@ Include this document as context in all Copilot queries related to database oper
 
 ## Current Database Tables
 
-As of August 5, 2025, the database contains the following tables:
+As of August 7, 2025, the database contains the following tables:
 
 1. **users** - User authentication and profile information
 2. **events** - Tournament and event details with location coordinates
 3. **registrations** - Tracks user registrations to events
 4. **qualities** - Predefined qualities that can be assigned to users
 5. **user_qualities** - Links between users and their assigned qualities
+6. **matches** - Tracks match details including winners and event association
+7. **user_matches** - Links users to matches with their positions
 
 All tables have proper Row-Level Security (RLS) enabled for data protection.
