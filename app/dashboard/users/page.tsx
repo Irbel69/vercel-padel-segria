@@ -132,16 +132,18 @@ export default function UsersPage() {
 	}
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-4 md:space-y-6 px-4 md:px-0">
 			{/* Header */}
-			<div className="flex items-center justify-between">
-				<div className="flex items-center gap-3">
+			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+				<div className="flex flex-col sm:flex-row sm:items-center gap-3">
 					<div className="p-2 bg-padel-primary/20 rounded-lg">
 						<Users className="h-6 w-6 text-padel-primary" />
 					</div>
 					<div>
-						<h1 className="text-3xl font-bold text-white">Gestió d'Usuaris</h1>
-						<p className="text-white/60">
+						<h1 className="text-2xl md:text-3xl font-bold text-white">
+							Gestió d'Usuaris
+						</h1>
+						<p className="text-white/60 text-sm md:text-base">
 							Administra tots els usuaris registrats a la plataforma
 						</p>
 					</div>
@@ -174,12 +176,12 @@ export default function UsersPage() {
 			{/* Users List */}
 			<Card className="bg-white/5 border-white/10">
 				<CardHeader>
-					<CardTitle className="text-white flex items-center justify-between">
-						<span>Usuaris Registrats</span>
+					<CardTitle className="text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+						<span className="text-lg md:text-xl">Usuaris Registrats</span>
 						{pagination && (
 							<Badge
 								variant="secondary"
-								className="bg-padel-primary/20 text-padel-primary">
+								className="bg-padel-primary/20 text-padel-primary self-start sm:self-auto">
 								{pagination.totalUsers} usuaris
 							</Badge>
 						)}
@@ -208,29 +210,29 @@ export default function UsersPage() {
 							</p>
 						</div>
 					) : (
-						<div className="space-y-4">
+						<div className="space-y-3 md:space-y-4">
 							{users.map((userData) => (
 								<Link
 									key={userData.id}
 									href={`/dashboard/users/${userData.id}`}
 									className="block">
-									<div className="flex items-center space-x-4 p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer">
-										<Avatar className="h-12 w-12">
+									<div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 p-3 md:p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer">
+										<Avatar className="h-12 w-12 self-center sm:self-auto">
 											<AvatarImage src={userData.avatar_url || ""} />
 											<AvatarFallback className="bg-padel-primary/20 text-padel-primary">
 												{getInitials(userData.name, userData.surname)}
 											</AvatarFallback>
 										</Avatar>
 
-										<div className="flex-1 min-w-0">
-											<div className="flex items-center gap-2 mb-1">
+										<div className="flex-1 min-w-0 text-center sm:text-left">
+											<div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
 												<p className="text-white font-medium truncate">
 													{userData.name && userData.surname
 														? `${userData.name} ${userData.surname}`
 														: userData.email}
 												</p>
 												{userData.is_admin && (
-													<Crown className="h-4 w-4 text-yellow-500" />
+													<Crown className="h-4 w-4 text-yellow-500 self-center sm:self-auto" />
 												)}
 											</div>
 											<p className="text-white/60 text-sm truncate">
@@ -243,8 +245,8 @@ export default function UsersPage() {
 											)}
 										</div>
 
-										<div className="text-right space-y-1">
-											<div className="flex items-center gap-2">
+										<div className="text-center sm:text-right space-y-1 flex-shrink-0">
+											<div className="flex items-center justify-center sm:justify-end gap-2">
 												<Badge
 													variant={userData.is_admin ? "default" : "secondary"}
 													className={
@@ -271,27 +273,27 @@ export default function UsersPage() {
 
 					{/* Pagination */}
 					{pagination && pagination.totalPages > 1 && (
-						<div className="flex items-center justify-between mt-6 pt-6 border-t border-white/10">
-							<p className="text-white/60 text-sm">
+						<div className="flex flex-col sm:flex-row items-center justify-between mt-6 pt-6 border-t border-white/10 gap-4">
+							<p className="text-white/60 text-sm text-center sm:text-left">
 								Pàgina {pagination.currentPage} de {pagination.totalPages}
 							</p>
-							<div className="flex gap-2">
+							<div className="flex gap-2 w-full sm:w-auto">
 								<Button
 									variant="outline"
 									size="sm"
 									onClick={() => handlePageChange(pagination.currentPage - 1)}
 									disabled={pagination.currentPage === 1}
-									className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+									className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex-1 sm:flex-initial">
 									<ChevronLeft className="h-4 w-4" />
-									Anterior
+									<span className="hidden sm:inline">Anterior</span>
 								</Button>
 								<Button
 									variant="outline"
 									size="sm"
 									onClick={() => handlePageChange(pagination.currentPage + 1)}
 									disabled={!pagination.hasMore}
-									className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-									Següent
+									className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex-1 sm:flex-initial">
+									<span className="hidden sm:inline">Següent</span>
 									<ChevronRight className="h-4 w-4" />
 								</Button>
 							</div>

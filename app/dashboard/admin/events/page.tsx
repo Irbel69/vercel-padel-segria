@@ -255,10 +255,12 @@ export default function AdminEventsPage() {
 			if (data.error === "tournament_has_registrations") {
 				const registrationsCount = data.registrations_count;
 				const confirmed = confirm(
-					`Aquest torneig té ${registrationsCount} inscripció${registrationsCount > 1 ? "s" : ""}.\n\n` +
-					"S'eliminaran també les reserves de tots els usuaris.\n" +
-					"Es recomana comunicar-ho als usuaris inscrits prèviament.\n\n" +
-					"Estàs segur que vols continuar amb l'eliminació?"
+					`Aquest torneig té ${registrationsCount} inscripció${
+						registrationsCount > 1 ? "s" : ""
+					}.\n\n` +
+						"S'eliminaran també les reserves de tots els usuaris.\n" +
+						"Es recomana comunicar-ho als usuaris inscrits prèviament.\n\n" +
+						"Estàs segur que vols continuar amb l'eliminació?"
 				);
 
 				if (!confirmed) {
@@ -266,9 +268,12 @@ export default function AdminEventsPage() {
 				}
 
 				// Force delete if confirmed
-				const forceResponse = await fetch(`/api/admin/events/${eventId}?force=true`, {
-					method: "DELETE",
-				});
+				const forceResponse = await fetch(
+					`/api/admin/events/${eventId}?force=true`,
+					{
+						method: "DELETE",
+					}
+				);
 
 				const forceData = await forceResponse.json();
 
@@ -330,25 +335,28 @@ export default function AdminEventsPage() {
 	}
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-4 md:space-y-6 px-4 md:px-0">
 			{/* Header */}
-			<div className="flex items-center justify-between">
-				<div className="flex items-center gap-3">
+			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+				<div className="flex flex-col sm:flex-row sm:items-center gap-3">
 					<div className="p-2 bg-padel-primary/20 rounded-lg">
 						<Calendar className="h-6 w-6 text-padel-primary" />
 					</div>
 					<div>
-						<h1 className="text-3xl font-bold text-white">
+						<h1 className="text-2xl md:text-3xl font-bold text-white">
 							Gestió d'Esdeveniments
 						</h1>
-						<p className="text-white/60">Administra tornejos i competicions</p>
+						<p className="text-white/60 text-sm md:text-base">
+							Administra tornejos i competicions
+						</p>
 					</div>
 				</div>
 				<Button
 					onClick={openCreateModal}
-					className="bg-padel-primary text-black hover:bg-padel-primary/90">
+					className="bg-padel-primary text-black hover:bg-padel-primary/90 w-full sm:w-auto">
 					<Plus className="h-4 w-4 mr-2" />
-					Nou Esdeveniment
+					<span className="sm:hidden">Nou</span>
+					<span className="hidden sm:inline">Nou Esdeveniment</span>
 				</Button>
 			</div>
 
@@ -378,12 +386,12 @@ export default function AdminEventsPage() {
 			{/* Events List */}
 			<Card className="bg-white/5 border-white/10">
 				<CardHeader>
-					<CardTitle className="text-white flex items-center justify-between">
-						<span>Esdeveniments</span>
+					<CardTitle className="text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+						<span className="text-lg md:text-xl">Esdeveniments</span>
 						{pagination && (
 							<Badge
 								variant="secondary"
-								className="bg-padel-primary/20 text-padel-primary">
+								className="bg-padel-primary/20 text-padel-primary self-start sm:self-auto">
 								{pagination.totalEvents} esdeveniments
 							</Badge>
 						)}
@@ -408,34 +416,36 @@ export default function AdminEventsPage() {
 							</p>
 						</div>
 					) : (
-						<div className="space-y-4">
+						<div className="space-y-3 md:space-y-4">
 							{events.map((event) => (
 								<div
 									key={event.id}
-									className="p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-									<div className="flex items-start justify-between">
+									className="p-3 md:p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+									<div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
 										<div className="flex-1">
-											<div className="flex items-center gap-3 mb-2">
-												<h3 className="text-white font-semibold text-lg">
+											<div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+												<h3 className="text-white font-semibold text-base md:text-lg">
 													{event.title}
 												</h3>
 												{getStatusBadge(event.status)}
 											</div>
 
-											<div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-white/70">
+											<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4 text-sm text-white/70">
 												<div className="flex items-center gap-2">
-													<Calendar className="h-4 w-4" />
-													<span>{formatDate(event.date)}</span>
+													<Calendar className="h-4 w-4 flex-shrink-0" />
+													<span className="truncate">
+														{formatDate(event.date)}
+													</span>
 												</div>
 												{event.location && (
 													<div className="flex items-center gap-2">
-														<MapPin className="h-4 w-4" />
-														<span>{event.location}</span>
+														<MapPin className="h-4 w-4 flex-shrink-0" />
+														<span className="truncate">{event.location}</span>
 													</div>
 												)}
 												<div className="flex items-center gap-2">
-													<Users className="h-4 w-4" />
-													<span>
+													<Users className="h-4 w-4 flex-shrink-0" />
+													<span className="truncate">
 														{event.current_participants || 0}/
 														{event.max_participants} participants
 													</span>
@@ -444,8 +454,8 @@ export default function AdminEventsPage() {
 
 											<div className="mt-2 text-xs text-white/50">
 												<div className="flex items-center gap-2">
-													<Clock className="h-3 w-3" />
-													<span>
+													<Clock className="h-3 w-3 flex-shrink-0" />
+													<span className="truncate">
 														Límit inscripció:{" "}
 														{formatDateTime(event.registration_deadline)}
 													</span>
@@ -455,27 +465,29 @@ export default function AdminEventsPage() {
 											{event.prizes && (
 												<div className="mt-2">
 													<div className="flex items-center gap-2 text-sm text-white/60">
-														<Trophy className="h-4 w-4" />
-														<span>{event.prizes}</span>
+														<Trophy className="h-4 w-4 flex-shrink-0" />
+														<span className="break-words">{event.prizes}</span>
 													</div>
 												</div>
 											)}
 										</div>
 
-										<div className="flex gap-2 ml-4">
+										<div className="flex flex-row lg:flex-col gap-2 justify-end lg:ml-4">
 											<Button
 												variant="outline"
 												size="sm"
 												onClick={() => openEditModal(event)}
-												className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+												className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex-1 lg:flex-initial">
 												<Edit className="h-4 w-4" />
+												<span className="ml-1 sm:hidden">Editar</span>
 											</Button>
 											<Button
 												variant="outline"
 												size="sm"
 												onClick={() => handleDelete(event.id)}
-												className="bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30">
+												className="bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30 flex-1 lg:flex-initial">
 												<Trash2 className="h-4 w-4" />
+												<span className="ml-1 sm:hidden">Eliminar</span>
 											</Button>
 										</div>
 									</div>
@@ -486,27 +498,27 @@ export default function AdminEventsPage() {
 
 					{/* Pagination */}
 					{pagination && pagination.totalPages > 1 && (
-						<div className="flex items-center justify-between mt-6 pt-6 border-t border-white/10">
-							<p className="text-white/60 text-sm">
+						<div className="flex flex-col sm:flex-row items-center justify-between mt-6 pt-6 border-t border-white/10 gap-4">
+							<p className="text-white/60 text-sm text-center sm:text-left">
 								Pàgina {pagination.currentPage} de {pagination.totalPages}
 							</p>
-							<div className="flex gap-2">
+							<div className="flex gap-2 w-full sm:w-auto">
 								<Button
 									variant="outline"
 									size="sm"
 									onClick={() => handlePageChange(pagination.currentPage - 1)}
 									disabled={pagination.currentPage === 1}
-									className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+									className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex-1 sm:flex-initial">
 									<ChevronLeft className="h-4 w-4" />
-									Anterior
+									<span className="hidden sm:inline">Anterior</span>
 								</Button>
 								<Button
 									variant="outline"
 									size="sm"
 									onClick={() => handlePageChange(pagination.currentPage + 1)}
 									disabled={!pagination.hasMore}
-									className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-									Següent
+									className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex-1 sm:flex-initial">
+									<span className="hidden sm:inline">Següent</span>
 									<ChevronRight className="h-4 w-4" />
 								</Button>
 							</div>

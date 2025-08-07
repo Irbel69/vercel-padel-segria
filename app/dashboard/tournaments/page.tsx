@@ -273,15 +273,17 @@ export default function TournamentsPage() {
 	};
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-4 md:space-y-6 px-4 md:px-0">
 			{/* Header */}
-			<div className="flex items-center gap-3">
+			<div className="flex flex-col sm:flex-row sm:items-center gap-3">
 				<div className="p-2 bg-padel-primary/20 rounded-lg">
 					<Target className="h-6 w-6 text-padel-primary" />
 				</div>
 				<div>
-					<h1 className="text-3xl font-bold text-white">Tornejos</h1>
-					<p className="text-white/60">
+					<h1 className="text-2xl md:text-3xl font-bold text-white">
+						Tornejos
+					</h1>
+					<p className="text-white/60 text-sm md:text-base">
 						Participa en competicions i esdeveniments
 					</p>
 				</div>
@@ -295,17 +297,19 @@ export default function TournamentsPage() {
 				</Alert>
 			)}
 
-			<Tabs defaultValue="available" className="space-y-6">
-				<TabsList className="bg-white/5 border-white/10">
+			<Tabs defaultValue="available" className="space-y-4 md:space-y-6">
+				<TabsList className="bg-white/5 border-white/10 w-full sm:w-auto">
 					<TabsTrigger
 						value="available"
-						className="data-[state=active]:bg-padel-primary data-[state=active]:text-black">
-						Esdeveniments Disponibles
+						className="data-[state=active]:bg-padel-primary data-[state=active]:text-black text-xs sm:text-sm flex-1 sm:flex-initial">
+						<span className="sm:hidden">Disponibles</span>
+						<span className="hidden sm:inline">Esdeveniments Disponibles</span>
 					</TabsTrigger>
 					<TabsTrigger
 						value="my-registrations"
-						className="data-[state=active]:bg-padel-primary data-[state=active]:text-black">
-						Les Meves Inscripcions
+						className="data-[state=active]:bg-padel-primary data-[state=active]:text-black text-xs sm:text-sm flex-1 sm:flex-initial">
+						<span className="sm:hidden">Meves</span>
+						<span className="hidden sm:inline">Les Meves Inscripcions</span>
 					</TabsTrigger>
 				</TabsList>
 
@@ -313,12 +317,14 @@ export default function TournamentsPage() {
 				<TabsContent value="available">
 					<Card className="bg-white/5 border-white/10">
 						<CardHeader>
-							<CardTitle className="text-white flex items-center justify-between">
-								<span>Esdeveniments Disponibles</span>
+							<CardTitle className="text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+								<span className="text-lg md:text-xl">
+									Esdeveniments Disponibles
+								</span>
 								{pagination && (
 									<Badge
 										variant="secondary"
-										className="bg-padel-primary/20 text-padel-primary">
+										className="bg-padel-primary/20 text-padel-primary self-start sm:self-auto">
 										{pagination.totalEvents} esdeveniments
 									</Badge>
 								)}
@@ -341,34 +347,40 @@ export default function TournamentsPage() {
 									</p>
 								</div>
 							) : (
-								<div className="space-y-4">
+								<div className="space-y-3 md:space-y-4">
 									{events.map((event) => (
 										<div
 											key={event.id}
-											className="p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-											<div className="flex items-start justify-between">
+											className="p-3 md:p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+											<div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
 												<div className="flex-1">
-													<div className="flex items-center gap-3 mb-2">
-														<h3 className="text-white font-semibold text-lg">
+													<div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+														<h3 className="text-white font-semibold text-base md:text-lg">
 															{event.title}
 														</h3>
-														{getStatusBadge(event.status)}
-														{event.user_registration_status &&
-															getRegistrationStatusBadge(
-																event.user_registration_status
-															)}
+														<div className="flex gap-2">
+															{getStatusBadge(event.status)}
+															{event.user_registration_status &&
+																getRegistrationStatusBadge(
+																	event.user_registration_status
+																)}
+														</div>
 													</div>
 
-													<div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-white/70">
+													<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4 text-sm text-white/70">
 														<div className="flex items-center gap-2">
-															<Calendar className="h-4 w-4" />
-															<span>{formatDate(event.date)}</span>
+															<Calendar className="h-4 w-4 flex-shrink-0" />
+															<span className="truncate">
+																{formatDate(event.date)}
+															</span>
 														</div>
 														{event.location && (
-															<div className="flex items-center gap-2 justify-between">
-																<div className="flex items-center gap-2">
-																	<MapPin className="h-4 w-4" />
-																	<span>{event.location}</span>
+															<div className="flex items-center gap-2 col-span-1 sm:col-span-2 lg:col-span-1">
+																<div className="flex items-center gap-2 min-w-0 flex-1">
+																	<MapPin className="h-4 w-4 flex-shrink-0" />
+																	<span className="truncate">
+																		{event.location}
+																	</span>
 																</div>
 																{event.latitude && event.longitude && (
 																	<LocationMapButton
@@ -380,8 +392,8 @@ export default function TournamentsPage() {
 															</div>
 														)}
 														<div className="flex items-center gap-2">
-															<Users className="h-4 w-4" />
-															<span>
+															<Users className="h-4 w-4 flex-shrink-0" />
+															<span className="truncate">
 																{event.current_participants || 0}/
 																{event.max_participants} participants
 															</span>
@@ -390,8 +402,8 @@ export default function TournamentsPage() {
 
 													<div className="mt-2 text-xs text-white/50">
 														<div className="flex items-center gap-2">
-															<Clock className="h-3 w-3" />
-															<span>
+															<Clock className="h-3 w-3 flex-shrink-0" />
+															<span className="truncate">
 																Límit inscripció:{" "}
 																{formatDateTime(event.registration_deadline)}
 															</span>
@@ -401,22 +413,31 @@ export default function TournamentsPage() {
 													{event.prizes && (
 														<div className="mt-2">
 															<div className="flex items-center gap-2 text-sm text-white/60">
-																<Trophy className="h-4 w-4" />
-																<span>{event.prizes}</span>
+																<Trophy className="h-4 w-4 flex-shrink-0" />
+																<span className="break-words">
+																	{event.prizes}
+																</span>
 															</div>
 														</div>
 													)}
 												</div>
 
-												<div className="flex gap-2 ml-4">
+												<div className="flex flex-row lg:flex-col gap-2 justify-end lg:ml-4">
 													{canRegister(event) && (
 														<Button
 															onClick={() => handleRegister(event.id)}
 															disabled={processingEvents.has(event.id)}
-															className="bg-padel-primary text-black hover:bg-padel-primary/90">
-															{processingEvents.has(event.id)
-																? "Inscrivint..."
-																: "Inscriure's"}
+															className="bg-padel-primary text-black hover:bg-padel-primary/90 text-sm flex-1 lg:flex-initial">
+															<span className="sm:hidden">
+																{processingEvents.has(event.id)
+																	? "..."
+																	: "Inscriure's"}
+															</span>
+															<span className="hidden sm:inline">
+																{processingEvents.has(event.id)
+																	? "Inscrivint..."
+																	: "Inscriure's"}
+															</span>
 														</Button>
 													)}
 													{canUnregister(event) && (
@@ -424,10 +445,17 @@ export default function TournamentsPage() {
 															variant="outline"
 															onClick={() => handleUnregister(event.id)}
 															disabled={processingEvents.has(event.id)}
-															className="bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30">
-															{processingEvents.has(event.id)
-																? "Cancel·lant..."
-																: "Cancel·lar"}
+															className="bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30 text-sm flex-1 lg:flex-initial">
+															<span className="sm:hidden">
+																{processingEvents.has(event.id)
+																	? "..."
+																	: "Cancel·lar"}
+															</span>
+															<span className="hidden sm:inline">
+																{processingEvents.has(event.id)
+																	? "Cancel·lant..."
+																	: "Cancel·lar"}
+															</span>
 														</Button>
 													)}
 													{event.user_registration_status &&
@@ -435,7 +463,7 @@ export default function TournamentsPage() {
 															<Button
 																variant="outline"
 																disabled
-																className="bg-white/10 border-white/20 text-white/50">
+																className="bg-white/10 border-white/20 text-white/50 text-sm flex-1 lg:flex-initial">
 																Inscrit
 															</Button>
 														)}
@@ -448,11 +476,11 @@ export default function TournamentsPage() {
 
 							{/* Pagination */}
 							{pagination && pagination.totalPages > 1 && (
-								<div className="flex items-center justify-between mt-6 pt-6 border-t border-white/10">
-									<p className="text-white/60 text-sm">
+								<div className="flex flex-col sm:flex-row items-center justify-between mt-6 pt-6 border-t border-white/10 gap-4">
+									<p className="text-white/60 text-sm text-center sm:text-left">
 										Pàgina {pagination.currentPage} de {pagination.totalPages}
 									</p>
-									<div className="flex gap-2">
+									<div className="flex gap-2 w-full sm:w-auto">
 										<Button
 											variant="outline"
 											size="sm"
@@ -460,9 +488,9 @@ export default function TournamentsPage() {
 												handlePageChange(pagination.currentPage - 1)
 											}
 											disabled={pagination.currentPage === 1}
-											className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+											className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex-1 sm:flex-initial">
 											<ChevronLeft className="h-4 w-4" />
-											Anterior
+											<span className="hidden sm:inline">Anterior</span>
 										</Button>
 										<Button
 											variant="outline"
@@ -471,8 +499,8 @@ export default function TournamentsPage() {
 												handlePageChange(pagination.currentPage + 1)
 											}
 											disabled={!pagination.hasMore}
-											className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-											Següent
+											className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex-1 sm:flex-initial">
+											<span className="hidden sm:inline">Següent</span>
 											<ChevronRight className="h-4 w-4" />
 										</Button>
 									</div>
@@ -486,11 +514,13 @@ export default function TournamentsPage() {
 				<TabsContent value="my-registrations">
 					<Card className="bg-white/5 border-white/10">
 						<CardHeader>
-							<CardTitle className="text-white flex items-center justify-between">
-								<span>Les Meves Inscripcions</span>
+							<CardTitle className="text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+								<span className="text-lg md:text-xl">
+									Les Meves Inscripcions
+								</span>
 								<Badge
 									variant="secondary"
-									className="bg-padel-primary/20 text-padel-primary">
+									className="bg-padel-primary/20 text-padel-primary self-start sm:self-auto">
 									{userRegistrations.length} inscripcions
 								</Badge>
 							</CardTitle>
@@ -514,32 +544,34 @@ export default function TournamentsPage() {
 									</p>
 								</div>
 							) : (
-								<div className="space-y-4">
+								<div className="space-y-3 md:space-y-4">
 									{userRegistrations.map((registration) => (
 										<div
 											key={registration.id}
-											className="p-4 rounded-lg bg-white/5 border border-white/10">
-											<div className="flex items-start justify-between">
+											className="p-3 md:p-4 rounded-lg bg-white/5 border border-white/10">
+											<div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
 												<div className="flex-1">
-													<div className="flex items-center gap-3 mb-2">
-														<h3 className="text-white font-semibold text-lg">
+													<div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+														<h3 className="text-white font-semibold text-base md:text-lg">
 															{registration.event?.title}
 														</h3>
 														{getRegistrationStatusBadge(registration.status)}
 													</div>
 
-													<div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-white/70">
+													<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4 text-sm text-white/70">
 														<div className="flex items-center gap-2">
-															<Calendar className="h-4 w-4" />
-															<span>
+															<Calendar className="h-4 w-4 flex-shrink-0" />
+															<span className="truncate">
 																{formatDate(registration.event?.date || "")}
 															</span>
 														</div>
 														{registration.event?.location && (
-															<div className="flex items-center gap-2 justify-between">
-																<div className="flex items-center gap-2">
-																	<MapPin className="h-4 w-4" />
-																	<span>{registration.event.location}</span>
+															<div className="flex items-center gap-2 col-span-1 sm:col-span-2 lg:col-span-1">
+																<div className="flex items-center gap-2 min-w-0 flex-1">
+																	<MapPin className="h-4 w-4 flex-shrink-0" />
+																	<span className="truncate">
+																		{registration.event.location}
+																	</span>
 																</div>
 																{registration.event.latitude &&
 																	registration.event.longitude && (
@@ -552,8 +584,8 @@ export default function TournamentsPage() {
 															</div>
 														)}
 														<div className="flex items-center gap-2">
-															<Users className="h-4 w-4" />
-															<span>
+															<Users className="h-4 w-4 flex-shrink-0" />
+															<span className="truncate">
 																{registration.event?.current_participants || 0}/
 																{registration.event?.max_participants}{" "}
 																participants
@@ -571,8 +603,10 @@ export default function TournamentsPage() {
 													{registration.event?.prizes && (
 														<div className="mt-2">
 															<div className="flex items-center gap-2 text-sm text-white/60">
-																<Trophy className="h-4 w-4" />
-																<span>{registration.event.prizes}</span>
+																<Trophy className="h-4 w-4 flex-shrink-0" />
+																<span className="break-words">
+																	{registration.event.prizes}
+																</span>
 															</div>
 														</div>
 													)}
@@ -584,7 +618,7 @@ export default function TournamentsPage() {
 														...registration.event,
 														user_registration_status: registration.status,
 													}) && (
-														<div className="ml-4">
+														<div className="flex justify-end lg:ml-4">
 															<Button
 																variant="outline"
 																onClick={() =>
@@ -593,10 +627,17 @@ export default function TournamentsPage() {
 																disabled={processingEvents.has(
 																	registration.event_id
 																)}
-																className="bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30">
-																{processingEvents.has(registration.event_id)
-																	? "Cancel·lant..."
-																	: "Cancel·lar"}
+																className="bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30 text-sm w-full sm:w-auto">
+																<span className="sm:hidden">
+																	{processingEvents.has(registration.event_id)
+																		? "..."
+																		: "Cancel·lar"}
+																</span>
+																<span className="hidden sm:inline">
+																	{processingEvents.has(registration.event_id)
+																		? "Cancel·lant..."
+																		: "Cancel·lar"}
+																</span>
 															</Button>
 														</div>
 													)}
