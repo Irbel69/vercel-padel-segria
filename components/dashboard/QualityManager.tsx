@@ -88,22 +88,6 @@ export function QualityManager({
 	userQualities,
 	onQualitiesUpdated,
 }: QualityManagerProps) {
-	// Temporary simple render to test
-	return (
-		<Card className="bg-white/5 border-white/10">
-			<CardHeader>
-				<CardTitle className="text-white flex items-center gap-2">
-					<Sparkles className="h-5 w-5" />
-					Qualitats destacades (Test)
-				</CardTitle>
-			</CardHeader>
-			<CardContent>
-				<div className="text-white/60 text-center py-4">
-					Component en desenvolupament...
-				</div>
-			</CardContent>
-		</Card>
-	);
 	const [allQualities, setAllQualities] = useState<Quality[]>([]);
 	const [assignedQualities, setAssignedQualities] = useState<
 		(Quality | null)[]

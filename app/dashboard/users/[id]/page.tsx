@@ -37,6 +37,7 @@ import {
 	Minus,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { QualityManager } from "@/components/dashboard/QualityManager";
 import type { UserProfile } from "@/types";
 
 interface UserDetailResponse {
@@ -174,6 +175,10 @@ export default function UserDetailPage() {
 		setFormData((prev) => ({ ...prev, [field]: value }));
 	};
 
+	const handleQualitiesUpdated = (updatedQualities: UserDetailResponse["user"]["user_qualities"]) => {
+		setUser(prev => prev ? { ...prev, user_qualities: updatedQualities } : null);
+	};
+
 	const formatDate = (dateString: string) => {
 		return new Date(dateString).toLocaleDateString("ca-ES", {
 			year: "numeric",
@@ -284,9 +289,11 @@ export default function UserDetailPage() {
 				</Alert>
 			)}
 
-			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-				{/* Profile Overview */}
-				<Card className="lg:col-span-1 bg-white/5 border-white/10">
+			<div className="space-y-6">
+				{/* First row: Profile Overview and Edit Form */}
+				<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+					{/* Profile Overview */}
+					<Card className="lg:col-span-1 bg-white/5 border-white/10">
 					<CardHeader>
 						<CardTitle className="text-white flex items-center gap-2">
 							<User className="h-5 w-5" />
@@ -630,6 +637,14 @@ export default function UserDetailPage() {
 						</div>
 					</CardContent>
 				</Card>
+				</div>
+
+				{/* Second row: Quality Manager */}
+				<QualityManager
+					userId={user.id}
+					userQualities={user.user_qualities}
+					onQualitiesUpdated={handleQualitiesUpdated}
+				/>
 			</div>
 		</div>
 	);
