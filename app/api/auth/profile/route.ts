@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 		const { data: userProfile, error: profileError } = await supabase
 			.from("users")
 			.select(
-				"id, email, name, surname, phone, observations, avatar_url, is_admin, score, matches_played, skill_level, trend, image_rights_accepted, privacy_policy_accepted, created_at"
+				"id, email, name, surname, phone, observations, avatar_url, is_admin, skill_level, trend, image_rights_accepted, privacy_policy_accepted, created_at"
 			)
 			.eq("id", user.id)
 			.single();
@@ -45,11 +45,53 @@ export async function GET(req: NextRequest) {
 			);
 		}
 
+		// Calculate user score and matches played dynamically
+		let score = 0;
+		let matchesPlayed = 0;
+
+		if (userProfile) {
+			// Get all matches for this user
+			const { data: userMatches, error: matchesError } = await supabase
+				.from("user_matches")
+				.select(
+					`
+					match_id,
+					matches!inner(
+						id,
+						winner_id
+					)
+				`
+				)
+				.eq("user_id", user.id);
+
+			if (!matchesError && userMatches) {
+				matchesPlayed = userMatches.length;
+
+				// Calculate score based on wins/losses
+				userMatches.forEach((userMatch) => {
+					const match = userMatch.matches as any;
+					if (match.winner_id === user.id) {
+						// User won: 10 points
+						score += 10;
+					} else {
+						// User lost: 3 points
+						score += 3;
+					}
+				});
+			}
+		}
+
 		return NextResponse.json({
 			user: {
 				id: user.id,
 				email: user.email,
-				profile: userProfile || null,
+				profile: userProfile
+					? {
+							...userProfile,
+							score,
+							matches_played: matchesPlayed,
+					  }
+					: null,
 			},
 		});
 	} catch (error) {
