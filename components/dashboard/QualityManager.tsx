@@ -95,6 +95,7 @@ export function QualityManager({
 	const [isLoading, setIsLoading] = useState(false);
 	const [isLoadingQualities, setIsLoadingQualities] = useState(true);
 	const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+	const [isAnimating, setIsAnimating] = useState(false);
 
 	// Initialize assigned qualities from props
 	useEffect(() => {
@@ -141,6 +142,14 @@ export function QualityManager({
 		slotIndex: number,
 		quality: Quality | null
 	) => {
+		// If removing a quality (quality is null), trigger animation
+		const isRemoving =
+			quality === null && assignedQualities[slotIndex] !== null;
+
+		if (isRemoving) {
+			setIsAnimating(true);
+		}
+
 		const newQualities = [...assignedQualities];
 		newQualities[slotIndex] = quality;
 
@@ -153,11 +162,38 @@ export function QualityManager({
 			}
 		}
 
-		setAssignedQualities(newQualities);
+		// If removing, compact the array (move nulls to the right)
+		if (isRemoving) {
+			const compactedQualities: (Quality | null)[] = [];
+			const nonNullQualities = newQualities.filter((q) => q !== null);
+
+			// Add non-null qualities first
+			compactedQualities.push(...nonNullQualities);
+			// Fill remaining slots with null
+			while (compactedQualities.length < 3) {
+				compactedQualities.push(null);
+			}
+
+			// Set the compacted qualities after a short delay for animation
+			setTimeout(() => {
+				setAssignedQualities(compactedQualities);
+				setTimeout(() => setIsAnimating(false), 100);
+			}, 150);
+		} else {
+			setAssignedQualities(newQualities);
+		}
+
 		setSelectedSlot(null);
 
 		// Save to backend
-		await saveQualities(newQualities);
+		const qualitiesToSave = isRemoving
+			? newQualities
+					.filter((q) => q !== null)
+					.concat([null, null, null])
+					.slice(0, 3)
+			: newQualities;
+
+		await saveQualities(qualitiesToSave);
 	};
 
 	const saveQualities = async (qualities: (Quality | null)[]) => {
@@ -252,12 +288,25 @@ export function QualityManager({
 			</CardHeader>
 			<CardContent>
 				{/* Horizontal layout for qualities */}
-				<div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+				<div className="grid grid-cols-1 sm:grid-cols-3 gap-6 relative">
 					{assignedQualities.map((quality, index) => (
-						<div key={index} className="flex flex-col items-center space-y-3">
+						<div
+							key={quality ? `quality-${quality.id}` : `empty-${index}`}
+							className={`flex flex-col items-center space-y-3 transition-all duration-300 ease-out ${
+								isAnimating ? "transform-gpu" : ""
+							}`}
+							style={{
+								transform: isAnimating ? "translateX(-10px)" : "translateX(0)",
+								transitionDelay: isAnimating ? `${index * 50}ms` : "0ms",
+							}}>
 							{quality ? (
 								// Assigned quality
-								<div className="relative group">
+								<div
+									className={`relative group transition-all duration-300 ease-out ${
+										isAnimating
+											? "scale-95 opacity-80"
+											: "scale-100 opacity-100"
+									}`}>
 									<div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-padel-primary/20 to-padel-primary/30 flex items-center justify-center border-2 border-padel-primary/40 shadow-lg transition-all duration-200 hover:from-padel-primary/30 hover:to-padel-primary/40 hover:scale-105 cursor-pointer">
 										{(() => {
 											const IconComponent = getQualityIcon(quality.name);
@@ -283,7 +332,12 @@ export function QualityManager({
 								// Empty slot with skeleton design
 								<Dialog>
 									<DialogTrigger asChild>
-										<div className="cursor-pointer transition-all duration-200 hover:scale-105 group">
+										<div
+											className={`cursor-pointer transition-all duration-300 hover:scale-105 group ${
+												isAnimating
+													? "scale-95 opacity-60"
+													: "scale-100 opacity-100"
+											}`}>
 											<div className="w-24 h-24 rounded-2xl bg-white/5 border-2 border-dashed border-white/20 flex items-center justify-center hover:border-white/40 hover:bg-white/10 transition-all duration-200 group-hover:border-padel-primary/30">
 												<Plus className="w-10 h-10 text-white/40 group-hover:text-white/60 transition-colors duration-200" />
 											</div>
