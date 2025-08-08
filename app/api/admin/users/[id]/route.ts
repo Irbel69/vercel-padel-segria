@@ -61,8 +61,6 @@ export async function GET(
 				phone,
 				avatar_url,
 				is_admin,
-				score,
-				matches_played,
 				skill_level,
 				trend,
 				observations,
@@ -97,7 +95,49 @@ export async function GET(
 			);
 		}
 
-		return NextResponse.json({ user: userData });
+		// Calculate user score and matches played dynamically
+		let score = 0;
+		let matchesPlayed = 0;
+
+		if (userData) {
+			// Get all matches for this user
+			const { data: userMatches, error: matchesError } = await supabase
+				.from("user_matches")
+				.select(
+					`
+					match_id,
+					matches!inner(
+						id,
+						winner_id
+					)
+				`
+				)
+				.eq("user_id", userId);
+
+			if (!matchesError && userMatches) {
+				matchesPlayed = userMatches.length;
+
+				// Calculate score based on wins/losses
+				userMatches.forEach((userMatch) => {
+					const match = userMatch.matches as any;
+					if (match.winner_id === userId) {
+						// User won: 10 points
+						score += 10;
+					} else {
+						// User lost: 3 points
+						score += 3;
+					}
+				});
+			}
+		}
+
+		return NextResponse.json({
+			user: {
+				...userData,
+				score,
+				matches_played: matchesPlayed,
+			},
+		});
 	} catch (error) {
 		console.error("Unexpected error:", error);
 		return NextResponse.json(
@@ -162,8 +202,6 @@ export async function PUT(
 			"surname",
 			"phone",
 			"is_admin",
-			"score",
-			"matches_played",
 			"skill_level",
 			"trend",
 			"observations",
@@ -195,23 +233,6 @@ export async function PUT(
 		) {
 			return NextResponse.json(
 				{ error: "El cognom ha de ser un text vàlid" },
-				{ status: 400 }
-			);
-		}
-
-		if (filteredUpdates.score && typeof filteredUpdates.score !== "number") {
-			return NextResponse.json(
-				{ error: "La puntuació ha de ser un número vàlid" },
-				{ status: 400 }
-			);
-		}
-
-		if (
-			filteredUpdates.matches_played &&
-			typeof filteredUpdates.matches_played !== "number"
-		) {
-			return NextResponse.json(
-				{ error: "Els partits jugats han de ser un número vàlid" },
 				{ status: 400 }
 			);
 		}

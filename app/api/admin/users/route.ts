@@ -52,8 +52,6 @@ export async function GET(req: NextRequest) {
 				surname,
 				phone,
 				is_admin,
-				score,
-				matches_played,
 				skill_level,
 				created_at,
 				updated_at
@@ -83,12 +81,56 @@ export async function GET(req: NextRequest) {
 			);
 		}
 
+		// Calculate score and matches_played for each user
+		const usersWithStats = await Promise.all(
+			(users || []).map(async (user) => {
+				let score = 0;
+				let matchesPlayed = 0;
+
+				// Get all matches for this user
+				const { data: userMatches, error: matchesError } = await supabase
+					.from("user_matches")
+					.select(
+						`
+						match_id,
+						matches!inner(
+							id,
+							winner_id
+						)
+					`
+					)
+					.eq("user_id", user.id);
+
+				if (!matchesError && userMatches) {
+					matchesPlayed = userMatches.length;
+
+					// Calculate score based on wins/losses
+					userMatches.forEach((userMatch) => {
+						const match = userMatch.matches as any;
+						if (match.winner_id === user.id) {
+							// User won: 10 points
+							score += 10;
+						} else {
+							// User lost: 3 points
+							score += 3;
+						}
+					});
+				}
+
+				return {
+					...user,
+					score,
+					matches_played: matchesPlayed,
+				};
+			})
+		);
+
 		// Calculate pagination info
 		const totalPages = Math.ceil((count || 0) / limit);
 		const hasMore = page < totalPages;
 
 		return NextResponse.json({
-			users: users || [],
+			users: usersWithStats || [],
 			pagination: {
 				currentPage: page,
 				totalPages,
