@@ -16,7 +16,6 @@ import {
 	Users,
 	Clock,
 	Star,
-	Target,
 	ExternalLink,
 } from "lucide-react";
 import { openInMaps, getMapServiceName } from "@/lib/maps";
@@ -115,7 +114,6 @@ export function EventsSection() {
 	const [isLoaded, setIsLoaded] = useState(false);
 	const [events, setEvents] = useState<EventType[]>([]);
 	const [isLoadingEvents, setIsLoadingEvents] = useState(true);
-	const [error, setError] = useState<string | null>(null);
 
 	// Fetch real events data
 	useEffect(() => {
@@ -126,16 +124,13 @@ export function EventsSection() {
 					// If API call fails, use mock data as fallback
 					console.warn("API call failed, using mock data");
 					setEvents([]);
-					setError(null); // Don't show error, just use mock data
 					return;
 				}
 
 				const data = await response.json();
 				setEvents(data.events || []);
-				setError(null);
 			} catch (error) {
 				console.error("Error fetching events:", error);
-				setError(null); // Don't show error, just use mock data
 				setEvents([]);
 			} finally {
 				setIsLoadingEvents(false);
@@ -184,7 +179,7 @@ export function EventsSection() {
 						updated_at: new Date().toISOString(),
 						current_participants: mockEvent.participants,
 					})
-			  );
+				);
 
 	// Show a simple loading state if the component hasn't loaded yet
 	if (!isLoaded) {

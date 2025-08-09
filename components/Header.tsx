@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import type { JSX } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import ButtonSignin from "./ButtonSignin";
 import config from "@/config";
 
 const links: { href: string; label: string }[] = [
@@ -54,7 +53,8 @@ interface HeaderProps {
 	transparent?: boolean;
 }
 
-const Header = ({ transparent = false }: HeaderProps) => {
+// Header content component that uses useSearchParams
+const HeaderContent = ({ transparent = false }: HeaderProps) => {
 	const searchParams = useSearchParams();
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [hasScrolled, setHasScrolled] = useState<boolean>(false);
@@ -434,6 +434,44 @@ const Header = ({ transparent = false }: HeaderProps) => {
 				</div>
 			</div>
 		</>
+	);
+};
+
+// Main Header component with Suspense boundary
+const Header = ({ transparent = false }: HeaderProps) => {
+	return (
+		<Suspense
+			fallback={
+				<header
+					className={`${
+						transparent
+							? "fixed top-0 left-0 right-0 z-50 bg-black/60 backdrop-blur-sm"
+							: "bg-base-200"
+					}`}>
+					<nav className="container flex items-center justify-between px-8 py-4 mx-auto">
+						<div className="flex lg:flex-1">
+							<Link
+								className="flex items-center gap-2 shrink-0"
+								href="/"
+								title={`${config.appName} homepage`}>
+								<Image
+									src="/logo_yellow.png"
+									alt={`${config.appName} logo`}
+									className="w-10 h-10"
+									priority={true}
+									width={40}
+									height={40}
+								/>
+								<span className="font-extrabold text-lg text-[#c3fb12]">
+									Padel Segrià
+								</span>
+							</Link>
+						</div>
+					</nav>
+				</header>
+			}>
+			<HeaderContent transparent={transparent} />
+		</Suspense>
 	);
 };
 

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/libs/supabase/server";
+import { createPublicClient } from "@/libs/supabase/server";
 import type { Event } from "@/types";
 
 // GET /api/events/public - Lista eventos públicos para la landing page (sin autenticación)
 export async function GET(request: NextRequest) {
 	try {
-		const supabase = createClient();
+		const supabase = createPublicClient();
 
 		const url = new URL(request.url);
 		const limit = parseInt(url.searchParams.get("limit") || "4");

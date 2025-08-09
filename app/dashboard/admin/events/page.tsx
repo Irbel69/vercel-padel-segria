@@ -320,7 +320,7 @@ export default function AdminEventsPage() {
 					? {
 							...prev,
 							current_participants: (prev.current_participants || 1) - 1,
-					  }
+					}
 					: prev
 			);
 		} catch (e: any) {

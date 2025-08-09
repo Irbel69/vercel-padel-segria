@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/libs/supabase/server";
+import { createPublicClient } from "@/libs/supabase/server";
 
 export async function GET(req: NextRequest) {
 	try {
-		const supabase = createClient();
+		const supabase = createPublicClient();
 
 		const { searchParams } = new URL(req.url);
 		const pageParam = searchParams.get("page");
