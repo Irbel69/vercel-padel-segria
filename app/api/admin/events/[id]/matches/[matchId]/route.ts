@@ -38,9 +38,12 @@ export async function PUT(
 		const { players, winner_pair } = body;
 
 		// Validate input
-		if (players && (!Array.isArray(players) || players.length !== 4)) {
+		if (
+			players &&
+			(!Array.isArray(players) || players.length < 1 || players.length > 4)
+		) {
 			return NextResponse.json(
-				{ error: "Cal especificar exactament 4 jugadors" },
+				{ error: "Cal especificar entre 1 i 4 jugadors" },
 				{ status: 400 }
 			);
 		}
@@ -72,7 +75,11 @@ export async function PUT(
 				.select("id")
 				.in("id", players);
 
-			if (usersError || !existingUsers || existingUsers.length !== 4) {
+			if (
+				usersError ||
+				!existingUsers ||
+				existingUsers.length !== players.length
+			) {
 				return NextResponse.json(
 					{ error: "Algun dels jugadors especificats no existeix" },
 					{ status: 400 }
@@ -81,7 +88,7 @@ export async function PUT(
 
 			// Check for duplicate players
 			const uniquePlayers = new Set(players);
-			if (uniquePlayers.size !== 4) {
+			if (uniquePlayers.size !== players.length) {
 				return NextResponse.json(
 					{ error: "No es pot repetir el mateix jugador" },
 					{ status: 400 }
@@ -151,8 +158,10 @@ export async function PUT(
 				.eq("match_id", matchId)
 				.order("position", { ascending: true });
 
-			if (um && um.length === 4) {
+			if (um && um.length > 0) {
 				const playerIds = um.map((row: any) => row.user_id);
+				const numPlayers = playerIds.length;
+
 				// Helper to apply delta to a list of user ids
 				const applyDelta = async (ids: string[], delta: number) => {
 					if (ids.length === 0) return;
@@ -170,36 +179,43 @@ export async function PUT(
 					}
 				};
 
+				// Get pair groups based on positions
+				const getPairGroups = (playerIds: string[], userMatches: any[]) => {
+					const pair1 = [];
+					const pair2 = [];
+
+					for (const userMatch of userMatches) {
+						const position = userMatch.position;
+						if (position === 1 || position === 3) {
+							pair1.push(userMatch.user_id);
+						} else if (position === 2 || position === 4) {
+							pair2.push(userMatch.user_id);
+						}
+					}
+
+					return { pair1, pair2 };
+				};
+
+				const { pair1, pair2 } = getPairGroups(playerIds, um);
+
 				// If previous winner exists and changed, revert previous points
 				if (match.winner_pair === 1 || match.winner_pair === 2) {
 					if (match.winner_pair !== winner_pair) {
-						const prevWinnerIdx = match.winner_pair === 1 ? [0, 2] : [1, 3];
-						const prevLoserIdx = match.winner_pair === 1 ? [1, 3] : [0, 2];
-						await applyDelta(
-							prevWinnerIdx.map((i) => playerIds[i]),
-							-10
-						);
-						await applyDelta(
-							prevLoserIdx.map((i) => playerIds[i]),
-							-3
-						);
+						const prevWinnerIds = match.winner_pair === 1 ? pair1 : pair2;
+						const prevLoserIds = match.winner_pair === 1 ? pair2 : pair1;
+						await applyDelta(prevWinnerIds, -10);
+						await applyDelta(prevLoserIds, -3);
 					}
 				}
 
 				// Apply new points if no previous winner, or always apply if changed
-				const newWinnerIdx = winner_pair === 1 ? [0, 2] : [1, 3];
-				const newLoserIdx = winner_pair === 1 ? [1, 3] : [0, 2];
+				const newWinnerIds = winner_pair === 1 ? pair1 : pair2;
+				const newLoserIds = winner_pair === 1 ? pair2 : pair1;
 
 				// If previous winner is same as new, skip re-applying
 				if (match.winner_pair !== winner_pair) {
-					await applyDelta(
-						newWinnerIdx.map((i) => playerIds[i]),
-						+10
-					);
-					await applyDelta(
-						newLoserIdx.map((i) => playerIds[i]),
-						+3
-					);
+					await applyDelta(newWinnerIds, +10);
+					await applyDelta(newLoserIds, +3);
 				}
 			}
 		}

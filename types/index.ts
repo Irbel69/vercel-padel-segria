@@ -129,7 +129,7 @@ export interface MatchPlayer {
 }
 
 export interface CreateMatchData {
-	players: string[]; // Array of 4 user IDs
+	players: string[]; // Array of 1-4 user IDs
 	winner_pair?: 1 | 2;
 }
 

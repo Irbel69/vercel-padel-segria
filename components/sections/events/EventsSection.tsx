@@ -121,20 +121,21 @@ export function EventsSection() {
 	useEffect(() => {
 		const fetchEvents = async () => {
 			try {
-				const response = await fetch("/api/events?limit=4");
+				const response = await fetch("/api/events/public?limit=4");
 				if (!response.ok) {
 					// If API call fails, use mock data as fallback
 					console.warn("API call failed, using mock data");
 					setEvents([]);
-					setError("No s'han pogut carregar els esdeveniments");
+					setError(null); // Don't show error, just use mock data
 					return;
 				}
 
 				const data = await response.json();
 				setEvents(data.events || []);
+				setError(null);
 			} catch (error) {
 				console.error("Error fetching events:", error);
-				setError("Error carregant els esdeveniments");
+				setError(null); // Don't show error, just use mock data
 				setEvents([]);
 			} finally {
 				setIsLoadingEvents(false);
@@ -164,21 +165,26 @@ export function EventsSection() {
 	};
 
 	// Convert EventType to display format for rendering
-	const displayEvents = events.length > 0 ? events : mockEvents.map((mockEvent): EventType => ({
-		id: mockEvent.id,
-		title: mockEvent.title,
-		date: mockEvent.date,
-		location: mockEvent.location,
-		latitude: null, // Mock events don't have real coordinates
-		longitude: null,
-		status: mockEvent.status as "open" | "closed" | "soon",
-		prizes: mockEvent.prizes,
-		max_participants: mockEvent.maxParticipants,
-		registration_deadline: mockEvent.registrationDeadline,
-		created_at: new Date().toISOString(),
-		updated_at: new Date().toISOString(),
-		current_participants: mockEvent.participants,
-	}));
+	const displayEvents =
+		events.length > 0
+			? events
+			: mockEvents.map(
+					(mockEvent): EventType => ({
+						id: mockEvent.id,
+						title: mockEvent.title,
+						date: mockEvent.date,
+						location: mockEvent.location,
+						latitude: null, // Mock events don't have real coordinates
+						longitude: null,
+						status: mockEvent.status as "open" | "closed" | "soon",
+						prizes: mockEvent.prizes,
+						max_participants: mockEvent.maxParticipants,
+						registration_deadline: mockEvent.registrationDeadline,
+						created_at: new Date().toISOString(),
+						updated_at: new Date().toISOString(),
+						current_participants: mockEvent.participants,
+					})
+			  );
 
 	// Show a simple loading state if the component hasn't loaded yet
 	if (!isLoaded) {
@@ -197,7 +203,7 @@ export function EventsSection() {
 	}
 
 	return (
-		<section className="py-24 relative overflow-hidden">
+		<section className="py-12 md:py-24 relative overflow-hidden">
 			{/* Background decorative elements */}
 			<div className="absolute inset-0 overflow-hidden">
 				<div className="absolute -top-40 -left-40 w-96 h-96 bg-padel-primary/5 rounded-full blur-3xl" />
@@ -210,183 +216,230 @@ export function EventsSection() {
 			<div className="container mx-auto px-4 relative z-10">
 				{/* Header */}
 				<div
-					className={`text-center mb-20 transition-all duration-700 ${
+					className={`text-center mb-8 md:mb-20 transition-all duration-700 ${
 						isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
 					}`}>
-					<h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+					<h2 className="text-2xl leading-tight md:text-5xl lg:text-6xl font-bold text-white mb-3 md:mb-6">
 						Propers Tornejos
 					</h2>
-					<p className="text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
+					<p className="text-sm md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed px-1 md:px-2">
 						Descobreix els tornejos més emocionants que estan per venir.
 						Uneix-te a la competició i demostra el teu talent en les millors
 						pistes de Segrià.
 					</p>
 				</div>
 
-				{/* Timeline */}
-				<div className="relative mb-16">
-					{/* Timeline line - Horizontal on desktop, vertical on mobile */}
-					<div className="hidden lg:block absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gray-600 to-transparent transform -translate-y-1/2" />
-					<div className="lg:hidden absolute left-8 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-gray-600 to-transparent" />
-
-					{/* Events */}
-					<div className="flex flex-col lg:flex-row lg:justify-between lg:items-center space-y-12 lg:space-y-0 lg:space-x-4">
-						{displayEvents.slice(0, 4).map((event, index) => (
-							<TooltipProvider key={event.id}>
-								<Tooltip>
-									<TooltipTrigger asChild>
-										<div
-											className={`relative flex flex-col lg:items-center text-left lg:text-center group cursor-pointer transition-all duration-500 hover:z-10 ${
-												hoveredEvent === event.id ? "lg:scale-110" : ""
-											} ${
-												isVisible
-													? "translate-y-0 opacity-100"
-													: "translate-y-8 opacity-0"
-											}`}
-											style={{
-												transitionDelay: `${index * 150}ms`,
-											}}
-											onMouseEnter={() => setHoveredEvent(event.id)}
-											onMouseLeave={() => setHoveredEvent(null)}>
-											{/* Timeline point */}
-											<div className="relative flex lg:flex-col items-center lg:items-center">
-												{/* Mobile timeline connector */}
-												<div className="lg:hidden w-16 h-16 bg-gradient-to-r from-padel-primary/30 to-padel-primary rounded-full flex items-center justify-center mr-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-													<div className="w-8 h-8 bg-padel-primary rounded-full flex items-center justify-center">
-														<span className="text-sm font-bold text-padel-secondary">
-															{index + 1}
-														</span>
-													</div>
-												</div>
-
-												{/* Desktop timeline point */}
-												<div className="hidden lg:flex w-16 h-16 bg-gradient-to-r from-padel-primary/30 to-padel-primary rounded-full items-center justify-center mb-6 group-hover:scale-125 group-hover:rotate-12 transition-all duration-300 shadow-lg">
-													<div className="w-8 h-8 bg-padel-primary rounded-full flex items-center justify-center">
-														<span className="text-sm font-bold text-padel-secondary">
-															{index + 1}
-														</span>
-													</div>
-												</div>
-
-												{/* Event card */}
+				{/* Events Grid */}
+				<div className="relative mb-8 md:mb-16">
+					{isLoadingEvents ? (
+						<div className="flex justify-center">
+							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 max-w-7xl w-full">
+								{Array.from({ length: 4 }).map((_, index) => (
+									<div
+										key={index}
+										className="animate-pulse bg-white/10 rounded-2xl p-6 space-y-4">
+										<div className="h-4 bg-white/20 rounded w-3/4"></div>
+										<div className="h-3 bg-white/20 rounded w-1/2"></div>
+										<div className="h-3 bg-white/20 rounded w-full"></div>
+										<div className="h-8 bg-white/20 rounded"></div>
+									</div>
+								))}
+							</div>
+						</div>
+					) : (
+						<div className="flex justify-center">
+							<div
+								className={`grid gap-3 md:gap-6 max-w-7xl w-full ${
+									displayEvents.length === 1
+										? "grid-cols-1 max-w-md"
+										: displayEvents.length === 2
+										? "grid-cols-1 md:grid-cols-2 max-w-2xl"
+										: displayEvents.length === 3
+										? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 max-w-5xl"
+										: "grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
+								}`}>
+								{displayEvents.slice(0, 4).map((event, index) => (
+									<TooltipProvider key={event.id}>
+										<Tooltip>
+											<TooltipTrigger asChild>
 												<div
-													className={`flex-1 lg:w-80 xl:w-72 p-6 rounded-2xl transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-padel-primary/20 ${
-														hoveredEvent === event.id
-															? "bg-white/15 border-padel-primary/50"
-															: ""
+													className={`group cursor-pointer transition-all duration-500 hover:scale-[1.02] md:hover:scale-105 ${
+														isVisible
+															? "translate-y-0 opacity-100"
+															: "translate-y-6 md:translate-y-8 opacity-0"
 													}`}
-													style={{
-														background:
+													style={{ transitionDelay: `${index * 120}ms` }}
+													onMouseEnter={() => setHoveredEvent(event.id)}
+													onMouseLeave={() => setHoveredEvent(null)}>
+													{/* Event card */}
+													<div
+														className={`h-full p-3 md:p-6 rounded-2xl transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-padel-primary/20 border min-h-[0] md:min-h-[380px] flex flex-col ${
 															hoveredEvent === event.id
-																? "rgba(255, 255, 255, 0.15)"
-																: "rgba(255, 255, 255, 0.08)",
-														backdropFilter: "blur(12px)",
-														WebkitBackdropFilter: "blur(12px)",
-														border:
-															hoveredEvent === event.id
-																? "1px solid rgba(229, 240, 0, 0.5)"
-																: "1px solid rgba(255, 255, 255, 0.1)",
-													}}>
-													<div className="space-y-4">
-														<div className="flex flex-col space-y-2">
-															<h3 className="text-lg lg:text-xl font-bold text-white group-hover:text-padel-primary transition-colors duration-300">
-																{event.title}
-															</h3>
-															<div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-2 text-sm text-gray-300">
-																<div className="flex items-center gap-1">
-																	<Calendar className="w-4 h-4 text-padel-primary/70" />
-																	<span>{new Date(event.date).toLocaleDateString('ca-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
-																</div>
-																<div className="flex items-center gap-1">
-																	<MapPin className="w-4 h-4 text-padel-primary/70" />
-																	<span className="truncate text-xs lg:text-sm">
-																		{event.location}
+																? "bg-white/15 border-padel-primary/50 shadow-xl shadow-padel-primary/30"
+																: "bg-white/8 border-white/10 hover:bg-white/12"
+														}`}
+														style={{
+															backdropFilter: "blur(12px)",
+															WebkitBackdropFilter: "blur(12px)",
+														}}>
+														{/* Header with event number and status */}
+														<div className="flex justify-between items-start mb-2 md:mb-4">
+															<div className="flex items-center gap-2 md:gap-3">
+																<div className="w-7 h-7 md:w-10 md:h-10 bg-gradient-to-r from-padel-primary to-yellow-400 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+																	<span className="text-xs md:text-sm font-bold text-black">
+																		{index + 1}
 																	</span>
-																	{event.latitude && event.longitude && (
-																		<Tooltip>
-																			<TooltipTrigger asChild>
-																				<button
-																					onClick={(e) => handleViewInMaps(event, e)}
-																					className="ml-1 text-padel-primary hover:text-padel-primary/80 transition-colors duration-200 p-1 rounded hover:bg-white/10"
-																					aria-label={`Veure ${event.title} a ${getMapServiceName()}`}
-																				>
-																					<ExternalLink className="w-3 h-3" />
-																				</button>
-																			</TooltipTrigger>
-																			<TooltipContent>
-																				<p>Veure a {getMapServiceName()}</p>
-																			</TooltipContent>
-																		</Tooltip>
-																	)}
+																</div>
+																<div className="scale-75 md:scale-100 origin-left">
+																	{getStatusBadge(event.status)}
 																</div>
 															</div>
 														</div>
 
-														<div className="flex flex-col items-start lg:items-center space-y-3">
-															{getStatusBadge(event.status)}
-															<div className="flex items-center gap-1 text-sm text-gray-400">
-																<Users className="w-4 h-4" />
+														{/* Event title */}
+														<h3 className="text-base md:text-xl font-bold text-white group-hover:text-padel-primary transition-colors duration-300 mb-1.5 md:mb-3 line-clamp-2">
+															{event.title}
+														</h3>
+
+														{/* Event details */}
+														<div className="space-y-1.5 md:space-y-3 mb-3 md:mb-6 flex-grow">
+															<div className="flex items-center gap-1.5 md:gap-2 text-[11px] md:text-sm text-gray-300 leading-tight">
+																<Calendar className="w-4 h-4 text-padel-primary/70 flex-shrink-0" />
 																<span>
-																	{event.current_participants || 0}/{event.max_participants}{" "}
-																	participants
+																	{new Date(event.date).toLocaleDateString(
+																		"ca-ES",
+																		{
+																			day: "numeric",
+																			month: "long",
+																			year: "numeric",
+																		}
+																	)}
 																</span>
 															</div>
+
+															<div className="flex items-center gap-1.5 md:gap-2 text-[11px] md:text-sm text-gray-300 leading-tight">
+																<MapPin className="w-4 h-4 text-padel-primary/70 flex-shrink-0" />
+																<span className="truncate flex-1">
+																	{event.location || "Ubicació per determinar"}
+																</span>
+																{event.latitude && event.longitude && (
+																	<Tooltip>
+																		<TooltipTrigger asChild>
+																			<button
+																				onClick={(e) =>
+																					handleViewInMaps(event, e)
+																				}
+																				className="text-padel-primary hover:text-padel-primary/80 transition-colors duration-200 p-1 rounded hover:bg-white/10"
+																				aria-label={`Veure ${
+																					event.title
+																				} a ${getMapServiceName()}`}>
+																				<ExternalLink className="w-3 h-3" />
+																			</button>
+																		</TooltipTrigger>
+																		<TooltipContent>
+																			<p>Veure a {getMapServiceName()}</p>
+																		</TooltipContent>
+																	</Tooltip>
+																)}
+															</div>
+
+															<div className="flex items-center gap-1.5 md:gap-2 text-[11px] md:text-sm text-gray-300 leading-tight">
+																<Users className="w-4 h-4 text-padel-primary/70 flex-shrink-0" />
+																<span>
+																	{event.current_participants || 0}/
+																	{event.max_participants} participants
+																</span>
+															</div>
+
+															{event.prizes && (
+																<div className="flex items-center gap-1.5 md:gap-2 text-[11px] md:text-sm text-yellow-400 leading-tight">
+																	<Trophy className="w-4 h-4 flex-shrink-0" />
+																	<span className="truncate">
+																		{event.prizes}
+																	</span>
+																</div>
+															)}
 														</div>
 
-														{event.status === "open" && (
-															<Button
-																size="sm"
-																className="w-full bg-padel-primary/20 text-padel-primary border border-padel-primary/30 hover:bg-padel-primary hover:text-padel-secondary transition-all duration-300 hover:scale-105">
-																Inscriure's
-															</Button>
-														)}
+														{/* Action button */}
+														<div className="mt-auto pt-1 md:pt-4">
+															{event.status === "open" ? (
+																<Button
+																	size="sm"
+																	className="w-full bg-padel-primary/20 text-padel-primary border border-padel-primary/30 hover:bg-padel-primary hover:text-black transition-all duration-300 hover:scale-[1.015] md:hover:scale-105 group-hover:shadow-lg text-[11px] md:text-sm py-1.5 md:py-0">
+																	Inscriure's
+																</Button>
+															) : (
+																<Button
+																	size="sm"
+																	variant="outline"
+																	disabled
+																	className="w-full border-white/20 text-white/50 text-[11px] md:text-sm py-1.5 md:py-0">
+																	{event.status === "soon"
+																		? "Properament"
+																		: "Tancat"}
+																</Button>
+															)}
+														</div>
 													</div>
 												</div>
-											</div>
-										</div>
-									</TooltipTrigger>
-									<TooltipContent
-										side={index % 2 === 0 ? "top" : "bottom"}
-										className="max-w-xs p-4 bg-black/95 text-white border border-gray-600 shadow-xl">
-										<div className="space-y-3">
-											<div className="flex items-center gap-2">
-												<Trophy className="w-4 h-4 text-padel-primary" />
-												<span className="font-semibold text-padel-primary">
-													{event.prizes || "Premis per determinar"}
-												</span>
-											</div>
-											<div className="flex items-center gap-2">
-												<Clock className="w-4 h-4 text-orange-400" />
-												<span className="text-sm">
-													Límit inscripció: {new Date(event.registration_deadline).toLocaleDateString('ca-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-												</span>
-											</div>
-											{event.status === "open" && (
-												<div className="flex items-center gap-2">
-													<Star className="w-4 h-4 text-yellow-400" />
-													<span className="text-sm font-medium">
-														Places disponibles:{" "}
-														{event.max_participants - (event.current_participants || 0)}
-													</span>
+											</TooltipTrigger>
+											<TooltipContent
+												side="top"
+												className="max-w-xs p-4 bg-black/95 text-white border border-gray-600 shadow-xl">
+												<div className="space-y-3">
+													<div className="flex items-center gap-2">
+														<Clock className="w-4 h-4 text-orange-400" />
+														<span className="text-sm">
+															Límit inscripció:{" "}
+															{new Date(
+																event.registration_deadline
+															).toLocaleDateString("ca-ES")}
+														</span>
+													</div>
+													{event.status === "open" && (
+														<div className="flex items-center gap-2">
+															<Star className="w-4 h-4 text-yellow-400" />
+															<span className="text-sm font-medium">
+																Places disponibles:{" "}
+																{event.max_participants -
+																	(event.current_participants || 0)}
+															</span>
+														</div>
+													)}
+													{event.latitude && event.longitude && (
+														<div className="flex items-center gap-2 pt-2 border-t border-gray-700">
+															<MapPin className="w-4 h-4 text-padel-primary" />
+															<button
+																onClick={(e) => handleViewInMaps(event, e)}
+																className="text-sm text-padel-primary hover:text-padel-primary/80 transition-colors duration-200 underline">
+																Veure ubicació a {getMapServiceName()}
+															</button>
+														</div>
+													)}
 												</div>
-											)}
-											{event.latitude && event.longitude && (
-												<div className="flex items-center gap-2 pt-2 border-t border-gray-700">
-													<MapPin className="w-4 h-4 text-padel-primary" />
-													<button
-														onClick={(e) => handleViewInMaps(event, e)}
-														className="text-sm text-padel-primary hover:text-padel-primary/80 transition-colors duration-200 underline"
-													>
-														Veure ubicació a {getMapServiceName()}
-													</button>
-												</div>
-											)}
-										</div>
-									</TooltipContent>
-								</Tooltip>
-							</TooltipProvider>
-						))}
-					</div>
+											</TooltipContent>
+										</Tooltip>
+									</TooltipProvider>
+								))}
+							</div>
+						</div>
+					)}
+
+					{/* Show message if no events */}
+					{!isLoadingEvents && displayEvents.length === 0 && (
+						<div className="text-center py-12">
+							<div className="w-16 h-16 bg-padel-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+								<Calendar className="w-8 h-8 text-padel-primary" />
+							</div>
+							<h3 className="text-xl font-semibold text-white mb-2">
+								No hi ha tornejos disponibles
+							</h3>
+							<p className="text-gray-400">
+								Estem preparant nous tornejos emocionants. Torna aviat!
+							</p>
+						</div>
+					)}
 				</div>
 
 				{/* Call to Action */}

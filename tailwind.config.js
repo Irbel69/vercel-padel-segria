@@ -161,7 +161,11 @@ module.exports = {
 			},
 		},
 	},
-	plugins: [require("daisyui"), require("tailwindcss-animate")],
+	plugins: [
+		require("daisyui"),
+		require("tailwindcss-animate"),
+		require("@tailwindcss/line-clamp"),
+	],
 	daisyui: {
 		// Light & dark themes are added by default (it switches automatically based on OS settings)
 		// You can add another theme among the list of 30+

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useUser } from "@/hooks/use-user";
 import { redirect, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -61,6 +61,8 @@ const PadelCourt = ({
 	onWinnerChange,
 	disabled = false,
 }: PadelCourtProps) => {
+	const playerCount = players.filter((p) => p !== null).length;
+
 	const getPlayerPosition = (index: number) => {
 		const positions = [
 			"top-2 left-2", // Position 1 - Parella 1 (izquierda arriba)
@@ -123,7 +125,9 @@ const PadelCourt = ({
 				) : (
 					<>
 						<Plus className="w-6 h-6 text-white/40" />
-						<span className="text-white/40">Jugador</span>
+						<span className="text-white/40">
+							{playerCount === 0 ? "Jugador" : "Opcional"}
+						</span>
 					</>
 				)}
 			</div>
@@ -177,8 +181,12 @@ const PadelCourt = ({
 
 			{/* Labels */}
 			<div className="flex justify-between mt-4 text-sm text-white/60">
-				<span>Parella 1</span>
-				<span>Parella 2</span>
+				<span>
+					Parella 1 {playerCount < 4 && playerCount > 0 ? "(pos. 1,3)" : ""}
+				</span>
+				<span>
+					Parella 2 {playerCount < 4 && playerCount > 0 ? "(pos. 2,4)" : ""}
+				</span>
 			</div>
 		</div>
 	);
@@ -374,10 +382,10 @@ export default function EventMatchesPage({
 			setIsSubmitting(true);
 			setError(null);
 
-			// Validate all players are selected
+			// Validate at least one player is selected
 			const playerIds = selectedPlayers.map((p) => p?.id).filter(Boolean);
-			if (playerIds.length !== 4) {
-				throw new Error("Cal seleccionar els 4 jugadors");
+			if (playerIds.length < 1) {
+				throw new Error("Cal seleccionar almenys un jugador");
 			}
 
 			const matchData: CreateMatchData = {
@@ -539,16 +547,22 @@ export default function EventMatchesPage({
 					) : (
 						<div className="space-y-4">
 							{matches.map((match) => {
-								// Parella 1: posiciones 1 y 3 (izquierda)
-								// Parella 2: posiciones 2 y 4 (derecha)
+								// Get all players in the match
+								const allPlayers = match.user_matches || [];
+								const totalPlayers = allPlayers.length;
+
+								// Traditional pair logic for 4 players
 								const pair1 =
-									match.user_matches?.filter(
+									allPlayers.filter(
 										(um) => um.position === 1 || um.position === 3
 									) || [];
 								const pair2 =
-									match.user_matches?.filter(
+									allPlayers.filter(
 										(um) => um.position === 2 || um.position === 4
 									) || [];
+
+								// For less than 4 players, show them all in a single list
+								const showAsPairs = totalPlayers === 4;
 
 								return (
 									<div
@@ -565,85 +579,132 @@ export default function EventMatchesPage({
 															Guanyadora: Parella {match.winner_pair}
 														</Badge>
 													)}
+													{totalPlayers < 4 && (
+														<Badge
+															variant="outline"
+															className="border-orange-500/30 text-orange-400">
+															{totalPlayers} jugador
+															{totalPlayers !== 1 ? "s" : ""}
+														</Badge>
+													)}
 												</div>
 
-												<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-													{/* Pair 1 */}
-													<div
-														className={`p-3 rounded-lg border ${
-															match.winner_pair === 1
-																? "bg-padel-primary/10 border-padel-primary/30"
-																: "bg-white/5 border-white/10"
-														}`}>
-														<div className="flex items-center gap-2 mb-2">
-															<span className="text-sm font-medium text-white/80">
-																Parella 1
-															</span>
-															{match.winner_pair === 1 && (
-																<Crown className="w-4 h-4 text-padel-primary" />
-															)}
+												{showAsPairs ? (
+													<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+														{/* Pair 1 */}
+														<div
+															className={`p-3 rounded-lg border ${
+																match.winner_pair === 1
+																	? "bg-padel-primary/10 border-padel-primary/30"
+																	: "bg-white/5 border-white/10"
+															}`}>
+															<div className="flex items-center gap-2 mb-2">
+																<span className="text-sm font-medium text-white/80">
+																	Parella 1
+																</span>
+																{match.winner_pair === 1 && (
+																	<Crown className="w-4 h-4 text-padel-primary" />
+																)}
+															</div>
+															<div className="space-y-2">
+																{pair1.map((userMatch) => (
+																	<div
+																		key={userMatch.users.id}
+																		className="flex items-center gap-2">
+																		<Avatar className="w-6 h-6">
+																			<AvatarImage
+																				src={getPlayerAvatar(userMatch)}
+																			/>
+																			<AvatarFallback className="text-xs">
+																				{((userMatch.users.name || "")[0] ||
+																					"") +
+																					((userMatch.users.surname || "")[0] ||
+																						"")}
+																			</AvatarFallback>
+																		</Avatar>
+																		<span className="text-sm text-white">
+																			{getPlayerName(userMatch)}
+																		</span>
+																	</div>
+																))}
+															</div>
 														</div>
-														<div className="space-y-2">
-															{pair1.map((userMatch) => (
-																<div
-																	key={userMatch.users.id}
-																	className="flex items-center gap-2">
-																	<Avatar className="w-6 h-6">
-																		<AvatarImage
-																			src={getPlayerAvatar(userMatch)}
-																		/>
-																		<AvatarFallback className="text-xs">
-																			{((userMatch.users.name || "")[0] || "") +
-																				((userMatch.users.surname || "")[0] ||
-																					"")}
-																		</AvatarFallback>
-																	</Avatar>
-																	<span className="text-sm text-white">
-																		{getPlayerName(userMatch)}
-																	</span>
-																</div>
-															))}
-														</div>
-													</div>
 
-													{/* Pair 2 */}
-													<div
-														className={`p-3 rounded-lg border ${
-															match.winner_pair === 2
-																? "bg-padel-primary/10 border-padel-primary/30"
-																: "bg-white/5 border-white/10"
-														}`}>
-														<div className="flex items-center gap-2 mb-2">
-															<span className="text-sm font-medium text-white/80">
-																Parella 2
-															</span>
-															{match.winner_pair === 2 && (
-																<Crown className="w-4 h-4 text-padel-primary" />
-															)}
-														</div>
-														<div className="space-y-2">
-															{pair2.map((userMatch) => (
-																<div
-																	key={userMatch.users.id}
-																	className="flex items-center gap-2">
-																	<Avatar className="w-6 h-6">
-																		<AvatarImage
-																			src={getPlayerAvatar(userMatch)}
-																		/>
-																		<AvatarFallback className="text-xs">
-																			{((userMatch.users.name || "")[0] || "") +
-																				((userMatch.users.surname || "")[0] ||
-																					"")}
-																		</AvatarFallback>
-																	</Avatar>
-																	<span className="text-sm text-white">
-																		{getPlayerName(userMatch)}
-																	</span>
-																</div>
-															))}
+														{/* Pair 2 */}
+														<div
+															className={`p-3 rounded-lg border ${
+																match.winner_pair === 2
+																	? "bg-padel-primary/10 border-padel-primary/30"
+																	: "bg-white/5 border-white/10"
+															}`}>
+															<div className="flex items-center gap-2 mb-2">
+																<span className="text-sm font-medium text-white/80">
+																	Parella 2
+																</span>
+																{match.winner_pair === 2 && (
+																	<Crown className="w-4 h-4 text-padel-primary" />
+																)}
+															</div>
+															<div className="space-y-2">
+																{pair2.map((userMatch) => (
+																	<div
+																		key={userMatch.users.id}
+																		className="flex items-center gap-2">
+																		<Avatar className="w-6 h-6">
+																			<AvatarImage
+																				src={getPlayerAvatar(userMatch)}
+																			/>
+																			<AvatarFallback className="text-xs">
+																				{((userMatch.users.name || "")[0] ||
+																					"") +
+																					((userMatch.users.surname || "")[0] ||
+																						"")}
+																			</AvatarFallback>
+																		</Avatar>
+																		<span className="text-sm text-white">
+																			{getPlayerName(userMatch)}
+																		</span>
+																	</div>
+																))}
+															</div>
 														</div>
 													</div>
-												</div>
+												) : (
+													<div className="p-3 rounded-lg bg-white/5 border border-white/10">
+														<div className="flex items-center gap-2 mb-2">
+															<span className="text-sm font-medium text-white/80">
+																Jugadors
+															</span>
+														</div>
+														<div className="space-y-2">
+															{allPlayers
+																.sort((a, b) => a.position - b.position)
+																.map((userMatch) => (
+																	<div
+																		key={userMatch.users.id}
+																		className="flex items-center gap-2">
+																		<Avatar className="w-6 h-6">
+																			<AvatarImage
+																				src={getPlayerAvatar(userMatch)}
+																			/>
+																			<AvatarFallback className="text-xs">
+																				{((userMatch.users.name || "")[0] ||
+																					"") +
+																					((userMatch.users.surname || "")[0] ||
+																						"")}
+																			</AvatarFallback>
+																		</Avatar>
+																		<span className="text-sm text-white">
+																			{getPlayerName(userMatch)}
+																		</span>
+																		<span className="text-xs text-white/40 ml-auto">
+																			Pos. {userMatch.position}
+																		</span>
+																	</div>
+																))}
+														</div>
+													</div>
+												)}
 
 												<div className="mt-3 text-xs text-white/50">
 													{formatDate(match.match_date)}
@@ -672,7 +733,9 @@ export default function EventMatchesPage({
 					<DialogHeader>
 						<DialogTitle>Crear Nou Partit</DialogTitle>
 						<DialogDescription className="text-white/60">
-							Selecciona els 4 jugadors i opcionalment la parella guanyadora
+							Selecciona entre 1 i 4 jugadors. Pots escollir la parella
+							guanyadora per atorgar punts (només aplicable amb 4 jugadors
+							registrats).
 						</DialogDescription>
 					</DialogHeader>
 
@@ -689,6 +752,13 @@ export default function EventMatchesPage({
 							<br />
 							Utilitza les corones per seleccionar la parella guanyadora.
 						</p>
+
+						<div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 text-xs text-blue-300">
+							<p className="font-medium mb-1">ℹ️ Nota sobre puntuació:</p>
+							<p>• Els jugadors en posicions 1 i 3 formen la Parella 1</p>
+							<p>• Els jugadors en posicions 2 i 4 formen la Parella 2</p>
+							<p>• Els guanyadors reben +10 punts, els perdedors +3 punts</p>
+						</div>
 					</div>
 
 					<DialogFooter>
@@ -706,7 +776,7 @@ export default function EventMatchesPage({
 							onClick={handleCreateMatch}
 							disabled={
 								isSubmitting ||
-								selectedPlayers.filter((p) => p !== null).length !== 4
+								selectedPlayers.filter((p) => p !== null).length < 1
 							}
 							className="bg-padel-primary text-black hover:bg-padel-primary/90">
 							{isSubmitting ? "Creant..." : "Crear Partit"}
@@ -723,6 +793,9 @@ export default function EventMatchesPage({
 						<DialogDescription className="text-white/60">
 							Tria un jugador per a la posició{" "}
 							{selectedPosition !== null ? selectedPosition + 1 : ""}.
+							{selectedPosition !== null &&
+								selectedPosition + 1 > 4 &&
+								" (opcional)"}
 						</DialogDescription>
 					</DialogHeader>
 					<PlayerSelector

@@ -68,6 +68,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@tailwindcss/line-clamp": "^0.4.4",
     "@types/jest": "^29.5.12",
     "@types/mdx": "^2.0.12",
     "@types/mongoose": "^5.11.97",

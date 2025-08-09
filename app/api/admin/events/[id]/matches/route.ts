@@ -148,9 +148,14 @@ export async function POST(
 		const { players, winner_pair } = body;
 
 		// Validate input
-		if (!players || !Array.isArray(players) || players.length !== 4) {
+		if (
+			!players ||
+			!Array.isArray(players) ||
+			players.length < 1 ||
+			players.length > 4
+		) {
 			return NextResponse.json(
-				{ error: "Cal especificar exactament 4 jugadors" },
+				{ error: "Cal especificar entre 1 i 4 jugadors" },
 				{ status: 400 }
 			);
 		}
@@ -168,7 +173,11 @@ export async function POST(
 			.select("id")
 			.in("id", players);
 
-		if (usersError || !existingUsers || existingUsers.length !== 4) {
+		if (
+			usersError ||
+			!existingUsers ||
+			existingUsers.length !== players.length
+		) {
 			return NextResponse.json(
 				{ error: "Algun dels jugadors especificats no existeix" },
 				{ status: 400 }
@@ -177,7 +186,7 @@ export async function POST(
 
 		// Check for duplicate players
 		const uniquePlayers = new Set(players);
-		if (uniquePlayers.size !== 4) {
+		if (uniquePlayers.size !== players.length) {
 			return NextResponse.json(
 				{ error: "No es pot repetir el mateix jugador" },
 				{ status: 400 }
@@ -225,35 +234,95 @@ export async function POST(
 
 		// If winner_pair is provided, update users' scores
 		if (winner_pair === 1 || winner_pair === 2) {
-			// Pair mapping: positions 1 & 3 => pair 1, positions 2 & 4 => pair 2
-			const winnerIndices = winner_pair === 1 ? [0, 2] : [1, 3];
-			const loserIndices = winner_pair === 1 ? [1, 3] : [0, 2];
-			const winnerIds = winnerIndices.map((i) => players[i]);
-			const loserIds = loserIndices.map((i) => players[i]);
+			// Get all players for score distribution
+			const allPlayerIds = players;
+			const numPlayers = allPlayerIds.length;
 
-			// Fetch current scores
-			const [{ data: winnerUsers }, { data: loserUsers }] = await Promise.all([
-				supabase.from("users").select("id, score").in("id", winnerIds),
-				supabase.from("users").select("id, score").in("id", loserIds),
-			]);
+			if (numPlayers === 4) {
+				// Traditional 4-player logic: positions 1 & 3 => pair 1, positions 2 & 4 => pair 2
+				const winnerIndices = winner_pair === 1 ? [0, 2] : [1, 3];
+				const loserIndices = winner_pair === 1 ? [1, 3] : [0, 2];
+				const winnerIds = winnerIndices.map((i) => players[i]);
+				const loserIds = loserIndices.map((i) => players[i]);
 
-			// Apply increments (best-effort; log errors)
-			if (winnerUsers) {
-				for (const wu of winnerUsers) {
-					const newScore = (wu.score || 0) + 10;
-					await supabase
-						.from("users")
-						.update({ score: newScore })
-						.eq("id", wu.id);
+				// Fetch current scores and apply points
+				const [{ data: winnerUsers }, { data: loserUsers }] = await Promise.all(
+					[
+						supabase.from("users").select("id, score").in("id", winnerIds),
+						supabase.from("users").select("id, score").in("id", loserIds),
+					]
+				);
+
+				if (winnerUsers) {
+					for (const wu of winnerUsers) {
+						const newScore = (wu.score || 0) + 10;
+						await supabase
+							.from("users")
+							.update({ score: newScore })
+							.eq("id", wu.id);
+					}
 				}
-			}
-			if (loserUsers) {
-				for (const lu of loserUsers) {
-					const newScore = (lu.score || 0) + 3;
-					await supabase
+				if (loserUsers) {
+					for (const lu of loserUsers) {
+						const newScore = (lu.score || 0) + 3;
+						await supabase
+							.from("users")
+							.update({ score: newScore })
+							.eq("id", lu.id);
+					}
+				}
+			} else {
+				// For less than 4 players, award points based on pair positions but with reduced logic
+				// Still use position-based pairing but be flexible with missing players
+				const pair1Players = [];
+				const pair2Players = [];
+
+				// Distribute existing players into pairs based on their positions
+				for (let i = 0; i < players.length; i++) {
+					const position = i + 1; // positions are 1-indexed
+					if (position === 1 || position === 3) {
+						pair1Players.push(players[i]);
+					} else if (position === 2 || position === 4) {
+						pair2Players.push(players[i]);
+					}
+				}
+
+				const winnerIds = winner_pair === 1 ? pair1Players : pair2Players;
+				const loserIds = winner_pair === 1 ? pair2Players : pair1Players;
+
+				// Award points to winners and participation points to losers
+				if (winnerIds.length > 0) {
+					const { data: winnerUsers } = await supabase
 						.from("users")
-						.update({ score: newScore })
-						.eq("id", lu.id);
+						.select("id, score")
+						.in("id", winnerIds);
+
+					if (winnerUsers) {
+						for (const wu of winnerUsers) {
+							const newScore = (wu.score || 0) + 10;
+							await supabase
+								.from("users")
+								.update({ score: newScore })
+								.eq("id", wu.id);
+						}
+					}
+				}
+
+				if (loserIds.length > 0) {
+					const { data: loserUsers } = await supabase
+						.from("users")
+						.select("id, score")
+						.in("id", loserIds);
+
+					if (loserUsers) {
+						for (const lu of loserUsers) {
+							const newScore = (lu.score || 0) + 3;
+							await supabase
+								.from("users")
+								.update({ score: newScore })
+								.eq("id", lu.id);
+						}
+					}
 				}
 			}
 		}
