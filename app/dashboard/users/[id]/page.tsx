@@ -236,7 +236,9 @@ export default function UserDetailPage() {
 						<ArrowLeft className="h-4 w-4 mr-2" />
 						Tornar
 					</Button>
-					<h1 className="text-3xl font-bold text-white">Detall d&apos;Usuari</h1>
+					<h1 className="text-3xl font-bold text-white">
+						Detall d&apos;Usuari
+					</h1>
 				</div>
 
 				<Alert variant="destructive">
@@ -269,7 +271,9 @@ export default function UserDetailPage() {
 							<User className="h-6 w-6 text-padel-primary" />
 						</div>
 						<div>
-							<h1 className="text-3xl font-bold text-white">Detall d&apos;Usuari</h1>
+							<h1 className="text-3xl font-bold text-white">
+								Detall d&apos;Usuari
+							</h1>
 							<p className="text-white/60">
 								Gestiona la informació de l&apos;usuari
 							</p>

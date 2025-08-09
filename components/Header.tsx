@@ -8,26 +8,12 @@ import Image from "next/image";
 import ButtonSignin from "./ButtonSignin";
 import config from "@/config";
 
-const links: {
-	href: string;
-	label: string;
-}[] = [
-	{
-		href: "/",
-		label: "Home",
-	},
-	{
-		href: "/club",
-		label: "Club",
-	},
-	{
-		href: "/shop",
-		label: "Shop",
-	},
-	{
-		href: "/event",
-		label: "Event",
-	},
+const links: { href: string; label: string }[] = [
+	{ href: "#hero", label: "Inici" },
+	{ href: "#top-players", label: "Top Players" },
+	{ href: "#rankings", label: "Classificació" },
+	{ href: "#events", label: "Propers Tornejos" },
+	{ href: "#contact", label: "Contacta" },
 ];
 
 // Define the Login button component

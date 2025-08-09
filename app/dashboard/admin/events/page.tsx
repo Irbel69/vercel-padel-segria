@@ -50,9 +50,9 @@ export default function AdminEventsPage() {
 	const [error, setError] = useState<string | null>(null);
 	const [search, setSearch] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
-	const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(
-		null
-	);
+	const [searchTimeout, setSearchTimeout] = useState<ReturnType<
+		typeof setTimeout
+	> | null>(null);
 
 	// Create/Edit Event Modal
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -320,7 +320,7 @@ export default function AdminEventsPage() {
 					? {
 							...prev,
 							current_participants: (prev.current_participants || 1) - 1,
-						}
+					  }
 					: prev
 			);
 		} catch (e: any) {

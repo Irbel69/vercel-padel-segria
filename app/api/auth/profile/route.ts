@@ -85,12 +85,12 @@ export async function GET(_req: NextRequest) {
 			user: {
 				id: user.id,
 				email: user.email,
-						profile: userProfile
+				profile: userProfile
 					? {
 							...userProfile,
 							score,
 							matches_played: matchesPlayed,
-						}
+					  }
 					: null,
 			},
 		});

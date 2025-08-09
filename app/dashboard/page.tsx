@@ -292,7 +292,9 @@ export default function Dashboard() {
 								{userProfile.skill_level}
 								<span className="text-lg text-white/50">/10</span>
 							</div>
-							<div className="text-sm text-white/60">Nivell d&apos;Habilitat</div>
+							<div className="text-sm text-white/60">
+								Nivell d&apos;Habilitat
+							</div>
 						</div>
 					</div>
 

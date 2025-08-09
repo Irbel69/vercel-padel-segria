@@ -32,9 +32,9 @@ export default function UsersPage() {
 	const [error, setError] = useState<string | null>(null);
 	const [search, setSearch] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
-	const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(
-		null
-	);
+	const [searchTimeout, setSearchTimeout] = useState<ReturnType<
+		typeof setTimeout
+	> | null>(null);
 
 	// Redirect if not admin
 	useEffect(() => {

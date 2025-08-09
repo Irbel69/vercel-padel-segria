@@ -86,7 +86,7 @@ export function ContactSection() {
 	];
 
 	return (
-		<section className="py-24 relative overflow-hidden">
+		<section id="contact" className="py-24 relative overflow-hidden">
 			{/* Background decorative elements */}
 			<div className="absolute inset-0 overflow-hidden">
 				<div className="absolute -top-40 -right-40 w-80 h-80 bg-padel-primary/10 rounded-full blur-3xl" />
@@ -101,8 +101,8 @@ export function ContactSection() {
 					</h2>
 					<p className="text-lg text-gray-300 max-w-2xl mx-auto leading-relaxed">
 						Tens preguntes sobre els nostres tornejos? Vols unir-te a la
-						comunitat de pàdel més gran de Segrià? Escriu-nos i t&apos;ajudarem amb
-						tot el que necessitis.
+						comunitat de pàdel més gran de Segrià? Escriu-nos i t&apos;ajudarem
+						amb tot el que necessitis.
 					</p>
 				</div>
 

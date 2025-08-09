@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
  */
 export default function HeroSection() {
 	return (
-		<section className="relative min-h-screen w-full overflow-hidden">
+		<section id="hero" className="relative min-h-screen w-full overflow-hidden">
 			{/* Background Ball Logo - Behind text on mobile and tablets, to the right on larger screens */}
 			<div className="absolute top-[10%] lg:top-0 right-0 lg:right-[0%] pointer-events-none z-0 lg:z-5 w-full lg:w-auto flex justify-center lg:block">
 				<Image

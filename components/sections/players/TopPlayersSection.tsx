@@ -123,7 +123,7 @@ export function TopPlayersSection() {
 	const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
 	return (
-		<section className="py-24 relative overflow-hidden">
+		<section id="top-players" className="py-24 relative overflow-hidden">
 			{/* Background decorative elements */}
 			<div className="absolute inset-0 overflow-hidden">
 				<div className="absolute -top-40 -right-40 w-80 h-80 bg-padel-primary/10 rounded-full blur-3xl" />

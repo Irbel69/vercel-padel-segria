@@ -184,7 +184,7 @@ export function EventsSection() {
 						updated_at: new Date().toISOString(),
 						current_participants: mockEvent.participants,
 					})
-				);
+			  );
 
 	// Show a simple loading state if the component hasn't loaded yet
 	if (!isLoaded) {
@@ -203,7 +203,7 @@ export function EventsSection() {
 	}
 
 	return (
-		<section className="py-12 md:py-24 relative overflow-hidden">
+		<section id="events" className="py-12 md:py-24 relative overflow-hidden">
 			{/* Background decorative elements */}
 			<div className="absolute inset-0 overflow-hidden">
 				<div className="absolute -top-40 -left-40 w-96 h-96 bg-padel-primary/5 rounded-full blur-3xl" />

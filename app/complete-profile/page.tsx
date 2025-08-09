@@ -249,10 +249,10 @@ export default function CompleteProfile() {
 										Autorització del dret d&apos;imatge:
 									</span>{" "}
 									Que la imatge del meu fill o filla, en cas de l&apos;escola de
-									nens/es, i la meva, en cas de l&apos;escola d&apos;adults, pugui
-									aparèixer en fotografies i vídeos corresponents a activitats
-									organitzades per Dakirol i publicades en la pàgina web i
-									xarxes socials de l&apos;empresa.
+									nens/es, i la meva, en cas de l&apos;escola d&apos;adults,
+									pugui aparèixer en fotografies i vídeos corresponents a
+									activitats organitzades per Dakirol i publicades en la pàgina
+									web i xarxes socials de l&apos;empresa.
 								</Label>
 							</div>
 
