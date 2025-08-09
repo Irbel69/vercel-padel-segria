@@ -216,54 +216,57 @@ export default function UsersPage() {
 									key={userData.id}
 									href={`/dashboard/users/${userData.id}`}
 									className="block">
-									<div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 p-3 md:p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer">
-										<Avatar className="h-12 w-12 self-center sm:self-auto">
+									{/* Compact mobile grid, richer layout on md+ */}
+									<div className="grid md:flex md:flex-row md:items-center grid-cols-[auto,1fr,auto] md:grid-cols-none gap-3 md:gap-4 p-2 md:p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer">
+										<Avatar className="h-10 w-10 md:h-12 md:w-12">
 											<AvatarImage src={userData.avatar_url || ""} />
-											<AvatarFallback className="bg-padel-primary/20 text-padel-primary">
+											<AvatarFallback className="bg-padel-primary/20 text-padel-primary text-xs md:text-sm">
 												{getInitials(userData.name, userData.surname)}
 											</AvatarFallback>
 										</Avatar>
 
-										<div className="flex-1 min-w-0 text-center sm:text-left">
-											<div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
-												<p className="text-white font-medium truncate">
+										{/* Main user identity */}
+										<div className="min-w-0 flex flex-col md:flex-1 col-start-2">
+											<div className="flex items-center gap-1 md:gap-2 md:mb-1">
+												<p className="text-white font-medium text-sm md:text-base truncate">
 													{userData.name && userData.surname
 														? `${userData.name} ${userData.surname}`
 														: userData.email}
 												</p>
 												{userData.is_admin && (
-													<Crown className="h-4 w-4 text-yellow-500 self-center sm:self-auto" />
+													<Crown className="h-3 w-3 md:h-4 md:w-4 text-yellow-500" />
 												)}
 											</div>
-											<p className="text-white/60 text-sm truncate">
+											<p className="text-white/60 text-[11px] md:text-sm truncate leading-tight">
 												{userData.email}
 											</p>
 											{userData.phone && (
-												<p className="text-white/40 text-xs">
+												<p className="text-white/40 text-[10px] md:text-xs truncate leading-tight">
 													{userData.phone}
 												</p>
 											)}
 										</div>
 
-										<div className="text-center sm:text-right space-y-1 flex-shrink-0">
-											<div className="flex items-center justify-center sm:justify-end gap-2">
-												<Badge
-													variant={userData.is_admin ? "default" : "secondary"}
-													className={
-														userData.is_admin
-															? "bg-yellow-500/20 text-yellow-400"
-															: "bg-white/10 text-white/70"
-													}>
-													{userData.is_admin ? "Admin" : "Usuari"}
-												</Badge>
-											</div>
-											<p className="text-white/40 text-xs">
-												Registrat: {formatDate(userData.created_at)}
+										{/* Meta / stats */}
+										<div className="flex flex-col items-end justify-center gap-0.5 md:gap-1 text-right md:text-right col-start-3">
+											<Badge
+												variant={userData.is_admin ? "default" : "secondary"}
+												className={
+													userData.is_admin
+														? "bg-yellow-500/20 text-yellow-400 px-1 py-0 h-5 md:h-6"
+														: "bg-white/10 text-white/70 px-1 py-0 h-5 md:h-6"
+												}>
+												{userData.is_admin ? "Admin" : "Usuari"}
+											</Badge>
+											<p className="text-white/40 text-[10px] md:text-xs leading-tight">
+												Reg: {formatDate(userData.created_at)}
 											</p>
-											<div className="text-white/60 text-xs">
-												Puntuació: {userData.score} | Partits:{" "}
-												{userData.matches_played}
-											</div>
+											<p className="text-white/60 text-[10px] md:text-xs leading-tight">
+												Nivell {userData.skill_level}
+												{userData.trend === "up" && " ↑"}
+												{userData.trend === "down" && " ↓"}
+												{userData.trend === "same" && " →"}
+											</p>
 										</div>
 									</div>
 								</Link>

@@ -63,7 +63,7 @@ export default async function LayoutPrivate({
 						<SidebarTrigger className="text-white hover:bg-white/10" />
 						<div className="ml-auto flex items-center space-x-4">
 							<span className="hidden sm:block text-sm text-white/70">
-								Benvingut, {userProfile.name} {userProfile.surname}
+								Benvingut
 							</span>
 							<ButtonAccount />
 						</div>

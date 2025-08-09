@@ -59,6 +59,36 @@ export default function AdminEventsPage() {
 	const [isEditing, setIsEditing] = useState(false);
 	const [editingEvent, setEditingEvent] = useState<Event | null>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	// Participants modal state
+	const [isParticipantsModalOpen, setIsParticipantsModalOpen] = useState(false);
+	const [participantsLoading, setParticipantsLoading] = useState(false);
+	const [participantsError, setParticipantsError] = useState<string | null>(
+		null
+	);
+	const [participantsEvent, setParticipantsEvent] = useState<
+		(Event & { participants?: any[] }) | null
+	>(null);
+	const [participants, setParticipants] = useState<
+		{
+			id: string;
+			name: string | null;
+			surname: string | null;
+			email: string;
+			avatar_url: string | null;
+		}[]
+	>([]);
+	const [userSearch, setUserSearch] = useState("");
+	const [userSearchResults, setUserSearchResults] = useState<
+		{
+			id: string;
+			name: string | null;
+			surname: string | null;
+			avatar_url: string | null;
+		}[]
+	>([]);
+	const [userSearchLoading, setUserSearchLoading] = useState(false);
+	const [addingUserId, setAddingUserId] = useState<string | null>(null);
+	const [removingUserId, setRemovingUserId] = useState<string | null>(null);
 	const [formData, setFormData] = useState<CreateEventData>({
 		title: "",
 		date: "",
@@ -193,6 +223,111 @@ export default function AdminEventsPage() {
 		setEditingEvent(event);
 		setIsEditing(true);
 		setIsCreateModalOpen(true);
+	};
+
+	const openParticipantsModal = async (event: Event) => {
+		setParticipantsEvent(event as any);
+		setParticipants([]);
+		setParticipantsError(null);
+		setIsParticipantsModalOpen(true);
+		setParticipantsLoading(true);
+		setUserSearch("");
+		setUserSearchResults([]);
+		try {
+			const res = await fetch(`/api/admin/events/${event.id}`);
+			const data = await res.json();
+			if (!res.ok)
+				throw new Error(data.error || "Error carregant participants");
+			// data.participants holds registrations with embedded users
+			const mapped = (data.participants || []).map((r: any) => ({
+				id: r.users?.id,
+				name: r.users?.name ?? null,
+				surname: r.users?.surname ?? null,
+				email: r.users?.email,
+				avatar_url: r.users?.avatar_url ?? null,
+			}));
+			setParticipants(mapped);
+			setParticipantsEvent({
+				...event,
+				current_participants: data.current_participants,
+				participants: data.participants,
+			});
+		} catch (e: any) {
+			setParticipantsError(e.message);
+		} finally {
+			setParticipantsLoading(false);
+		}
+	};
+
+	// Search users to add
+	useEffect(() => {
+		if (!isParticipantsModalOpen) return;
+		if (userSearch.trim().length < 2) {
+			setUserSearchResults([]);
+			return;
+		}
+		let active = true;
+		setUserSearchLoading(true);
+		fetch(`/api/admin/users/search?search=${encodeURIComponent(userSearch)}`)
+			.then((r) => r.json())
+			.then((data) => {
+				if (!active) return;
+				setUserSearchResults(data.users || []);
+			})
+			.catch(() => {})
+			.finally(() => active && setUserSearchLoading(false));
+		return () => {
+			active = false;
+		};
+	}, [userSearch, isParticipantsModalOpen]);
+
+	const addUserToEvent = async (userId: string) => {
+		if (!participantsEvent) return;
+		setAddingUserId(userId);
+		try {
+			const res = await fetch(
+				`/api/admin/events/${participantsEvent.id}/participants`,
+				{
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ user_id: userId }),
+				}
+			);
+			const data = await res.json();
+			if (!res.ok) throw new Error(data.error || "Error afegint usuari");
+			// Refresh list
+			openParticipantsModal(participantsEvent);
+		} catch (e: any) {
+			setParticipantsError(e.message);
+		} finally {
+			setAddingUserId(null);
+		}
+	};
+
+	const removeUserFromEvent = async (userId: string) => {
+		if (!participantsEvent) return;
+		setRemovingUserId(userId);
+		try {
+			const res = await fetch(
+				`/api/admin/events/${participantsEvent.id}/participants?user_id=${userId}`,
+				{ method: "DELETE" }
+			);
+			const data = await res.json();
+			if (!res.ok) throw new Error(data.error || "Error eliminant usuari");
+			setParticipants((prev) => prev.filter((p) => p.id !== userId));
+			setParticipantsEvent((prev) =>
+				prev
+					? {
+							...prev,
+							current_participants: (prev.current_participants || 1) - 1,
+					  }
+					: prev
+			);
+		} catch (e: any) {
+			setParticipantsError(e.message);
+		} finally {
+			setRemovingUserId(null);
+		}
 	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -422,59 +557,60 @@ export default function AdminEventsPage() {
 							{events.map((event) => (
 								<div
 									key={event.id}
-									className="p-3 md:p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-									<div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
-										<div className="flex-1">
-											<div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-												<h3 className="text-white font-semibold text-base md:text-lg">
+									className="p-2 md:p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+									<div className="flex flex-col lg:flex-row lg:items-start justify-between gap-2 md:gap-3">
+										<div className="flex-1 min-w-0">
+											<div className="flex items-center flex-wrap gap-1.5 md:gap-2 mb-1 md:mb-2">
+												<h3 className="text-white font-semibold text-sm md:text-lg leading-tight">
 													{event.title}
 												</h3>
 												{getStatusBadge(event.status)}
 											</div>
 
-											<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4 text-sm text-white/70">
-												<div className="flex items-center gap-2">
-													<Calendar className="h-4 w-4 flex-shrink-0" />
+											<div className="grid grid-cols-2 md:grid-cols-3 gap-1.5 md:gap-4 text-[11px] md:text-sm text-white/70">
+												<div className="flex items-center gap-1.5 md:gap-2 min-w-0">
+													<Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
 													<span className="truncate">
 														{formatDate(event.date)}
 													</span>
 												</div>
 												{event.location && (
-													<div className="flex items-center gap-2">
-														<MapPin className="h-4 w-4 flex-shrink-0" />
+													<div className="flex items-center gap-1.5 md:gap-2 min-w-0">
+														<MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
 														<span className="truncate">{event.location}</span>
 													</div>
 												)}
-												<div className="flex items-center gap-2">
-													<Users className="h-4 w-4 flex-shrink-0" />
+												<div className="flex items-center gap-1.5 md:gap-2 min-w-0">
+													<Users className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
 													<span className="truncate">
 														{event.current_participants || 0}/
-														{event.max_participants} participants
+														{event.max_participants} part.
 													</span>
 												</div>
 											</div>
 
-											<div className="mt-2 text-xs text-white/50">
-												<div className="flex items-center gap-2">
+											<div className="mt-1 md:mt-2 text-[10px] md:text-xs text-white/50">
+												<div className="flex items-center gap-1.5 md:gap-2 min-w-0">
 													<Clock className="h-3 w-3 flex-shrink-0" />
 													<span className="truncate">
-														Límit inscripció:{" "}
-														{formatDateTime(event.registration_deadline)}
+														Límit: {formatDateTime(event.registration_deadline)}
 													</span>
 												</div>
 											</div>
 
 											{event.prizes && (
-												<div className="mt-2">
-													<div className="flex items-center gap-2 text-sm text-white/60">
-														<Trophy className="h-4 w-4 flex-shrink-0" />
-														<span className="break-words">{event.prizes}</span>
+												<div className="mt-1 md:mt-2">
+													<div className="flex items-start gap-1.5 md:gap-2 text-[11px] md:text-sm text-white/60">
+														<Trophy className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0 mt-0.5" />
+														<span className="break-words leading-snug">
+															{event.prizes}
+														</span>
 													</div>
 												</div>
 											)}
 										</div>
 
-										<div className="flex flex-row lg:flex-col gap-2 justify-end lg:ml-4">
+										<div className="flex flex-row lg:flex-col flex-wrap gap-1.5 md:gap-2 justify-end lg:ml-4 max-w-full">
 											<Button
 												variant="outline"
 												size="sm"
@@ -483,25 +619,41 @@ export default function AdminEventsPage() {
 														`/dashboard/admin/events/${event.id}/matches`
 													)
 												}
-												className="bg-padel-primary/20 border-padel-primary/30 text-padel-primary hover:bg-padel-primary/30 flex-1 lg:flex-initial">
-												<Swords className="h-4 w-4" />
-												<span className="ml-1 sm:hidden">Partits</span>
+												className="bg-padel-primary/20 border-padel-primary/30 text-padel-primary hover:bg-padel-primary/30 flex-1 lg:flex-initial h-7 md:h-8 px-2 md:px-3">
+												<Swords className="h-3.5 w-3.5 md:h-4 md:w-4" />
+												<span className="ml-1 hidden sm:inline text-[11px]">
+													Partits
+												</span>
+											</Button>
+											<Button
+												variant="outline"
+												size="sm"
+												onClick={() => openParticipantsModal(event)}
+												className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex-1 lg:flex-initial h-7 md:h-8 px-2 md:px-3">
+												<Users className="h-3.5 w-3.5 md:h-4 md:w-4" />
+												<span className="ml-1 hidden sm:inline text-[11px]">
+													Inscrits
+												</span>
 											</Button>
 											<Button
 												variant="outline"
 												size="sm"
 												onClick={() => openEditModal(event)}
-												className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex-1 lg:flex-initial">
-												<Edit className="h-4 w-4" />
-												<span className="ml-1 sm:hidden">Editar</span>
+												className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex-1 lg:flex-initial h-7 md:h-8 px-2 md:px-3">
+												<Edit className="h-3.5 w-3.5 md:h-4 md:w-4" />
+												<span className="ml-1 hidden sm:inline text-[11px]">
+													Editar
+												</span>
 											</Button>
 											<Button
 												variant="outline"
 												size="sm"
 												onClick={() => handleDelete(event.id)}
-												className="bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30 flex-1 lg:flex-initial">
-												<Trash2 className="h-4 w-4" />
-												<span className="ml-1 sm:hidden">Eliminar</span>
+												className="bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30 flex-1 lg:flex-initial h-7 md:h-8 px-2 md:px-3">
+												<Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
+												<span className="ml-1 hidden sm:inline text-[11px]">
+													Eliminar
+												</span>
 											</Button>
 										</div>
 									</div>
@@ -695,6 +847,137 @@ export default function AdminEventsPage() {
 								: "Crear"}
 						</Button>
 					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			{/* Participants Modal */}
+			<Dialog
+				open={isParticipantsModalOpen}
+				onOpenChange={setIsParticipantsModalOpen}>
+				<DialogContent className="bg-black/90 border-white/20 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+					<DialogHeader>
+						<DialogTitle>
+							Inscrits {participantsEvent ? `- ${participantsEvent.title}` : ""}
+						</DialogTitle>
+						<DialogDescription className="text-white/60">
+							Llista d'usuaris confirmats{" "}
+							{participantsEvent && (
+								<span
+									className={
+										(participantsEvent.current_participants ||
+											participants.length) > participantsEvent.max_participants
+											? "text-red-400"
+											: ""
+									}>
+									(
+									{participantsEvent.current_participants ||
+										participants.length}
+									/{participantsEvent.max_participants})
+								</span>
+							)}
+						</DialogDescription>
+					</DialogHeader>
+					<div className="space-y-4">
+						{/* Add user search */}
+						<div className="space-y-2">
+							<label className="text-xs uppercase tracking-wide text-white/60">
+								Afegir usuari
+							</label>
+							<Input
+								value={userSearch}
+								onChange={(e) => setUserSearch(e.target.value)}
+								placeholder="Cerca per nom o cognom (mínim 2 caràcters)"
+								className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
+							/>
+							{userSearchLoading && (
+								<p className="text-xs text-white/40">Cercant...</p>
+							)}
+							{!userSearchLoading &&
+								userSearch.length >= 2 &&
+								userSearchResults.length > 0 && (
+									<ul className="max-h-40 overflow-y-auto bg-white/5 border border-white/10 rounded-md divide-y divide-white/10">
+										{userSearchResults.map((u) => {
+											const already = participants.some((p) => p.id === u.id);
+											return (
+												<li
+													key={u.id}
+													className="p-2 flex items-center gap-3 text-sm">
+													<div className="h-7 w-7 rounded-full bg-white/10 flex items-center justify-center text-[10px]">
+														{(u.name?.[0] || "?") + (u.surname?.[0] || "")}
+													</div>
+													<div className="flex-1 min-w-0 truncate">
+														{u.name || u.surname
+															? `${u.name || ""} ${u.surname || ""}`.trim()
+															: u.id}
+													</div>
+													<Button
+														variant="outline"
+														size="sm"
+														disabled={already || addingUserId === u.id}
+														onClick={() => addUserToEvent(u.id)}
+														className="h-6 px-2 text-[10px] bg-padel-primary/20 border-padel-primary/30 text-padel-primary hover:bg-padel-primary/30">
+														{already
+															? "Afegit"
+															: addingUserId === u.id
+															? "..."
+															: "Afegir"}
+													</Button>
+												</li>
+											);
+										})}
+									</ul>
+								)}
+						</div>
+						{participantsLoading && (
+							<div className="space-y-2">
+								{Array.from({ length: 5 }).map((_, i) => (
+									<Skeleton key={i} className="h-10 w-full" />
+								))}
+							</div>
+						)}
+						{participantsError && (
+							<Alert variant="destructive">
+								<AlertCircle className="h-4 w-4" />
+								<AlertDescription>{participantsError}</AlertDescription>
+							</Alert>
+						)}
+						{!participantsLoading &&
+							!participantsError &&
+							participants.length === 0 && (
+								<p className="text-white/60 text-sm">
+									Encara no hi ha inscrits confirmats.
+								</p>
+							)}
+						{!participantsLoading && participants.length > 0 && (
+							<ul className="divide-y divide-white/10">
+								{participants.map((p) => (
+									<li key={p.id} className="py-2 flex items-center gap-3">
+										<div className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-medium">
+											{(p.name?.[0] || "?") + (p.surname?.[0] || "")}
+										</div>
+										<div className="flex-1 min-w-0">
+											<p className="text-sm font-medium text-white truncate">
+												{p.name || p.surname
+													? `${p.name || ""} ${p.surname || ""}`.trim()
+													: p.email}
+											</p>
+											<p className="text-xs text-white/50 truncate">
+												{p.email}
+											</p>
+										</div>
+										<Button
+											variant="outline"
+											size="sm"
+											disabled={removingUserId === p.id}
+											onClick={() => removeUserFromEvent(p.id)}
+											className="h-6 px-2 text-[10px] bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30">
+											{removingUserId === p.id ? "..." : "Treure"}
+										</Button>
+									</li>
+								))}
+							</ul>
+						)}
+					</div>
 				</DialogContent>
 			</Dialog>
 		</div>

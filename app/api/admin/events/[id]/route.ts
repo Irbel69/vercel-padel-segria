@@ -50,7 +50,7 @@ export async function GET(
 			);
 		}
 
-		// Obtener número de participantes
+		// Obtener número de participantes (incluye todos los confirmados, aunque superen el límite)
 		const { count: participantCount } = await supabase
 			.from("registrations")
 			.select("*", { count: "exact", head: true })
@@ -288,7 +288,8 @@ export async function DELETE(
 				{
 					error: "tournament_has_registrations",
 					registrations_count: totalRegistrations,
-					message: "Aquest torneig té inscripcions. Utilitzeu el paràmetre 'force' per eliminar-lo.",
+					message:
+						"Aquest torneig té inscripcions. Utilitzeu el paràmetre 'force' per eliminar-lo.",
 				},
 				{ status: 400 }
 			);
@@ -302,7 +303,10 @@ export async function DELETE(
 				.eq("event_id", eventId);
 
 			if (deleteRegistrationsError) {
-				console.error("Error deleting registrations:", deleteRegistrationsError);
+				console.error(
+					"Error deleting registrations:",
+					deleteRegistrationsError
+				);
 				return NextResponse.json(
 					{ error: "Error eliminant les inscripcions" },
 					{ status: 500 }
