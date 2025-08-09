@@ -39,7 +39,6 @@ create table users (
 	avatar_url text,
 	is_admin boolean not null default false,
 	score integer not null default 0,
-	matches_played integer not null default 0,
 	skill_level integer not null default 0,
 	trend trend_status not null default 'same',
 	created_at timestamp with time zone default now(),

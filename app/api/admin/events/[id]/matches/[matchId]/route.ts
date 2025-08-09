@@ -55,7 +55,7 @@ export async function PUT(
 		// Verify match exists and belongs to this event
 		const { data: match, error: matchError } = await supabase
 			.from("matches")
-			.select("id, event_id")
+			.select("id, event_id, winner_pair")
 			.eq("id", matchId)
 			.eq("event_id", eventId)
 			.single();
@@ -140,6 +140,68 @@ export async function PUT(
 				{ error: "Error actualitzant el partit" },
 				{ status: 500 }
 			);
+		}
+
+		// If winner_pair provided, adjust scores based on previous vs new winner
+		if (winner_pair === 1 || winner_pair === 2) {
+			// Get current players for this match ordered by position
+			const { data: um } = await supabase
+				.from("user_matches")
+				.select("user_id, position")
+				.eq("match_id", matchId)
+				.order("position", { ascending: true });
+
+			if (um && um.length === 4) {
+				const playerIds = um.map((row: any) => row.user_id);
+				// Helper to apply delta to a list of user ids
+				const applyDelta = async (ids: string[], delta: number) => {
+					if (ids.length === 0) return;
+					const { data: users } = await supabase
+						.from("users")
+						.select("id, score")
+						.in("id", ids);
+					if (!users) return;
+					for (const u of users) {
+						const newScore = (u.score || 0) + delta;
+						await supabase
+							.from("users")
+							.update({ score: newScore })
+							.eq("id", u.id);
+					}
+				};
+
+				// If previous winner exists and changed, revert previous points
+				if (match.winner_pair === 1 || match.winner_pair === 2) {
+					if (match.winner_pair !== winner_pair) {
+						const prevWinnerIdx = match.winner_pair === 1 ? [0, 2] : [1, 3];
+						const prevLoserIdx = match.winner_pair === 1 ? [1, 3] : [0, 2];
+						await applyDelta(
+							prevWinnerIdx.map((i) => playerIds[i]),
+							-10
+						);
+						await applyDelta(
+							prevLoserIdx.map((i) => playerIds[i]),
+							-3
+						);
+					}
+				}
+
+				// Apply new points if no previous winner, or always apply if changed
+				const newWinnerIdx = winner_pair === 1 ? [0, 2] : [1, 3];
+				const newLoserIdx = winner_pair === 1 ? [1, 3] : [0, 2];
+
+				// If previous winner is same as new, skip re-applying
+				if (match.winner_pair !== winner_pair) {
+					await applyDelta(
+						newWinnerIdx.map((i) => playerIds[i]),
+						+10
+					);
+					await applyDelta(
+						newLoserIdx.map((i) => playerIds[i]),
+						+3
+					);
+				}
+			}
 		}
 
 		return NextResponse.json({

@@ -55,21 +55,21 @@ export async function GET(
 			.from("matches")
 			.select(
 				`
-				id,
-				event_id,
-				winner_pair,
-				match_date,
-				created_at,
-				user_matches (
-					position,
-					users (
-						id,
-						name,
-						surname,
-						avatar_url
+					id,
+					event_id,
+					winner_pair,
+					match_date,
+					created_at,
+					user_matches (
+						position,
+						users (
+							id,
+							name,
+							surname,
+							avatar_url
+						)
 					)
-				)
-			`
+				`
 			)
 			.eq("event_id", eventId)
 			.order("created_at", { ascending: true });
@@ -221,6 +221,41 @@ export async function POST(
 				{ error: "Error assignant jugadors al partit" },
 				{ status: 500 }
 			);
+		}
+
+		// If winner_pair is provided, update users' scores
+		if (winner_pair === 1 || winner_pair === 2) {
+			// Pair mapping: positions 1 & 3 => pair 1, positions 2 & 4 => pair 2
+			const winnerIndices = winner_pair === 1 ? [0, 2] : [1, 3];
+			const loserIndices = winner_pair === 1 ? [1, 3] : [0, 2];
+			const winnerIds = winnerIndices.map((i) => players[i]);
+			const loserIds = loserIndices.map((i) => players[i]);
+
+			// Fetch current scores
+			const [{ data: winnerUsers }, { data: loserUsers }] = await Promise.all([
+				supabase.from("users").select("id, score").in("id", winnerIds),
+				supabase.from("users").select("id, score").in("id", loserIds),
+			]);
+
+			// Apply increments (best-effort; log errors)
+			if (winnerUsers) {
+				for (const wu of winnerUsers) {
+					const newScore = (wu.score || 0) + 10;
+					await supabase
+						.from("users")
+						.update({ score: newScore })
+						.eq("id", wu.id);
+				}
+			}
+			if (loserUsers) {
+				for (const lu of loserUsers) {
+					const newScore = (lu.score || 0) + 3;
+					await supabase
+						.from("users")
+						.update({ score: newScore })
+						.eq("id", lu.id);
+				}
+			}
 		}
 
 		return NextResponse.json(

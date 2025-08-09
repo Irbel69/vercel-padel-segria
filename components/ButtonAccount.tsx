@@ -26,7 +26,7 @@ const ButtonAccount = () => {
 		<Popover className="relative z-10">
 			{({ open }) => (
 				<>
-					<Popover.Button className="btn">
+					<Popover.Button className="flex items-center gap-2 bg-black text-white hover:bg-gray-800 transition-colors duration-200 px-4 py-2 rounded-lg">
 						{user?.user_metadata?.avatar_url || profile?.avatar_url ? (
 							<img
 								src={profile?.avatar_url || user?.user_metadata?.avatar_url}
@@ -66,10 +66,10 @@ const ButtonAccount = () => {
 						leaveFrom="transform scale-100 opacity-100"
 						leaveTo="transform scale-95 opacity-0">
 						<Popover.Panel className="absolute left-0 z-10 mt-3 w-screen max-w-[16rem] transform">
-							<div className="overflow-hidden rounded-xl shadow-xl ring-1 ring-base-content ring-opacity-5 bg-base-100 p-1">
+							<div className="overflow-hidden rounded-xl shadow-xl ring-1 ring-white ring-opacity-20 bg-black p-1 text-white">
 								<div className="space-y-0.5 text-sm">
 									{profile && (
-										<div className="px-4 py-2 border-b border-base-300">
+										<div className="px-4 py-2 border-b border-gray-700">
 											<p className="font-medium">
 												{profile.name} {profile.surname}
 											</p>
@@ -82,7 +82,7 @@ const ButtonAccount = () => {
 										</div>
 									)}
 									<button
-										className="flex items-center gap-2 hover:bg-error/20 hover:text-error duration-200 py-1.5 px-4 w-full rounded-lg font-medium"
+										className="flex items-center gap-2 text-white hover:bg-error/20 hover:text-error duration-200 py-1.5 px-4 w-full rounded-lg font-medium"
 										onClick={handleSignOut}>
 										<svg
 											xmlns="http://www.w3.org/2000/svg"

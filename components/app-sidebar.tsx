@@ -48,6 +48,12 @@ const menuItems = [
 		icon: Target,
 		description: "Participa en competicions",
 	},
+	{
+		title: "Classificació",
+		url: "/dashboard/rankings",
+		icon: Trophy,
+		description: "Rànking de jugadors",
+	},
 ];
 
 const adminItems = [

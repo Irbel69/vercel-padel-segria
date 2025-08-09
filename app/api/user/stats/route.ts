@@ -18,13 +18,13 @@ export async function GET() {
 			.from("user_matches")
 			.select(
 				`
-				position,
-				matches!inner (
-					id,
-					winner_pair,
-					match_date
-				)
-			`
+					position,
+					matches!inner (
+						id,
+						winner_pair,
+						match_date
+					)
+				`
 			)
 			.eq("user_id", user.id);
 
@@ -62,15 +62,26 @@ export async function GET() {
 		const winPercentage =
 			matchesPlayed > 0 ? Math.round((matchesWon / matchesPlayed) * 100) : 0;
 
-		// Calculate score according to the formula: wins * 0.7 + total matches * 0.3
-		const userScore =
-			Math.round((matchesWon * 0.7 + matchesPlayed * 0.3) * 100) / 100;
+		// Fetch persisted user.score and return it as userScore
+		const { data: profile, error: profileError } = await supabase
+			.from("users")
+			.select("score")
+			.eq("id", user.id)
+			.single();
+
+		if (profileError) {
+			console.error("Error fetching user profile score:", profileError);
+			return NextResponse.json(
+				{ error: "Error fetching user profile" },
+				{ status: 500 }
+			);
+		}
 
 		return NextResponse.json({
 			matchesPlayed,
 			matchesWon,
 			winPercentage,
-			userScore,
+			userScore: profile?.score ?? 0,
 		});
 	} catch (error) {
 		console.error("Error in user stats API:", error);
