@@ -295,7 +295,7 @@ export function EventsSection() {
 															<div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-2 text-sm text-gray-300">
 																<div className="flex items-center gap-1">
 																	<Calendar className="w-4 h-4 text-padel-primary/70" />
-																	<span>{new Date(event.date).toLocaleDateString('ca-ES')}</span>
+																	<span>{new Date(event.date).toLocaleDateString('ca-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
 																</div>
 																<div className="flex items-center gap-1">
 																	<MapPin className="w-4 h-4 text-padel-primary/70" />
@@ -358,7 +358,7 @@ export function EventsSection() {
 											<div className="flex items-center gap-2">
 												<Clock className="w-4 h-4 text-orange-400" />
 												<span className="text-sm">
-													Límit inscripció: {new Date(event.registration_deadline).toLocaleDateString('ca-ES')}
+													Límit inscripció: {new Date(event.registration_deadline).toLocaleDateString('ca-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
 												</span>
 											</div>
 											{event.status === "open" && (

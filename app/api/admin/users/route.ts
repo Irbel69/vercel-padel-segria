@@ -52,7 +52,9 @@ export async function GET(req: NextRequest) {
 				surname,
 				phone,
 				is_admin,
+				score,
 				skill_level,
+				trend,
 				created_at,
 				updated_at
 				`,
@@ -84,8 +86,8 @@ export async function GET(req: NextRequest) {
 		// Calculate score and matches_played for each user
 		const usersWithStats = await Promise.all(
 			(users || []).map(async (user) => {
-				let score = 0;
 				let matchesPlayed = 0;
+				let matchesWon = 0;
 
 				// Get all matches for this user
 				const { data: userMatches, error: matchesError } = await supabase
@@ -104,23 +106,19 @@ export async function GET(req: NextRequest) {
 				if (!matchesError && userMatches) {
 					matchesPlayed = userMatches.length;
 
-					// Calculate score based on wins/losses
+					// Count matches won
 					userMatches.forEach((userMatch) => {
 						const match = userMatch.matches as any;
 						if (match.winner_id === user.id) {
-							// User won: 10 points
-							score += 10;
-						} else {
-							// User lost: 3 points
-							score += 3;
+							matchesWon++;
 						}
 					});
 				}
 
 				return {
 					...user,
-					score,
 					matches_played: matchesPlayed,
+					matches_won: matchesWon,
 				};
 			})
 		);

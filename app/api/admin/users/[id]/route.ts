@@ -61,6 +61,7 @@ export async function GET(
 				phone,
 				avatar_url,
 				is_admin,
+				score,
 				skill_level,
 				trend,
 				observations,
@@ -95,9 +96,9 @@ export async function GET(
 			);
 		}
 
-		// Calculate user score and matches played dynamically
-		let score = 0;
+		// Calculate matches played and won from database
 		let matchesPlayed = 0;
+		let matchesWon = 0;
 
 		if (userData) {
 			// Get all matches for this user
@@ -117,15 +118,11 @@ export async function GET(
 			if (!matchesError && userMatches) {
 				matchesPlayed = userMatches.length;
 
-				// Calculate score based on wins/losses
+				// Count matches won
 				userMatches.forEach((userMatch) => {
 					const match = userMatch.matches as any;
 					if (match.winner_id === userId) {
-						// User won: 10 points
-						score += 10;
-					} else {
-						// User lost: 3 points
-						score += 3;
+						matchesWon++;
 					}
 				});
 			}
@@ -134,8 +131,8 @@ export async function GET(
 		return NextResponse.json({
 			user: {
 				...userData,
-				score,
 				matches_played: matchesPlayed,
+				matches_won: matchesWon,
 			},
 		});
 	} catch (error) {
@@ -202,6 +199,7 @@ export async function PUT(
 			"surname",
 			"phone",
 			"is_admin",
+			"score",
 			"skill_level",
 			"trend",
 			"observations",
@@ -245,6 +243,16 @@ export async function PUT(
 		) {
 			return NextResponse.json(
 				{ error: "El nivell d'habilitat ha de ser un número entre 0 i 10" },
+				{ status: 400 }
+			);
+		}
+
+		if (
+			filteredUpdates.score !== undefined &&
+			(typeof filteredUpdates.score !== "number" || filteredUpdates.score < 0)
+		) {
+			return NextResponse.json(
+				{ error: "La puntuació ha de ser un número positiu" },
 				{ status: 400 }
 			);
 		}

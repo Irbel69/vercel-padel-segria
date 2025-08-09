@@ -174,16 +174,16 @@ export default function AdminEventsPage() {
 	const formatDate = (dateString: string) => {
 		return new Date(dateString).toLocaleDateString("ca-ES", {
 			year: "numeric",
-			month: "long",
-			day: "numeric",
+			month: "2-digit",
+			day: "2-digit",
 		});
 	};
 
 	const formatDateTime = (dateString: string) => {
-		return new Date(dateString).toLocaleDateString("ca-ES", {
+		return new Date(dateString).toLocaleString("ca-ES", {
 			year: "numeric",
-			month: "short",
-			day: "numeric",
+			month: "2-digit",
+			day: "2-digit",
 			hour: "2-digit",
 			minute: "2-digit",
 		});

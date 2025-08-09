@@ -42,6 +42,9 @@ import type { UserProfile } from "@/types";
 
 interface UserDetailResponse {
 	user: UserProfile & {
+		score: number;
+		matches_played: number;
+		matches_won: number;
 		user_qualities: Array<{
 			quality_id: number;
 			assigned_at: string;
@@ -69,6 +72,7 @@ export default function UserDetailPage() {
 		surname: "",
 		phone: "",
 		is_admin: false,
+		score: 0,
 		skill_level: 0,
 		trend: "same" as "up" | "down" | "same",
 		observations: "",
@@ -107,6 +111,7 @@ export default function UserDetailPage() {
 					surname: data.user.surname || "",
 					phone: data.user.phone || "",
 					is_admin: data.user.is_admin || false,
+					score: data.user.score || 0,
 					skill_level: data.user.skill_level || 0,
 					trend: data.user.trend || "same",
 					observations: data.user.observations || "",
@@ -247,9 +252,9 @@ export default function UserDetailPage() {
 	}
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-6 px-3 sm:px-0">
 			{/* Header */}
-			<div className="flex items-center justify-between">
+			<div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
 				<div className="flex items-center gap-4">
 					<Button
 						variant="outline"
@@ -352,17 +357,27 @@ export default function UserDetailPage() {
 										Puntuació:
 									</span>
 									<span className="text-white font-medium">
-										{(user as any)?.score || 0}
+										{user.score || 0}
 									</span>
 								</div>
 
 								<div className="flex items-center justify-between">
 									<span className="text-white/60 text-sm flex items-center gap-1">
 										<Target className="h-3 w-3" />
-										Partits:
+										Partits jugats:
 									</span>
 									<span className="text-white font-medium">
-										{(user as any)?.matches_played || 0}
+										{user.matches_played || 0}
+									</span>
+								</div>
+
+								<div className="flex items-center justify-between">
+									<span className="text-white/60 text-sm flex items-center gap-1">
+										<Trophy className="h-3 w-3" />
+										Partits guanyats:
+									</span>
+									<span className="text-white font-medium">
+										{user.matches_won || 0}
 									</span>
 								</div>
 
@@ -435,6 +450,17 @@ export default function UserDetailPage() {
 							<div className="space-y-4">
 								<h4 className="text-white font-medium">Informació Personal</h4>
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									<div className="space-y-2 md:col-span-2">
+										<Label htmlFor="email" className="text-white/70">
+											Email
+										</Label>
+										<Input
+											id="email"
+											value={user.email}
+											disabled
+											className="bg-white/10 border-white/20 text-white"
+										/>
+									</div>
 									<div className="space-y-2">
 										<Label htmlFor="name" className="text-white/70">
 											Nom
@@ -534,17 +560,37 @@ export default function UserDetailPage() {
 								<h4 className="text-white font-medium">Estadístiques de Joc</h4>
 								<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 									<div className="space-y-2">
-										<Label className="text-white/70">Puntuació</Label>
-										<div className="bg-white/5 border border-white/20 rounded-md px-3 py-2 text-white/80">
-											{(user as any)?.score || 0}
-										</div>
+										<Label htmlFor="score" className="text-white/70">
+											Puntuació
+										</Label>
+										<Input
+											id="score"
+											type="number"
+											min="0"
+											value={formData.score}
+											onChange={(e) =>
+												handleInputChange(
+													"score",
+													parseInt(e.target.value) || 0
+												)
+											}
+											className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
+										/>
 									</div>
 									<div className="space-y-2">
 										<Label className="text-white/70">Partits Jugats</Label>
 										<div className="bg-white/5 border border-white/20 rounded-md px-3 py-2 text-white/80">
-											{(user as any)?.matches_played || 0}
+											{user.matches_played || 0}
 										</div>
 									</div>
+									<div className="space-y-2">
+										<Label className="text-white/70">Partits Guanyats</Label>
+										<div className="bg-white/5 border border-white/20 rounded-md px-3 py-2 text-white/80">
+											{user.matches_won || 0}
+										</div>
+									</div>
+								</div>
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<div className="space-y-2">
 										<Label htmlFor="skill_level" className="text-white/70">
 											Nivell d'Habilitat (0-10)
@@ -564,40 +610,40 @@ export default function UserDetailPage() {
 											className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
 										/>
 									</div>
-								</div>
-								<div className="space-y-2">
-									<Label htmlFor="trend" className="text-white/70">
-										Tendència
-									</Label>
-									<Select
-										value={formData.trend}
-										onValueChange={(value) =>
-											handleInputChange("trend", value)
-										}>
-										<SelectTrigger className="bg-white/10 border-white/20 text-white">
-											<SelectValue placeholder="Selecciona una tendència" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="up">
-												<div className="flex items-center gap-2">
-													<TrendingUp className="h-4 w-4 text-green-500" />
-													Pujant
-												</div>
-											</SelectItem>
-											<SelectItem value="same">
-												<div className="flex items-center gap-2">
-													<Minus className="h-4 w-4 text-gray-500" />
-													Igual
-												</div>
-											</SelectItem>
-											<SelectItem value="down">
-												<div className="flex items-center gap-2">
-													<TrendingDown className="h-4 w-4 text-red-500" />
-													Baixant
-												</div>
-											</SelectItem>
-										</SelectContent>
-									</Select>
+									<div className="space-y-2">
+										<Label htmlFor="trend" className="text-white/70">
+											Tendència
+										</Label>
+										<Select
+											value={formData.trend}
+											onValueChange={(value) =>
+												handleInputChange("trend", value)
+											}>
+											<SelectTrigger className="bg-white/10 border-white/20 text-white">
+												<SelectValue placeholder="Selecciona una tendència" />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="up">
+													<div className="flex items-center gap-2">
+														<TrendingUp className="h-4 w-4 text-green-500" />
+														Pujant
+													</div>
+												</SelectItem>
+												<SelectItem value="same">
+													<div className="flex items-center gap-2">
+														<Minus className="h-4 w-4 text-gray-500" />
+														Igual
+													</div>
+												</SelectItem>
+												<SelectItem value="down">
+													<div className="flex items-center gap-2">
+														<TrendingDown className="h-4 w-4 text-red-500" />
+														Baixant
+													</div>
+												</SelectItem>
+											</SelectContent>
+										</Select>
+									</div>
 								</div>
 							</div>
 
