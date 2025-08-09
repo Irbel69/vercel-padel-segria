@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";

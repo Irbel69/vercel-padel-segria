@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useUser } from "@/hooks/use-user";
 import { redirect, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +50,7 @@ export default function AdminEventsPage() {
 	const [error, setError] = useState<string | null>(null);
 	const [search, setSearch] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
-	const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
+	const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(
 		null
 	);
 
@@ -320,7 +320,7 @@ export default function AdminEventsPage() {
 					? {
 							...prev,
 							current_participants: (prev.current_participants || 1) - 1,
-					  }
+						}
 					: prev
 			);
 		} catch (e: any) {
@@ -481,7 +481,7 @@ export default function AdminEventsPage() {
 					</div>
 					<div>
 						<h1 className="text-2xl md:text-3xl font-bold text-white">
-							Gestió d'Esdeveniments
+							Gestió d&apos;Esdeveniments
 						</h1>
 						<p className="text-white/60 text-sm md:text-base">
 							Administra tornejos i competicions
@@ -730,7 +730,7 @@ export default function AdminEventsPage() {
 
 								<div>
 									<Label htmlFor="date" className="text-white">
-										Data de l'esdeveniment *
+										Data de l&apos;esdeveniment *
 									</Label>
 									<Input
 										id="date"
@@ -786,7 +786,7 @@ export default function AdminEventsPage() {
 
 								<div className="md:col-span-2">
 									<Label htmlFor="registration_deadline" className="text-white">
-										Data límit d'inscripció *
+										Data límit d&apos;inscripció *
 									</Label>
 									<Input
 										id="registration_deadline"
@@ -860,7 +860,7 @@ export default function AdminEventsPage() {
 							Inscrits {participantsEvent ? `- ${participantsEvent.title}` : ""}
 						</DialogTitle>
 						<DialogDescription className="text-white/60">
-							Llista d'usuaris confirmats{" "}
+							Llista d&apos;usuaris confirmats{" "}
 							{participantsEvent && (
 								<span
 									className={

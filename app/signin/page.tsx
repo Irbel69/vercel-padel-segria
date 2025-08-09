@@ -88,7 +88,7 @@ export default function Login() {
 									clipRule="evenodd"
 								/>
 							</svg>
-							Torna a l'inici
+							Torna a l&apos;inici
 						</Link>
 					</div>
 
@@ -219,7 +219,7 @@ export default function Login() {
 
 						{/* Help text */}
 						<p className="mt-6 text-xs text-center text-white/40">
-							Rebràs un correu amb un enllaç d'accés. <br />
+							Rebràs un correu amb un enllaç d&apos;accés. <br />
 							No es requereix contrasenya.
 						</p>
 					</div>

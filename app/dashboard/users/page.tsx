@@ -32,7 +32,7 @@ export default function UsersPage() {
 	const [error, setError] = useState<string | null>(null);
 	const [search, setSearch] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
-	const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
+	const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(
 		null
 	);
 
@@ -141,7 +141,7 @@ export default function UsersPage() {
 					</div>
 					<div>
 						<h1 className="text-2xl md:text-3xl font-bold text-white">
-							Gestió d'Usuaris
+							Gestió d&apos;Usuaris
 						</h1>
 						<p className="text-white/60 text-sm md:text-base">
 							Administra tots els usuaris registrats a la plataforma

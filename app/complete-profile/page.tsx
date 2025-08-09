@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/libs/supabase/client";
 import toast from "react-hot-toast";
@@ -246,13 +246,13 @@ export default function CompleteProfile() {
 									htmlFor="imageRights"
 									className="text-sm leading-relaxed">
 									<span className="font-medium">
-										Autorització del dret d'imatge:
+										Autorització del dret d&apos;imatge:
 									</span>{" "}
-									Que la imatge del meu fill o filla, en cas de l'escola de
-									nens/es, i la meva, en cas de l'escola d'adults, pugui
+									Que la imatge del meu fill o filla, en cas de l&apos;escola de
+									nens/es, i la meva, en cas de l&apos;escola d&apos;adults, pugui
 									aparèixer en fotografies i vídeos corresponents a activitats
 									organitzades per Dakirol i publicades en la pàgina web i
-									xarxes socials de l'empresa.
+									xarxes socials de l&apos;empresa.
 								</Label>
 							</div>
 
@@ -271,7 +271,7 @@ export default function CompleteProfile() {
 										href="/privacy"
 										target="_blank"
 										className="text-[#c3fb12] hover:underline">
-										polítiques d'ús i privacitat
+										polítiques d&apos;ús i privacitat
 									</a>
 								</Label>
 							</div>

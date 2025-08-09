@@ -236,7 +236,7 @@ export default function UserDetailPage() {
 						<ArrowLeft className="h-4 w-4 mr-2" />
 						Tornar
 					</Button>
-					<h1 className="text-3xl font-bold text-white">Detall d'Usuari</h1>
+					<h1 className="text-3xl font-bold text-white">Detall d&apos;Usuari</h1>
 				</div>
 
 				<Alert variant="destructive">
@@ -269,9 +269,9 @@ export default function UserDetailPage() {
 							<User className="h-6 w-6 text-padel-primary" />
 						</div>
 						<div>
-							<h1 className="text-3xl font-bold text-white">Detall d'Usuari</h1>
+							<h1 className="text-3xl font-bold text-white">Detall d&apos;Usuari</h1>
 							<p className="text-white/60">
-								Gestiona la informació de l'usuari
+								Gestiona la informació de l&apos;usuari
 							</p>
 						</div>
 					</div>
@@ -302,7 +302,7 @@ export default function UserDetailPage() {
 						<CardHeader>
 							<CardTitle className="text-white flex items-center gap-2">
 								<User className="h-5 w-5" />
-								Perfil d'Usuari
+								Perfil d&apos;Usuari
 							</CardTitle>
 						</CardHeader>
 						<CardContent className="space-y-4">
@@ -533,7 +533,7 @@ export default function UserDetailPage() {
 										<Label
 											htmlFor="image_rights"
 											className="text-white/70 text-sm">
-											Drets d'imatge acceptats
+											Drets d&apos;imatge acceptats
 										</Label>
 									</div>
 									<div className="flex items-center space-x-2">
@@ -593,7 +593,7 @@ export default function UserDetailPage() {
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<div className="space-y-2">
 										<Label htmlFor="skill_level" className="text-white/70">
-											Nivell d'Habilitat (0-10)
+											Nivell d&apos;Habilitat (0-10)
 										</Label>
 										<Input
 											id="skill_level"

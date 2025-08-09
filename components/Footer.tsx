@@ -36,7 +36,7 @@ const Footer = () => {
 
 						<p className="text-sm text-gray-300 text-center md:text-left max-w-xs leading-relaxed">
 							La millor comunitat de pàdel del Segrià. Uneix-te a nosaltres i
-							gaudeix d'aquest apassionant esport.
+							gaudeix d&apos;aquest apassionant esport.
 						</p>
 					</div>
 

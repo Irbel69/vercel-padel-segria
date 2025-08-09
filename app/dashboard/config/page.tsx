@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import {
 	Card,
 	CardContent,
@@ -394,10 +394,10 @@ export default function ConfigurationPage() {
 								<CardHeader>
 									<CardTitle className="text-white flex items-center gap-2">
 										<Palette className="w-5 h-5 text-padel-primary" />
-										Configuració d'Aparença
+										Configuració d&apos;Aparença
 									</CardTitle>
 									<CardDescription className="text-white/60">
-										Personalitza l'aparença de l'aplicació
+										Personalitza l&apos;aparença de l&apos;aplicació
 									</CardDescription>
 								</CardHeader>
 								<CardContent className="space-y-6">

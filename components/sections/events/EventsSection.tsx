@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -184,7 +184,7 @@ export function EventsSection() {
 						updated_at: new Date().toISOString(),
 						current_participants: mockEvent.participants,
 					})
-			  );
+				);
 
 	// Show a simple loading state if the component hasn't loaded yet
 	if (!isLoaded) {
@@ -367,7 +367,7 @@ export function EventsSection() {
 																<Button
 																	size="sm"
 																	className="w-full bg-padel-primary/20 text-padel-primary border border-padel-primary/30 hover:bg-padel-primary hover:text-black transition-all duration-300 hover:scale-[1.015] md:hover:scale-105 group-hover:shadow-lg text-[11px] md:text-sm py-1.5 md:py-0">
-																	Inscriure's
+																	Inscriure&apos;s
 																</Button>
 															) : (
 																<Button

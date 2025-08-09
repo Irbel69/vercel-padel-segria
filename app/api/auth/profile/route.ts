@@ -3,7 +3,7 @@ import { createClient } from "@/libs/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
 	try {
 		const supabase = createClient();
 
@@ -85,12 +85,12 @@ export async function GET(req: NextRequest) {
 			user: {
 				id: user.id,
 				email: user.email,
-				profile: userProfile
+						profile: userProfile
 					? {
 							...userProfile,
 							score,
 							matches_played: matchesPlayed,
-					  }
+						}
 					: null,
 			},
 		});

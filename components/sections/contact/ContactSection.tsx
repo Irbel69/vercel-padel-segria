@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -101,7 +101,7 @@ export function ContactSection() {
 					</h2>
 					<p className="text-lg text-gray-300 max-w-2xl mx-auto leading-relaxed">
 						Tens preguntes sobre els nostres tornejos? Vols unir-te a la
-						comunitat de pàdel més gran de Segrià? Escriu-nos i t'ajudarem amb
+						comunitat de pàdel més gran de Segrià? Escriu-nos i t&apos;ajudarem amb
 						tot el que necessitis.
 					</p>
 				</div>
