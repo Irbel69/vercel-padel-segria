@@ -29,21 +29,22 @@ const LoginButton = ({
 			isHomePage || transparent
 				? "bg-[#c3fb12] text-black hover:bg-white"
 				: "btn btn-primary"
-		} font-bold px-6 py-2 rounded-md flex items-center justify-center gap-2`}>
+		} font-bold px-3 lg:px-4 xl:px-6 py-2 rounded-md flex items-center justify-center gap-1 lg:gap-2 text-xs lg:text-sm xl:text-base`}>
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
 			fill="none"
 			viewBox="0 0 24 24"
 			strokeWidth={2}
 			stroke="currentColor"
-			className="w-5 h-5">
+			className="w-4 h-4 lg:w-5 lg:h-5">
 			<path
 				strokeLinecap="round"
 				strokeLinejoin="round"
 				d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275"
 			/>
 		</svg>
-		Àrea Personal
+		<span className="hidden sm:inline lg:inline">Àrea Personal</span>
+		<span className="sm:hidden lg:hidden">Àrea</span>
 	</Link>
 );
 
@@ -130,7 +131,11 @@ const HeaderContent = ({ transparent = false }: HeaderProps) => {
 								viewBox="0 0 24 24"
 								strokeWidth={1.5}
 								stroke="currentColor"
-								className="w-6 h-6 text-base-content">
+								className={`w-6 h-6 ${
+									isHomePage || transparent 
+										? "text-white" 
+										: "text-base-content"
+								}`}>
 								<path
 									strokeLinecap="round"
 									strokeLinejoin="round"
@@ -141,12 +146,12 @@ const HeaderContent = ({ transparent = false }: HeaderProps) => {
 					</div>
 
 					{/* Your links on large screens */}
-					<div className="hidden lg:flex lg:justify-center lg:gap-12 lg:items-center">
+					<div className="hidden lg:flex lg:justify-center lg:gap-4 lg:items-center lg:flex-1">
 						{links.map((link) => (
 							<Link
 								href={link.href}
 								key={link.href}
-								className={`text-base font-medium ${
+								className={`text-xs xl:text-sm font-medium whitespace-nowrap ${
 									isHomePage || transparent
 										? "text-white hover:text-[#c3fb12]"
 										: "hover:text-[#c3fb12]"

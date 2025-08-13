@@ -184,7 +184,7 @@ export function EventsSection() {
 	// Show a simple loading state if the component hasn't loaded yet
 	if (!isLoaded) {
 		return (
-			<section className="py-24 relative overflow-hidden">
+			<section className="py-24 relative overflow-visible">
 				<div className="container mx-auto px-4 relative z-10">
 					<div className="text-center mb-20">
 						<h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
@@ -198,14 +198,12 @@ export function EventsSection() {
 	}
 
 	return (
-		<section id="events" className="py-12 md:py-24 relative overflow-hidden">
+		<section id="events" className="py-12 md:py-24 relative overflow-visible">
 			{/* Background decorative elements */}
-			<div className="absolute inset-0 overflow-hidden">
-				<div className="absolute -top-40 -left-40 w-96 h-96 bg-padel-primary/5 rounded-full blur-3xl" />
-				<div className="absolute -bottom-40 -right-40 w-96 h-96 bg-padel-primary/10 rounded-full blur-3xl" />
-				<div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full">
-					<div className="absolute inset-0 bg-gradient-to-br from-transparent via-padel-primary/5 to-transparent" />
-				</div>
+			<div className="absolute inset-0 pointer-events-none">
+				<div className="absolute -top-40 -left-20 w-96 h-96 bg-padel-primary/5 rounded-full blur-3xl" />
+				<div className="absolute -bottom-40 -right-20 w-96 h-96 bg-padel-primary/10 rounded-full blur-3xl" />
+			
 			</div>
 
 			<div className="container mx-auto px-4 relative z-10">
@@ -258,7 +256,7 @@ export function EventsSection() {
 										<Tooltip>
 											<TooltipTrigger asChild>
 												<div
-													className={`group cursor-pointer transition-all duration-500 hover:scale-[1.02] md:hover:scale-105 ${
+													className={`group cursor-pointer transition-all duration-300 hover:scale-[1.01] md:hover:scale-[1.02] ${
 														isVisible
 															? "translate-y-0 opacity-100"
 															: "translate-y-6 md:translate-y-8 opacity-0"
@@ -268,38 +266,41 @@ export function EventsSection() {
 													onMouseLeave={() => setHoveredEvent(null)}>
 													{/* Event card */}
 													<div
-														className={`h-full p-3 md:p-6 rounded-2xl transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-padel-primary/20 border min-h-[0] md:min-h-[380px] flex flex-col ${
+														className={`h-full p-4 md:p-6 rounded-2xl transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-padel-primary/20 border min-h-[0] md:min-h-[440px] flex flex-col ${
 															hoveredEvent === event.id
-																? "bg-white/15 border-padel-primary/50 shadow-xl shadow-padel-primary/30"
-																: "bg-white/8 border-white/10 hover:bg-white/12"
+																? "border-padel-primary/50 shadow-xl shadow-padel-primary/30"
+																: "hover:shadow-lg"
 														}`}
 														style={{
-															backdropFilter: "blur(12px)",
-															WebkitBackdropFilter: "blur(12px)",
+															background: "rgba(255, 255, 255, 0.1)",
+															borderRadius: "16px",
+															boxShadow: "0 4px 30px rgba(0, 0, 0, 0.2)",
+															backdropFilter: "blur(5px)",
+															WebkitBackdropFilter: "blur(5px)",
+															border: "1px solid rgba(255, 255, 255, 0.2)",
 														}}>
 														{/* Header with event number and status */}
-														<div className="flex justify-between items-start mb-2 md:mb-4">
-															<div className="flex items-center gap-2 md:gap-3">
-																<div className="w-7 h-7 md:w-10 md:h-10 bg-gradient-to-r from-padel-primary to-yellow-400 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-																	<span className="text-xs md:text-sm font-bold text-black">
-																		{index + 1}
-																	</span>
-																</div>
-																<div className="scale-75 md:scale-100 origin-left">
-																	{getStatusBadge(event.status)}
-																</div>
+														<div className="flex justify-between items-start mb-4 md:mb-6">
+															<div className="w-8 h-8 md:w-12 md:h-12 bg-gradient-to-r from-padel-primary to-yellow-400 rounded-full flex items-center justify-center group-hover:scale-105 transition-transform duration-200 shadow-lg">
+																<span className="text-sm md:text-base font-bold text-black">
+																	{index + 1}
+																</span>
+															</div>
+															<div className="scale-90 md:scale-100">
+																{getStatusBadge(event.status)}
 															</div>
 														</div>
 
 														{/* Event title */}
-														<h3 className="text-base md:text-xl font-bold text-white group-hover:text-padel-primary transition-colors duration-300 mb-1.5 md:mb-3 line-clamp-2">
+														<h3 className="text-xl md:text-2xl lg:text-3xl font-extrabold text-white group-hover:text-padel-primary transition-colors duration-300 mb-4 md:mb-6 line-clamp-2 leading-tight">
 															{event.title}
 														</h3>
 
 														{/* Event details */}
-														<div className="space-y-1.5 md:space-y-3 mb-3 md:mb-6 flex-grow">
-															<div className="flex items-center gap-1.5 md:gap-2 text-[11px] md:text-sm text-gray-300 leading-tight">
-																<Calendar className="w-4 h-4 text-padel-primary/70 flex-shrink-0" />
+														<div className="space-y-4 md:space-y-5 mb-4 md:mb-6 flex-grow">
+															{/* Date - highlighted as primary info */}
+															<div className="flex items-center gap-2 md:gap-3 text-sm md:text-base text-padel-primary/90 font-medium leading-tight">
+																<Calendar className="w-5 h-5 text-padel-primary flex-shrink-0" />
 																<span>
 																	{new Date(event.date).toLocaleDateString(
 																		"ca-ES",
@@ -312,44 +313,63 @@ export function EventsSection() {
 																</span>
 															</div>
 
-															<div className="flex items-center gap-1.5 md:gap-2 text-[11px] md:text-sm text-gray-300 leading-tight">
-																<MapPin className="w-4 h-4 text-padel-primary/70 flex-shrink-0" />
-																<span className="truncate flex-1">
-																	{event.location || "Ubicació per determinar"}
-																</span>
-																{event.latitude && event.longitude && (
-																	<Tooltip>
-																		<TooltipTrigger asChild>
-																			<button
-																				onClick={(e) =>
-																					handleViewInMaps(event, e)
-																				}
-																				className="text-padel-primary hover:text-padel-primary/80 transition-colors duration-200 p-1 rounded hover:bg-white/10"
-																				aria-label={`Veure ${
-																					event.title
-																				} a ${getMapServiceName()}`}>
-																				<ExternalLink className="w-3 h-3" />
-																			</button>
-																		</TooltipTrigger>
-																		<TooltipContent>
-																			<p>Veure a {getMapServiceName()}</p>
-																		</TooltipContent>
-																	</Tooltip>
-																)}
-															</div>
-
-															<div className="flex items-center gap-1.5 md:gap-2 text-[11px] md:text-sm text-gray-300 leading-tight">
-																<Users className="w-4 h-4 text-padel-primary/70 flex-shrink-0" />
-																<span>
-																	{event.current_participants || 0}/
-																	{event.max_participants} participants
-																</span>
-															</div>
-
-															{event.prizes && (
-																<div className="flex items-center gap-1.5 md:gap-2 text-[11px] md:text-sm text-yellow-400 leading-tight">
-																	<Trophy className="w-4 h-4 flex-shrink-0" />
+															{/* Location and participants in same row for better grouping */}
+															<div className="flex items-start justify-between gap-3 text-xs md:text-sm text-gray-300 leading-tight">
+																{/* Simplified location */}
+																<div className="flex items-center gap-2 flex-1 min-w-0">
+																	<MapPin className="w-4 h-4 md:w-5 md:h-5 text-padel-primary/70 flex-shrink-0" />
 																	<span className="truncate">
+																		{event.location 
+																			? (() => {
+																				// Extract meaningful location info - try to get city name
+																				const parts = event.location.split(',').map(p => p.trim());
+																				// Look for common city names or return first meaningful part
+																				const cityPart = parts.find(part => 
+																					part.includes('Lleida') || 
+																					part.includes('Barcelona') || 
+																					part.includes('Mollerussa') ||
+																					part.includes('Girona') ||
+																					part.length > 3
+																				);
+																				return cityPart || parts[0] || "Ubicació per determinar";
+																			})()
+																			: "Ubicació per determinar"}
+																	</span>
+																	{event.latitude && event.longitude && (
+																		<Tooltip>
+																			<TooltipTrigger asChild>
+																				<button
+																					onClick={(e) =>
+																						handleViewInMaps(event, e)
+																					}
+																					className="text-padel-primary hover:text-padel-primary/80 transition-colors duration-200 p-1 rounded hover:bg-white/10"
+																					aria-label={`Veure ${
+																						event.title
+																					} a ${getMapServiceName()}`}>
+																					<ExternalLink className="w-3 h-3 md:w-4 md:h-4" />
+																				</button>
+																			</TooltipTrigger>
+																			<TooltipContent>
+																				<p>Veure a {getMapServiceName()}</p>
+																			</TooltipContent>
+																		</Tooltip>
+																	)}
+																</div>
+
+																{/* Participants on the right */}
+																<div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+																	<Users className="w-4 h-4 md:w-5 md:h-5 text-padel-primary/70" />
+																	<span className="font-medium">
+																		{event.current_participants || 0}/{event.max_participants}
+																	</span>
+																</div>
+															</div>
+
+															{/* Prizes - if available */}
+															{event.prizes && (
+																<div className="flex items-center gap-2 md:gap-3 text-xs md:text-sm text-yellow-400 leading-tight">
+																	<Trophy className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
+																	<span className="truncate font-medium">
 																		{event.prizes}
 																	</span>
 																</div>
@@ -357,11 +377,11 @@ export function EventsSection() {
 														</div>
 
 														{/* Action button */}
-														<div className="mt-auto pt-1 md:pt-4">
+														<div className="mt-auto pt-2 md:pt-4">
 															{event.status === "open" ? (
 																<Button
 																	size="sm"
-																	className="w-full bg-padel-primary/20 text-padel-primary border border-padel-primary/30 hover:bg-padel-primary hover:text-black transition-all duration-300 hover:scale-[1.015] md:hover:scale-105 group-hover:shadow-lg text-[11px] md:text-sm py-1.5 md:py-0">
+																	className="w-full bg-padel-primary text-black border border-padel-primary hover:bg-padel-primary/90 hover:shadow-lg hover:shadow-padel-primary/30 transition-all duration-200 hover:scale-[1.01] font-semibold text-sm md:text-base py-2.5 md:py-3 rounded-xl">
 																	Inscriure&apos;s
 																</Button>
 															) : (
@@ -369,7 +389,7 @@ export function EventsSection() {
 																	size="sm"
 																	variant="outline"
 																	disabled
-																	className="w-full border-white/20 text-white/50 text-[11px] md:text-sm py-1.5 md:py-0">
+																	className="w-full border-white/30 text-white/60 bg-white/5 text-sm md:text-base py-2.5 md:py-3 rounded-xl cursor-not-allowed">
 																	{event.status === "soon"
 																		? "Properament"
 																		: "Tancat"}
@@ -381,7 +401,7 @@ export function EventsSection() {
 											</TooltipTrigger>
 											<TooltipContent
 												side="top"
-												className="max-w-xs p-4 bg-black/95 text-white border border-gray-600 shadow-xl">
+												className="max-w-xs p-4 bg-black/95 text-white border border-gray-600 shadow-xl rounded-xl">
 												<div className="space-y-3">
 													<div className="flex items-center gap-2">
 														<Clock className="w-4 h-4 text-orange-400" />
@@ -405,11 +425,15 @@ export function EventsSection() {
 													{event.latitude && event.longitude && (
 														<div className="flex items-center gap-2 pt-2 border-t border-gray-700">
 															<MapPin className="w-4 h-4 text-padel-primary" />
-															<button
-																onClick={(e) => handleViewInMaps(event, e)}
-																className="text-sm text-padel-primary hover:text-padel-primary/80 transition-colors duration-200 underline">
-																Veure ubicació a {getMapServiceName()}
-															</button>
+															<div className="flex flex-col gap-1">
+																<span className="text-xs text-gray-400">Direcció completa:</span>
+																<span className="text-sm">{event.location}</span>
+																<button
+																	onClick={(e) => handleViewInMaps(event, e)}
+																	className="text-sm text-padel-primary hover:text-padel-primary/80 transition-colors duration-200 underline text-left">
+																	Veure ubicació a {getMapServiceName()}
+																</button>
+															</div>
 														</div>
 													)}
 												</div>
@@ -456,8 +480,7 @@ export function EventsSection() {
 				</div>
 			</div>
 
-			{/* Bottom decorative fade */}
-			<div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none" />
+			{/* Removed bottom black fade to avoid masking the global dotted background */}
 		</section>
 	);
 }

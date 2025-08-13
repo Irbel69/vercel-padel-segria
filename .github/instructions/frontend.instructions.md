@@ -1,17 +1,22 @@
+---
+applyTo: '**'
+---
 # Padel Segria - Project Instructions
 
 ## General Implementation Workflow
 Whenever a new feature or change is requested:
 
-### Analyze the Codebase
+### First Analyze the Codebase
 
 First, identify and review all files related to the requested feature.
 
 This step ensures that GitHub Copilot (or any other AI assistant) has the correct context before starting implementation.
 
-### Optional – Use MCP with Puppeteer
-
+### Use MCP with Puppeteer if no screenshot provided
+Important: Never ask to start development server, it's already running.
 If needed, the MCP Puppeteer tool can be used to interact with the browser, navigate the app, and take screenshots for reference.
+
+### Use Sequential thinking MCP to plan your solution
 
 ### Post-Implementation Verification
 

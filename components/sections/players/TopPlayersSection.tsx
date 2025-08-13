@@ -123,12 +123,12 @@ export function TopPlayersSection() {
 	const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
 	return (
-		<section id="top-players" className="py-24 relative overflow-hidden">
+		<section id="top-players" className="py-24 relative overflow-visible">
 			{/* Background decorative elements */}
-			<div className="absolute inset-0 overflow-hidden">
-				<div className="absolute -top-40 -right-40 w-80 h-80 bg-padel-primary/10 rounded-full blur-3xl" />
-				<div className="absolute top-1/2 -left-40 w-96 h-96 bg-padel-primary/5 rounded-full blur-3xl" />
-				<div className="absolute -bottom-40 right-1/3 w-80 h-80 bg-padel-primary/8 rounded-full blur-3xl" />
+			<div className="absolute inset-0 pointer-events-none">
+				<div className="absolute -top-40 -right-20 w-80 h-80 bg-padel-primary/10 rounded-full blur-3xl" />
+				<div className="absolute top-1/2 -left-20 w-96 h-96 bg-padel-primary/5 rounded-full blur-3xl" />
+				<div className="absolute -bottom-40 right-1/4 w-80 h-80 bg-padel-primary/8 rounded-full blur-3xl" />
 			</div>
 
 			<div className="container mx-auto px-4 relative z-10">
@@ -148,10 +148,10 @@ export function TopPlayersSection() {
 				</div>
 
 				{/* Main Content Grid */}
-				<div className="grid lg:grid-cols-4 gap-8 items-start">
+				<div className="grid lg:grid-cols-3 gap-12 items-start">
 					{/* Players Cards - Takes 3 columns on large screens */}
 					<div className="lg:col-span-3">
-						<div className="grid md:grid-cols-3 gap-6">
+						<div className="grid md:grid-cols-3 gap-14 md:mx-14">
 							{topPlayers.map((player, index) => {
 								const IconComponent = getRankIcon(player.rank);
 								return (
@@ -251,7 +251,7 @@ export function TopPlayersSection() {
 					</div>
 
 					{/* Floating Info Panel - Takes 1 column on large screens */}
-					<div className="lg:col-span-1">
+					<div className="lg:col-span-1 hidden">
 						<div className="lg:sticky lg:top-8">
 							<Card
 								className="border-0 text-center"
