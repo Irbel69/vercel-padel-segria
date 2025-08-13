@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { Viewport } from "next";
 import { getSEOTags } from "@/libs/seo";
 import ClientLayout from "@/components/LayoutClient";
+import DottedBackground from "@/components/DottedBackground";
 import { ThemeProvider } from "@/components/theme-provider";
 import config from "@/config";
 import "./globals.css";
@@ -35,8 +36,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 					enableSystem
 					disableTransitionOnChange
 				>
-					{/* ClientLayout contains all the client wrappers (Crisp chat support, toast messages, tooltips, etc.) */}
-					<ClientLayout>{children}</ClientLayout>
+					{/* Global background pattern (single instance) */}
+					<div className="relative min-h-screen w-full overflow-x-hidden overflow-y-hidden">
+						<DottedBackground />
+						{/* ClientLayout contains all the client wrappers (Crisp chat support, toast messages, tooltips, etc.) */}
+						<ClientLayout>{children}</ClientLayout>
+					</div>
 				</ThemeProvider>
 			</body>
 		</html>

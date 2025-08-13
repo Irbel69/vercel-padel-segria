@@ -120,11 +120,11 @@ export function RankingsSection() {
 	};
 
 	return (
-		<section id="rankings" className="py-24 relative overflow-hidden">
+		<section id="rankings" className="py-24 relative overflow-visible">
 			{/* Background decorative elements */}
-			<div className="absolute inset-0 overflow-hidden">
-				<div className="absolute -top-40 -left-40 w-80 h-80 bg-padel-primary/10 rounded-full blur-3xl" />
-				<div className="absolute top-1/2 -right-40 w-96 h-96 bg-padel-primary/5 rounded-full blur-3xl" />
+			<div className="absolute inset-0 pointer-events-none">
+				<div className="absolute -top-40 -left-20 w-80 h-80 bg-padel-primary/10 rounded-full blur-3xl" />
+				<div className="absolute top-1/2 -right-20 w-96 h-96 bg-padel-primary/5 rounded-full blur-3xl" />
 				<div className="absolute -bottom-40 left-1/2 w-80 h-80 bg-padel-primary/8 rounded-full blur-3xl" />
 			</div>
 
