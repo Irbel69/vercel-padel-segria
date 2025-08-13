@@ -90,7 +90,7 @@ export async function GET(_req: NextRequest) {
 							...userProfile,
 							score,
 							matches_played: matchesPlayed,
-					}
+					  }
 					: null,
 			},
 		});
