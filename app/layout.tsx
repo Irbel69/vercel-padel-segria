@@ -25,15 +25,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 	return (
 		<html
 			lang="en"
-			data-theme={config.colors.theme}
-			className={font.className}
+			data-theme="dark"
+			className={`${font.className} dark`}
 			suppressHydrationWarning
 		>
 			<body>
 				<ThemeProvider
 					attribute="class"
-					defaultTheme="system"
-					enableSystem
+					forcedTheme="dark"
+					defaultTheme="dark"
+					enableSystem={false}
 					disableTransitionOnChange
 				>
 					{/* Global background pattern (single instance) */}

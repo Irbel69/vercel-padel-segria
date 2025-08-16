@@ -16,7 +16,7 @@ export default async function LayoutPrivate({
 }: {
 	children: ReactNode;
 }) {
-	const supabase = createClient();
+	 const supabase = createClient();
 
 	const {
 		data: { user },
@@ -35,7 +35,7 @@ export default async function LayoutPrivate({
 
 	if (!userProfile || !userProfile.name || !userProfile.surname) {
 		redirect("/complete-profile");
-	}
+	} 
 
 	return (
 		<div className="min-h-screen bg-black relative overflow-hidden">
