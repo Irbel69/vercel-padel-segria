@@ -53,13 +53,8 @@ export default async function LayoutPrivate({
 				<main className="flex-1 relative z-10">
 					{/* Header */}
 					<div
-						className="flex h-16 items-center border-b px-4 lg:px-8"
-						style={{
-							background: "rgba(255, 255, 255, 0.05)",
-							borderColor: "rgba(255, 255, 255, 0.1)",
-							backdropFilter: "blur(10px)",
-							WebkitBackdropFilter: "blur(10px)",
-						}}>
+						className="flex h-16 items-center border-b px-4 lg:px-8 bg-white/5 border-white/10"
+					>
 						<SidebarTrigger className="text-white hover:bg-white/10" />
 						<div className="ml-auto flex items-center space-x-4">
 							<span className="hidden sm:block text-sm text-white/70">

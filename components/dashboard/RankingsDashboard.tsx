@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,41 +8,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowUp, ArrowDown, Minus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useUser } from "@/hooks/use-user";
-import type { RankingPlayer, RankingsResponse } from "@/types/rankings";
+import { useRankings } from "@/hooks/use-rankings";
+import type { RankingsResponse } from "@/hooks/use-rankings";
 
 export function RankingsDashboard() {
   const { user } = useUser();
-  const [rankings, setRankings] = useState<RankingPlayer[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pagination, setPagination] = useState<RankingsResponse["pagination"] | null>(null);
-
-  useEffect(() => {
-    fetchRankings(currentPage);
-  }, [currentPage]);
-
-  const fetchRankings = async (page: number = 1) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await fetch(`/api/rankings?page=${page}&limit=10`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Error al cargar el rànking");
-      }
-
-      setRankings(data.players);
-      setPagination(data.pagination);
-    } catch (err) {
-      console.error("Error fetching rankings:", err);
-      setError(err instanceof Error ? err.message : "Error desconegut");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { data, isLoading, error } = useRankings(currentPage, 10);
+  const rankings = data?.players ?? [];
+  const pagination: RankingsResponse["pagination"] | null = data?.pagination ?? null;
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
@@ -83,7 +57,7 @@ export function RankingsDashboard() {
           </div>
         ) : error ? (
           <div className="text-center py-4">
-            <p className="text-red-400">{error}</p>
+            <p className="text-red-400">{String(error)}</p>
           </div>
         ) : rankings.length === 0 ? (
           <div className="text-center py-8">

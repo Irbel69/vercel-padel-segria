@@ -118,3 +118,45 @@ progress::-webkit-progress-value {
 		@apply bg-background text-foreground bg-dotted-pattern;
 	}
 }
+
+/* --- Sidebar micro-animations --- */
+@keyframes sidebarEnter {
+	from { transform: translateX(-8px); opacity: 0 }
+	to { transform: translateX(0); opacity: 1 }
+}
+
+@keyframes glowPulse {
+	0%, 100% { filter: drop-shadow(0 0 0 rgba(229, 240, 0, 0.0)); }
+	50% { filter: drop-shadow(0 0 10px rgba(229, 240, 0, 0.35)); }
+}
+
+.animate-sidebar-enter {
+	animation: sidebarEnter 300ms ease-out both;
+}
+
+.logo-glow {
+	animation: glowPulse 2500ms ease-in-out infinite;
+	animation-play-state: paused;
+}
+
+.logo-glow:hover {
+	animation-play-state: running;
+}
+
+/* Staggered item enter animation */
+@keyframes itemEnter {
+	from { transform: translateY(6px); opacity: 0 }
+	to { transform: translateY(0); opacity: 1 }
+}
+
+.animate-item-enter {
+	animation: itemEnter 320ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.animate-sidebar-enter,
+	.animate-item-enter,
+	.logo-glow {
+		animation: none !important;
+	}
+}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 interface UserStats {
 	matchesPlayed: number;
@@ -7,34 +7,21 @@ interface UserStats {
 	userScore: number;
 }
 
+async function fetchUserStats(): Promise<UserStats> {
+	const res = await fetch("/api/user/stats", { cache: "no-store" });
+	if (!res.ok) throw new Error("Failed to fetch user stats");
+	return res.json();
+}
+
 export function useUserStats() {
-	const [stats, setStats] = useState<UserStats | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+	const query = useQuery({
+		queryKey: ["user", "stats"],
+		queryFn: fetchUserStats,
+		staleTime: 60_000,
+		gcTime: 5 * 60_000,
+		refetchOnWindowFocus: false,
+		meta: { onError: (err: unknown) => console.error("User stats error", err) },
+	});
 
-	useEffect(() => {
-		async function fetchStats() {
-			try {
-				setLoading(true);
-				setError(null);
-
-				const response = await fetch("/api/user/stats");
-
-				if (!response.ok) {
-					throw new Error("Failed to fetch user stats");
-				}
-
-				const data = await response.json();
-				setStats(data);
-			} catch (err) {
-				setError(err instanceof Error ? err.message : "Unknown error");
-			} finally {
-				setLoading(false);
-			}
-		}
-
-		fetchStats();
-	}, []);
-
-	return { stats, loading, error };
+	return { stats: query.data ?? null, loading: query.isLoading, error: query.error ? String(query.error) : null };
 }

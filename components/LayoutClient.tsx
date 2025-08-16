@@ -9,6 +9,7 @@ import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "react-hot-toast";
 import { Tooltip } from "react-tooltip";
 import config from "@/config";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Crisp customer chat support:
 // This component is separated from ClientLayout because it needs to be wrapped with <SessionProvider> to use useSession() hook
@@ -67,8 +68,9 @@ const CrispChat = (): null => {
 // 3. Tooltip: Show tooltips if any JSX elements has these 2 attributes: data-tooltip-id="tooltip" data-tooltip-content=""
 // 4. CrispChat: Set Crisp customer chat support (see above)
 const ClientLayout = ({ children }: { children: ReactNode }) => {
+  const [queryClient] = useState(() => new QueryClient());
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
       {/* Show a progress bar at the top when navigating between pages */}
       <NextTopLoader color={config.colors.main} showSpinner={false} />
 
@@ -90,7 +92,7 @@ const ClientLayout = ({ children }: { children: ReactNode }) => {
 
       {/* Set Crisp customer chat support */}
       <CrispChat />
-    </>
+  </QueryClientProvider>
   );
 };
 

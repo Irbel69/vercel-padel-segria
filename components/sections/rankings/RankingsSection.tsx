@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,64 +19,17 @@ import {
 	ChevronLeft,
 	ChevronRight,
 } from "lucide-react";
+import { useRankings } from "@/hooks/use-rankings";
 
-interface RankingPlayer {
-	id: string;
-	name: string | null;
-	surname: string | null;
-	avatar_url: string | null;
-	trend: "up" | "down" | "same";
-	total_points: number;
-	ranking_position: number;
-}
-
-interface RankingsResponse {
-	players: RankingPlayer[];
-	pagination: {
-		currentPage: number;
-		totalPages: number;
-		totalPlayers: number;
-		hasMore: boolean;
-		limit: number;
-	};
-}
+import type { RankingsResponse } from "@/hooks/use-rankings";
 
 const DEFAULT_LIMIT = 10;
 
 export function RankingsSection() {
-	const [players, setPlayers] = useState<RankingPlayer[]>([]);
-	const [pagination, setPagination] = useState<
-		RankingsResponse["pagination"] | null
-	>(null);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-
-	const fetchRankings = async (
-		page: number = 1,
-		limit: number = DEFAULT_LIMIT
-	) => {
-		try {
-			setIsLoading(true);
-			setError(null);
-			const res = await fetch(`/api/rankings?page=${page}&limit=${limit}`, {
-				cache: "no-store",
-			});
-			const data: RankingsResponse | { error: string } = await res.json();
-			if (!res.ok)
-				throw new Error((data as any).error || "Error al obtenir el rànking");
-			const r = data as RankingsResponse;
-			setPlayers(r.players);
-			setPagination(r.pagination);
-		} catch (e) {
-			setError(e instanceof Error ? e.message : "Error desconegut");
-		} finally {
-			setIsLoading(false);
-		}
-	};
-
-	useEffect(() => {
-		fetchRankings(1, DEFAULT_LIMIT);
-	}, []);
+	const [page, setPage] = useState(1);
+	const { data, isLoading, error } = useRankings(page, DEFAULT_LIMIT);
+	const players = data?.players ?? [];
+	const pagination = data?.pagination ?? null;
 
 	const getRankIcon = (rank: number) => {
 		switch (rank) {
@@ -108,15 +61,14 @@ export function RankingsSection() {
 
 	const handlePrev = () => {
 		if (!pagination) return;
-		const newPage = Math.max(1, pagination.currentPage - 1);
-		if (newPage !== pagination.currentPage)
-			fetchRankings(newPage, pagination.limit);
+		const newPage = Math.max(1, page - 1);
+		if (newPage !== page) setPage(newPage);
 	};
 
 	const handleNext = () => {
 		if (!pagination) return;
-		const newPage = pagination.currentPage + 1;
-		if (pagination.hasMore) fetchRankings(newPage, pagination.limit);
+		const newPage = page + 1;
+		if (pagination.hasMore) setPage(newPage);
 	};
 
 	return (
@@ -165,7 +117,7 @@ export function RankingsSection() {
 									Carregant...
 								</div>
 							) : error ? (
-								<div className="p-6 text-center text-red-400">{error}</div>
+								<div className="p-6 text-center text-red-400">{String(error)}</div>
 							) : (
 								<Table>
 									<TableHeader>

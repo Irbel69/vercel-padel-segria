@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -13,8 +12,7 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
-	SidebarProvider,
-	SidebarTrigger,
+	SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -88,15 +86,12 @@ export function AppSidebar() {
 
 	return (
 		<Sidebar
-			className="border-r-0"
-			style={{
-				background: "rgba(0, 0, 0, 0.9)",
-				backdropFilter: "blur(20px)",
-				WebkitBackdropFilter: "blur(20px)",
-			}}>
-			<SidebarHeader className="border-b border-white/10">
+			className={cn(
+				"border-r border-sidebar-border bg-sidebar/95 backdrop-blur-xl animate-sidebar-enter"
+			)}>
+			<SidebarHeader className="border-b border-sidebar-border">
 				<div className="flex items-center gap-3 px-4 py-4">
-					<div className="relative">
+					<div className="relative logo-glow">
 						<div className="absolute inset-0 bg-padel-primary/30 rounded-full blur-sm" />
 						<Image
 							src="/logo_yellow.png"
@@ -107,8 +102,8 @@ export function AppSidebar() {
 						/>
 					</div>
 					<div className="flex flex-col">
-						<span className="font-bold text-white text-lg">Padel Segrià</span>
-						<span className="text-xs text-white/60">Dashboard</span>
+						<span className="font-bold text-sidebar-foreground text-lg">Padel Segrià</span>
+						<span className="text-xs text-sidebar-foreground/60">Dashboard</span>
 					</div>
 				</div>
 			</SidebarHeader>
@@ -116,28 +111,32 @@ export function AppSidebar() {
 			<SidebarContent className="px-2 py-4">
 				{/* Main Navigation */}
 				<div className="mb-6">
-					<div className="px-3 mb-3">
-						<h4 className="text-xs font-semibold tracking-wide text-white/40 uppercase">
+					<div className="px-4 mb-3">
+						<h4 className="text-xs font-semibold tracking-wide text-sidebar-foreground/60 uppercase">
 							Navegació Principal
 						</h4>
 					</div>
-					<SidebarMenu>
-						{menuItems.map((item) => (
+					<SidebarMenu className="gap-1.5">
+						{menuItems.map((item, idx) => (
 							<SidebarMenuItem key={item.title}>
-								<SidebarMenuButton
+				<SidebarMenuButton
 									asChild
 									isActive={pathname === item.url}
+									size="lg"
 									className={cn(
-										"group relative overflow-hidden rounded-xl mb-1 transition-all duration-300",
-										pathname === item.url
-											? "bg-padel-primary/20 text-padel-primary border border-padel-primary/30"
-											: "text-white/70 hover:text-white hover:bg-white/10"
-									)}>
-									<Link href={item.url} className="flex items-center gap-3 p-3">
-										<item.icon className="h-5 w-5 shrink-0" />
+										"group relative overflow-hidden rounded-xl mb-1.5 transition-all duration-200 hover:translate-x-0.5 px-4 py-3.5 animate-item-enter hover:shadow-[0_0_10px_rgba(229,240,0,0.06)]",
+										pathname === item.url &&
+											"bg-white/5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)] before:absolute before:left-0 before:top-0 before:h-full before:w-[3px] before:bg-padel-primary before:rounded-l-xl before:shadow-[0_0_6px_rgba(229,240,0,0.35)]"
+									)}
+									style={{ animationDelay: `${(idx + 1) * 50}ms` }}
+								>
+									<Link href={item.url} className="flex items-center gap-4">
+										<item.icon className="h-5 w-5 shrink-0 transition-colors group-data-[active=true]:text-padel-primary" />
 										<div className="flex flex-col">
-											<span className="font-medium">{item.title}</span>
-											<span className="text-xs opacity-60">
+											<span className="font-medium text-sidebar-foreground">
+												{item.title}
+											</span>
+											<span className="text-[13px] leading-4 text-sidebar-foreground/60">
 												{item.description}
 											</span>
 										</div>
@@ -146,36 +145,37 @@ export function AppSidebar() {
 							</SidebarMenuItem>
 						))}
 					</SidebarMenu>
+					<SidebarSeparator className="my-4" />
 				</div>
 
 				{/* Admin Section - Only show if user is admin */}
 				{profile?.is_admin && (
 					<div className="mb-6">
-						<div className="px-3 mb-3 flex items-center gap-2">
+						<div className="px-4 mb-3 flex items-center gap-2">
 							<Shield className="w-3 h-3 text-padel-primary" />
-							<h4 className="text-xs font-semibold tracking-wide text-white/40 uppercase">
+							<h4 className="text-xs font-semibold tracking-wide text-sidebar-foreground/60 uppercase">
 								Administració
 							</h4>
 						</div>
-						<SidebarMenu>
-							{adminItems.map((item) => (
+						<SidebarMenu className="gap-1.5">
+							{adminItems.map((item, idx) => (
 								<SidebarMenuItem key={item.title}>
 									<SidebarMenuButton
 										asChild
 										isActive={pathname === item.url}
+										size="lg"
 										className={cn(
-											"group relative overflow-hidden rounded-xl mb-1 transition-all duration-300",
-											pathname === item.url
-												? "bg-padel-primary/20 text-padel-primary border border-padel-primary/30"
-												: "text-white/70 hover:text-white hover:bg-white/10"
-										)}>
-										<Link
-											href={item.url}
-											className="flex items-center gap-3 p-3">
-											<item.icon className="h-5 w-5 shrink-0" />
+											"group relative overflow-hidden rounded-xl mb-1.5 transition-all duration-200 hover:translate-x-0.5 px-4 py-3.5 animate-item-enter hover:shadow-[0_0_10px_rgba(229,240,0,0.06)]",
+											pathname === item.url &&
+												"bg-white/5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)] before:absolute before:left-0 before:top-0 before:h-full before:w-[3px] before:bg-padel-primary before:rounded-l-xl before:shadow-[0_0_6px_rgba(229,240,0,0.35)]"
+										)}
+										style={{ animationDelay: `${(idx + 1) * 50}ms` }}
+									>
+										<Link href={item.url} className="flex items-center gap-4">
+											<item.icon className="h-5 w-5 shrink-0 transition-colors group-data-[active=true]:text-padel-primary" />
 											<div className="flex flex-col">
-												<span className="font-medium">{item.title}</span>
-												<span className="text-xs opacity-60">
+												<span className="font-medium text-sidebar-foreground">{item.title}</span>
+												<span className="text-[13px] leading-4 text-sidebar-foreground/60">
 													{item.description}
 												</span>
 											</div>
@@ -184,35 +184,36 @@ export function AppSidebar() {
 								</SidebarMenuItem>
 							))}
 						</SidebarMenu>
+						<SidebarSeparator className="my-4" />
 					</div>
 				)}
 
 				{/* Settings Section */}
 				<div>
-					<div className="px-3 mb-3 flex items-center gap-2">
-						<Settings className="w-3 h-3 text-white/40" />
-						<h4 className="text-xs font-semibold tracking-wide text-white/40 uppercase">
+					<div className="px-4 mb-3 flex items-center gap-2">
+						<Settings className="w-3 h-3 text-sidebar-foreground/60" />
+						<h4 className="text-xs font-semibold tracking-wide text-sidebar-foreground/60 uppercase">
 							Configuració
 						</h4>
 					</div>
-					<SidebarMenu>
+		    <SidebarMenu className="gap-1.5">
 						<SidebarMenuItem>
-							<SidebarMenuButton
+			    <SidebarMenuButton
 								asChild
 								isActive={pathname === "/dashboard/config"}
+								size="lg"
 								className={cn(
-									"group relative overflow-hidden rounded-xl mb-1 transition-all duration-300",
-									pathname === "/dashboard/config"
-										? "bg-padel-primary/20 text-padel-primary border border-padel-primary/30"
-										: "text-white/70 hover:text-white hover:bg-white/10"
-								)}>
-								<Link
-									href="/dashboard/config"
-									className="flex items-center gap-3 p-3">
-									<Settings className="h-5 w-5 shrink-0" />
+									"group relative overflow-hidden rounded-xl mb-1.5 transition-all duration-200 hover:translate-x-0.5 px-4 py-3.5 animate-item-enter hover:shadow-[0_0_10px_rgba(229,240,0,0.06)]",
+									pathname === "/dashboard/config" &&
+										"bg-white/5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)] before:absolute before:left-0 before:top-0 before:h-full before:w-[3px] before:bg-padel-primary before:rounded-l-xl before:shadow-[0_0_6px_rgba(229,240,0,0.35)]"
+								)}
+								style={{ animationDelay: `200ms` }}
+							>
+				<Link href="/dashboard/config" className="flex items-center gap-4">
+									<Settings className="h-5 w-5 shrink-0 transition-colors group-data-[active=true]:text-padel-primary" />
 									<div className="flex flex-col">
-										<span className="font-medium">Configuració General</span>
-										<span className="text-xs opacity-60">
+										<span className="font-medium text-sidebar-foreground">Configuració General</span>
+					<span className="text-[13px] leading-4 text-sidebar-foreground/60">
 											Preferències i ajustos
 										</span>
 									</div>
@@ -223,10 +224,10 @@ export function AppSidebar() {
 				</div>
 			</SidebarContent>
 
-			<SidebarFooter className="border-t border-white/10 p-4">
+			<SidebarFooter className="border-t border-sidebar-border p-4">
 				<Button
 					variant="outline"
-					className="w-full flex items-center gap-3 bg-white/5 border-white/20 text-white/70 hover:text-white hover:bg-white/10 hover:border-white/30 transition-all duration-300"
+					className="w-full flex items-center gap-3 bg-sidebar-accent/10 border-sidebar-border text-sidebar-foreground/80 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent hover:border-sidebar-accent transition-all duration-200"
 					onClick={handleLogout}>
 					<LogOut className="h-4 w-4" />
 					<span>Tancar Sessió</span>

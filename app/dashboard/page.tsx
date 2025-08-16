@@ -102,35 +102,36 @@ export default function Dashboard() {
 
 				setUser(authUser);
 
-				// Get user profile
-				const { data: profile } = await supabase
-					.from("users")
-					.select("*")
-					.eq("id", authUser.id)
-					.single();
+						// Fetch profile and qualities in parallel
+						const [profileRes, qualitiesRes] = await Promise.all([
+							supabase
+								.from("users")
+								.select(
+									"id,name,surname,skill_level,trend,email,phone,observations,created_at,is_admin"
+								)
+								.eq("id", authUser.id)
+								.single(),
+							supabase
+								.from("user_qualities")
+								.select(
+									`
+									quality_id,
+									qualities!inner (
+										id,
+										name
+									)
+								`
+								)
+								.eq("user_id", authUser.id),
+						]);
 
-				if (!profile) {
-					router.push("/complete-profile");
-					return;
-				}
+						if (!profileRes.data) {
+							router.push("/complete-profile");
+							return;
+						}
 
-				setUserProfile(profile);
-
-				// Get user qualities
-				const { data: qualities } = await supabase
-					.from("user_qualities")
-					.select(
-						`
-						quality_id,
-						qualities!inner (
-							id,
-							name
-						)
-					`
-					)
-					.eq("user_id", authUser.id);
-
-				setUserQualities(qualities || []);
+						setUserProfile(profileRes.data);
+						setUserQualities(qualitiesRes.data || []);
 			} catch (error) {
 				console.error("Error loading user data:", error);
 			} finally {
@@ -142,7 +143,7 @@ export default function Dashboard() {
 	}, [router, supabase]);
 
 	if (loading) {
-		return (
+			return (
 			<div className="space-y-8">
 				<Skeleton className="h-12 w-96" />
 				<Skeleton className="h-64 w-full" />
@@ -180,16 +181,7 @@ export default function Dashboard() {
 			</div>
 
 			{/* Main User Profile Card */}
-			<Card
-				className="border-0 relative overflow-hidden"
-				style={{
-					background: "rgba(255, 255, 255, 0.1)",
-					borderRadius: "20px",
-					boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
-					backdropFilter: "blur(10px)",
-					WebkitBackdropFilter: "blur(10px)",
-					border: "1px solid rgba(255, 255, 255, 0.2)",
-				}}>
+			<Card className="border-0 relative overflow-hidden rounded-2xl [background:rgba(255,255,255,0.1)] shadow-[0_8px_32px_rgba(0,0,0,0.3)] ring-1 ring-white/20">
 				<CardHeader>
 					<div className="flex items-center gap-4">
 						<div className="w-16 h-16 bg-padel-primary/20 rounded-full flex items-center justify-center">
