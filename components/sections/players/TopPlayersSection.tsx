@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
 	Trophy,
 	Users,
@@ -26,6 +27,7 @@ import {
 	Gamepad2,
 	ChevronRight,
 } from "lucide-react";
+import { useTopPlayers } from "@/hooks/use-top-players";
 
 // Lista de cualidades con sus iconos correspondientes
 const qualitiesPool = [
@@ -62,36 +64,11 @@ const getRandomQualities = () => {
 	return shuffled.slice(0, 3);
 };
 
-// Datos ficticios de jugadores
-const topPlayers = [
-	{
-		id: 1,
-		name: "Joan Pérez",
-		score: 1200,
-		avatar: "/avatars/joan.png",
-		qualities: getRandomQualities(),
-		rank: 1,
-		isChampion: true,
-	},
-	{
-		id: 2,
-		name: "Maria López",
-		score: 1150,
-		avatar: "/avatars/maria.png",
-		qualities: getRandomQualities(),
-		rank: 2,
-		isChampion: false,
-	},
-	{
-		id: 3,
-		name: "Carlos García",
-		score: 1100,
-		avatar: "/avatars/carlos.png",
-		qualities: getRandomQualities(),
-		rank: 3,
-		isChampion: false,
-	},
-];
+// Función para obtener el icono de una cualidad por nombre
+const getQualityIcon = (qualityName: string) => {
+	const quality = qualitiesPool.find(q => q.name === qualityName);
+	return quality ? quality.icon : Star; // Star como icono por defecto
+};
 
 const getRankIcon = (rank: number) => {
 	switch (rank) {
@@ -120,7 +97,80 @@ const getRankGradient = (rank: number) => {
 };
 
 export function TopPlayersSection() {
-	const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+	const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+	const { data: topPlayersData, isLoading, error } = useTopPlayers();
+	
+	const topPlayers = topPlayersData?.players || [];
+
+	// Loading state
+	if (isLoading) {
+		return (
+			<section id="top-players" className="py-24 relative overflow-visible">
+				<div className="container mx-auto px-4 relative z-10">
+					<div className="text-center mb-16">
+						<div className="flex items-center justify-center gap-3 mb-6">
+							<Trophy className="w-8 h-8 text-padel-primary" />
+							<h2 className="text-4xl md:text-5xl font-bold text-white">
+								Top Players
+							</h2>
+							<Trophy className="w-8 h-8 text-padel-primary" />
+						</div>
+						<p className="text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
+							Descobreix els jugadors més destacats de Padel Segrià. Aquests són
+							els campions que dominen les pistes amb el seu talent excepcional.
+						</p>
+					</div>
+
+					<div className="grid md:grid-cols-3 gap-14 md:mx-14">
+						{Array.from({ length: 3 }).map((_, i) => (
+							<Card
+								key={i}
+								className="relative overflow-hidden border-0"
+								style={{
+									background: "rgba(255, 255, 255, 0.1)",
+									borderRadius: "20px",
+									boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+									backdropFilter: "blur(10px)",
+									WebkitBackdropFilter: "blur(10px)",
+									border: "1px solid rgba(255, 255, 255, 0.2)",
+								}}>
+								<CardContent className="p-6 pt-16">
+									<div className="text-center mb-6">
+										<Skeleton className="w-20 h-20 rounded-full mx-auto mb-4" />
+										<Skeleton className="h-6 w-32 mx-auto mb-2" />
+										<Skeleton className="h-8 w-20 mx-auto" />
+									</div>
+									<div className="space-y-3">
+										{Array.from({ length: 3 }).map((_, j) => (
+											<Skeleton key={j} className="h-10 w-full" />
+										))}
+									</div>
+								</CardContent>
+							</Card>
+						))}
+					</div>
+				</div>
+			</section>
+		);
+	}
+
+	// Error state
+	if (error) {
+		return (
+			<section id="top-players" className="py-24 relative overflow-visible">
+				<div className="container mx-auto px-4 relative z-10">
+					<div className="text-center">
+						<h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+							Top Players
+						</h2>
+						<p className="text-red-400">
+							Error al carregar els jugadors destacats
+						</p>
+					</div>
+				</div>
+			</section>
+		);
+	}
 
 	return (
 		<section id="top-players" className="py-24 relative overflow-visible">
@@ -154,6 +204,9 @@ export function TopPlayersSection() {
 						<div className="grid md:grid-cols-3 gap-14 md:mx-14">
 							{topPlayers.map((player, index) => {
 								const IconComponent = getRankIcon(player.rank);
+								const fullName = `${player.name || ""} ${player.surname || ""}`.trim();
+								const initials = `${player.name?.[0] || ""}${player.surname?.[0] || ""}`.toUpperCase();
+								
 								return (
 									<Card
 										key={player.id}
@@ -197,20 +250,17 @@ export function TopPlayersSection() {
 											<div className="text-center mb-6">
 												<Avatar className="w-20 h-20 mx-auto border-4 border-white/20 shadow-lg mb-4">
 													<AvatarImage
-														src={player.avatar}
-														alt={player.name}
+														src={player.avatar_url || ""}
+														alt={fullName}
 														className="object-cover"
 													/>
 													<AvatarFallback className="bg-padel-primary text-padel-secondary text-xl font-bold">
-														{player.name
-															.split(" ")
-															.map((n) => n[0])
-															.join("")}
+														{initials}
 													</AvatarFallback>
 												</Avatar>
 
 												<h3 className="text-xl font-bold text-white mb-2">
-													{player.name}
+													{fullName}
 												</h3>
 
 												<div className="flex items-center justify-center gap-2 mb-4">
@@ -227,21 +277,27 @@ export function TopPlayersSection() {
 												<h4 className="text-sm font-semibold text-gray-300 text-center mb-3">
 													Qualitats destacades
 												</h4>
-												{player.qualities.map((quality, qualityIndex) => {
-													const QualityIcon = quality.icon;
-													return (
-														<div
-															key={qualityIndex}
-															className="flex items-center gap-3 p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors duration-200">
-															<div className="w-8 h-8 rounded-lg bg-padel-primary/20 flex items-center justify-center flex-shrink-0">
-																<QualityIcon className="w-4 h-4 text-padel-primary" />
+												{player.qualities.length > 0 ? (
+													player.qualities.map((quality, qualityIndex) => {
+														const QualityIcon = getQualityIcon(quality.name);
+														return (
+															<div
+																key={qualityIndex}
+																className="flex items-center gap-3 p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors duration-200">
+																<div className="w-8 h-8 rounded-lg bg-padel-primary/20 flex items-center justify-center flex-shrink-0">
+																	<QualityIcon className="w-4 h-4 text-padel-primary" />
+																</div>
+																<span className="text-white text-sm font-medium">
+																	{quality.name}
+																</span>
 															</div>
-															<span className="text-white text-sm font-medium">
-																{quality.name}
-															</span>
-														</div>
-													);
-												})}
+														);
+													})
+												) : (
+													<div className="text-center text-gray-400 text-sm">
+														No hi ha qualitats assignades
+													</div>
+												)}
 											</div>
 										</CardContent>
 									</Card>
