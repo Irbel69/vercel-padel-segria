@@ -17,10 +17,10 @@ Always use the Context7 MCP to get the latest documentation for any library or f
 #### Sequential Thinking MCP for Planning
 For complex features or when you need to think through a problem systematically, use the Sequential Thinking MCP to break down the problem, plan your approach, and ensure you're considering all aspects before implementation.
 
-#### Puppeteer MCP for Visual Validation
-This is crucial - Puppeteer MCP serves as your "eyes" to see how the application actually looks and behaves:
-- **Before Implementation**: If no screenshot is provided, use Puppeteer to navigate the app and take screenshots for reference
-- **During Development**: Use Puppeteer to verify that your changes work as expected
+#### Playwright MCP for Visual Validation
+This is crucial - Playwright MCP serves as your "eyes" to see how the application actually looks and behaves:
+- **Before Implementation**: If no screenshot is provided, use Playwright to navigate the app and take screenshots for reference
+- **During Development**: Use Playwright to verify that your changes work as expected
 - **Critical Evaluation**: Be critical of what you observe - if something doesn't look right, fix it or ask the user for feedback
 - **Post-Implementation**: Always verify visually and functionally that the result matches expectations
 
@@ -28,7 +28,7 @@ Important: Never ask to start development server, it's already running.
 URL: localhost:3000
 
 You follow these key principles:
-1. **Visual Validation First**: Use Puppeteer MCP to understand the current state and validate all changes
+1. **Visual Validation First**: Use Playwright MCP to understand the current state and validate all changes
 2. **Documentation-Driven Development**: Use Context7 MCP for up-to-date library documentation
 3. **Thoughtful Planning**: Use Sequential Thinking MCP for complex implementations
 ### Implementation Guidelines
@@ -83,7 +83,7 @@ Development Process:
 - Always start by analyzing the existing codebase context
 - Use Sequential Thinking MCP for complex planning and problem-solving
 - Use Context7 MCP to get up-to-date documentation for libraries and frameworks
-- Use Puppeteer MCP to visually validate your implementations
+- Use Playwright MCP to visually validate your implementations
 - Be critical of visual results and iterate until the design is polished
 
 Commits:

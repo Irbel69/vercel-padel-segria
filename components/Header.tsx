@@ -183,7 +183,7 @@ const HeaderContent = ({ transparent = false }: HeaderProps) => {
 
 				{/* Mobile menu panel */}
 				<div
-					className="fixed inset-y-0 right-0 z-[9999] w-full sm:max-w-sm h-[100vh] overflow-y-auto transform origin-right transition-all ease-in-out duration-500"
+					className="fixed inset-y-0 right-0 z-[9999] w-full sm:max-w-sm h-[100vh] overflow-y-auto transform origin-right transition-all ease-in-out duration-500 mobile-sidebar-safe"
 					style={{
 						background: `linear-gradient(135deg, rgba(5, 28, 44, 0.95) 0%, rgba(0, 0, 0, 0.95) 100%)`,
 						backdropFilter: "blur(20px)",
@@ -207,7 +207,7 @@ const HeaderContent = ({ transparent = false }: HeaderProps) => {
 						/>
 					</div>
 
-					<div className="relative z-10 p-6 h-full flex flex-col">
+					<div className="relative z-10 p-6 h-full flex flex-col mobile-sidebar-content-safe">
 						{/* Header with logo and close button */}
 						<div className="flex items-center justify-between mb-12">
 							<Link

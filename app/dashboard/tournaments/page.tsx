@@ -170,6 +170,25 @@ export default function TournamentsPage() {
 		}
 	};
 
+	const getShortLocation = (location: string) => {
+		if (!location) return "";
+		
+		// Extract city/area from full address
+		const parts = location.split(",");
+		// Try to get city name (usually 2nd or 3rd part)
+		if (parts.length >= 3) {
+			return parts[1]?.trim() || parts[0]?.trim();
+		}
+		return parts[0]?.trim();
+	};
+
+	const isRegistrationUrgent = (deadline: string) => {
+		const deadlineDate = new Date(deadline);
+		const now = new Date();
+		const hoursUntilDeadline = (deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+		return hoursUntilDeadline <= 24 && hoursUntilDeadline > 0;
+	};
+
 	const formatDate = (dateString: string) => {
 		return new Date(dateString).toLocaleDateString("ca-ES", {
 			year: "numeric",
@@ -273,17 +292,17 @@ export default function TournamentsPage() {
 	};
 
 	return (
-		<div className="space-y-4 md:space-y-6 px-4 md:px-0">
+		<div className="space-y-3 md:space-y-6 px-2 md:px-0 max-w-full overflow-hidden">
 			{/* Header */}
-			<div className="flex flex-col sm:flex-row sm:items-center gap-3">
-				<div className="p-2 bg-padel-primary/20 rounded-lg">
-					<Target className="h-6 w-6 text-padel-primary" />
+			<div className="flex flex-row items-center gap-2 md:gap-3">
+				<div className="p-1.5 md:p-2 bg-padel-primary/20 rounded-lg">
+					<Target className="h-5 w-5 md:h-6 md:w-6 text-padel-primary" />
 				</div>
-				<div>
-					<h1 className="text-2xl md:text-3xl font-bold text-white">
+				<div className="min-w-0 flex-1">
+					<h1 className="text-xl md:text-3xl font-bold text-white">
 						Tornejos
 					</h1>
-					<p className="text-white/60 text-sm md:text-base">
+					<p className="text-white/60 text-xs md:text-base">
 						Participa en competicions i esdeveniments
 					</p>
 				</div>
@@ -297,7 +316,7 @@ export default function TournamentsPage() {
 				</Alert>
 			)}
 
-			<Tabs defaultValue="available" className="space-y-4 md:space-y-6">
+			<Tabs defaultValue="available" className="space-y-3 md:space-y-6">
 				<TabsList className="bg-white/5 border-white/10 w-full sm:w-auto">
 					<TabsTrigger
 						value="available"
@@ -315,8 +334,8 @@ export default function TournamentsPage() {
 
 				{/* Available Events */}
 				<TabsContent value="available">
-					<Card className="bg-white/5 border-white/10">
-						<CardHeader>
+					<Card className="bg-white/5 border-white/10 w-full max-w-full overflow-hidden">
+						<CardHeader className="px-3 md:px-6">
 							<CardTitle className="text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
 								<span className="text-lg md:text-xl">
 									Esdeveniments Disponibles
@@ -330,7 +349,7 @@ export default function TournamentsPage() {
 								)}
 							</CardTitle>
 						</CardHeader>
-						<CardContent>
+						<CardContent className="px-3 md:px-6 max-w-full overflow-hidden">
 							{isLoading ? (
 								<div className="space-y-4">
 									{Array.from({ length: 5 }).map((_, i) => (
@@ -347,15 +366,115 @@ export default function TournamentsPage() {
 									</p>
 								</div>
 							) : (
-								<div className="space-y-3 md:space-y-4">
+								<div className="space-y-2 md:space-y-4 max-w-full">
 									{events.map((event) => (
 										<div
 											key={event.id}
-											className="p-3 md:p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-											<div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
-												<div className="flex-1">
-													<div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-														<h3 className="text-white font-semibold text-base md:text-lg">
+											className="p-2 md:p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors max-w-full overflow-hidden">
+											
+											{/* Mobile Layout */}
+											<div className="md:hidden max-w-full">
+												{/* Title and Status */}
+												<div className="flex items-start justify-between gap-2 mb-2 max-w-full">
+													<h3 className="text-white font-semibold text-base leading-tight flex-1 min-w-0 truncate">
+														{event.title}
+													</h3>
+													<div className="flex-shrink-0">
+														{getStatusBadge(event.status)}
+													</div>
+												</div>
+
+												{/* Date and Participants */}
+												<div className="flex items-center justify-between mb-2 text-sm text-white/70 max-w-full">
+													<div className="flex items-center gap-1.5 min-w-0 flex-1">
+														<Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+														<span className="truncate">{formatDate(event.date)}</span>
+													</div>
+													<div className="flex items-center gap-1.5 flex-shrink-0">
+														<Users className="h-3.5 w-3.5 flex-shrink-0" />
+														<span className="text-xs whitespace-nowrap">
+															{event.current_participants || 0}/{event.max_participants}
+														</span>
+													</div>
+												</div>
+
+												{/* Location */}
+												{event.location && (
+													<div className="mb-3 text-sm text-white/60 max-w-full">
+														<div className="flex items-center gap-1.5 p-1">
+															<MapPin className="h-3.5 w-3.5 flex-shrink-0 text-padel-primary" />
+															<span className="truncate flex-1">{getShortLocation(event.location)}</span>
+															{event.latitude && event.longitude && (
+																<button
+																	onClick={() => {
+																		const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+																		const mapsUrl = isMac
+																			? `maps://maps.apple.com/?q=${encodeURIComponent(
+																					event.location
+																			  )}&ll=${event.latitude},${event.longitude}&z=15`
+																			: `https://www.google.com/maps/search/?api=1&query=${event.latitude},${event.longitude}`;
+																		window.open(mapsUrl, "_blank");
+																	}}
+																	className="text-xs text-padel-primary opacity-70 whitespace-nowrap flex-shrink-0"
+																>
+																	toca aquí
+																</button>
+															)}
+														</div>
+													</div>
+												)}
+
+												{/* Registration Status */}
+												{event.user_registration_status && (
+													<div className="mb-2">
+														{getRegistrationStatusBadge(event.user_registration_status)}
+													</div>
+												)}
+
+												{/* Urgent Registration Deadline */}
+												{isRegistrationUrgent(event.registration_deadline) && (
+													<div className="mb-2 text-xs text-orange-400 flex items-center gap-1.5 max-w-full">
+														<Clock className="h-3 w-3 flex-shrink-0" />
+														<span className="truncate">Límit: {formatDateTime(event.registration_deadline)}</span>
+													</div>
+												)}
+
+												{/* Action Button */}
+												<div className="pt-2 max-w-full">
+													{canRegister(event) && (
+														<Button
+															onClick={() => handleRegister(event.id)}
+															disabled={processingEvents.has(event.id)}
+															className="bg-padel-primary text-black hover:bg-padel-primary/90 text-sm w-full">
+															{processingEvents.has(event.id) ? "Inscrivint..." : "Inscriure's"}
+														</Button>
+													)}
+													{canUnregister(event) && (
+														<Button
+															variant="outline"
+															onClick={() => handleUnregister(event.id)}
+															disabled={processingEvents.has(event.id)}
+															className="bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30 text-sm w-full">
+															{processingEvents.has(event.id) ? "Cancel·lant..." : "Cancel·lar"}
+														</Button>
+													)}
+													{event.user_registration_status && !canUnregister(event) && (
+														<Button
+															variant="outline"
+															disabled
+															className="bg-white/10 border-white/20 text-white/50 text-sm w-full">
+															Inscrit
+														</Button>
+													)}
+												</div>
+											</div>
+
+											{/* Desktop Layout */}
+											<div className="hidden md:block">
+												<div className="space-y-3">
+													{/* Header with title and badges */}
+													<div className="flex items-center justify-between gap-3">
+														<h3 className="text-white font-semibold text-lg">
 															{event.title}
 														</h3>
 														<div className="flex gap-2">
@@ -367,106 +486,95 @@ export default function TournamentsPage() {
 														</div>
 													</div>
 
-													<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4 text-sm text-white/70">
+													{/* Main info grid */}
+													<div className="grid grid-cols-2 gap-4 text-sm text-white/70">
 														<div className="flex items-center gap-2">
 															<Calendar className="h-4 w-4 flex-shrink-0" />
-															<span className="truncate">
-																{formatDate(event.date)}
-															</span>
+															<span>{formatDate(event.date)}</span>
 														</div>
-														{event.location && (
-															<div className="flex items-center gap-2 col-span-1 sm:col-span-2 lg:col-span-1">
-																<div className="flex items-center gap-2 min-w-0 flex-1">
-																	<MapPin className="h-4 w-4 flex-shrink-0" />
-																	<span className="truncate">
-																		{event.location}
-																	</span>
-																</div>
-																{event.latitude && event.longitude && (
-																	<LocationMapButton
-																		latitude={event.latitude}
-																		longitude={event.longitude}
-																		location={event.location}
-																	/>
-																)}
-															</div>
-														)}
 														<div className="flex items-center gap-2">
 															<Users className="h-4 w-4 flex-shrink-0" />
-															<span className="truncate">
+															<span>
 																{event.current_participants || 0}/
 																{event.max_participants} participants
 															</span>
 														</div>
 													</div>
 
-													<div className="mt-2 text-xs text-white/50">
-														<div className="flex items-center gap-2">
-															<Clock className="h-3 w-3 flex-shrink-0" />
-															<span className="truncate">
-																Límit inscripció:{" "}
-																{formatDateTime(event.registration_deadline)}
-															</span>
-														</div>
-													</div>
-
-													{event.prizes && (
-														<div className="mt-2">
-															<div className="flex items-center gap-2 text-sm text-white/60">
-																<Trophy className="h-4 w-4 flex-shrink-0" />
-																<span className="break-words">
-																	{event.prizes}
+													{/* Location */}
+													{event.location && (
+														<div className="text-sm text-white/60">
+															<div className="flex items-center gap-2 p-2">
+																<MapPin className="h-4 w-4 flex-shrink-0 text-padel-primary" />
+																<span className="truncate">
+																	{getShortLocation(event.location)}
 																</span>
+																{event.latitude && event.longitude && (
+																	<button
+																		onClick={() => {
+																			const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+																			const mapsUrl = isMac
+																				? `maps://maps.apple.com/?q=${encodeURIComponent(
+																						event.location
+																				  )}&ll=${event.latitude},${event.longitude}&z=15`
+																				: `https://www.google.com/maps/search/?api=1&query=${event.latitude},${event.longitude}`;
+																			window.open(mapsUrl, "_blank");
+																		}}
+																		className="ml-1 text-xs text-padel-primary hover:text-padel-primary/80 hover:underline transition-colors flex-shrink-0"
+																	>
+																		toca aquí
+																	</button>
+																)}
 															</div>
 														</div>
 													)}
-												</div>
 
-												<div className="flex flex-row lg:flex-col gap-2 justify-end lg:ml-4">
-													{canRegister(event) && (
-														<Button
-															onClick={() => handleRegister(event.id)}
-															disabled={processingEvents.has(event.id)}
-															className="bg-padel-primary text-black hover:bg-padel-primary/90 text-sm flex-1 lg:flex-initial">
-															<span className="sm:hidden">
-																{processingEvents.has(event.id)
-																	? "..."
-																	: "Inscriure's"}
-															</span>
-															<span className="hidden sm:inline">
-																{processingEvents.has(event.id)
-																	? "Inscrivint..."
-																	: "Inscriure's"}
-															</span>
-														</Button>
+													{/* Prizes */}
+													{event.prizes && (
+														<div className="flex items-center gap-2 text-sm text-white/60">
+															<Trophy className="h-4 w-4 flex-shrink-0" />
+															<span>{event.prizes}</span>
+														</div>
 													)}
-													{canUnregister(event) && (
-														<Button
-															variant="outline"
-															onClick={() => handleUnregister(event.id)}
-															disabled={processingEvents.has(event.id)}
-															className="bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30 text-sm flex-1 lg:flex-initial">
-															<span className="sm:hidden">
-																{processingEvents.has(event.id)
-																	? "..."
-																	: "Cancel·lar"}
-															</span>
-															<span className="hidden sm:inline">
-																{processingEvents.has(event.id)
-																	? "Cancel·lant..."
-																	: "Cancel·lar"}
-															</span>
-														</Button>
-													)}
-													{event.user_registration_status &&
-														!canUnregister(event) && (
-															<Button
-																variant="outline"
-																disabled
-																className="bg-white/10 border-white/20 text-white/50 text-sm flex-1 lg:flex-initial">
-																Inscrit
-															</Button>
-														)}
+
+													{/* Registration deadline and action buttons */}
+													<div className="flex items-center justify-between gap-4">
+														<div className="text-xs text-white/50">
+															<div className="flex items-center gap-2">
+																<Clock className="h-3 w-3 flex-shrink-0" />
+																<span>
+																	Límit inscripció: {formatDateTime(event.registration_deadline)}
+																</span>
+															</div>
+														</div>
+														<div className="flex-shrink-0">
+															{canRegister(event) && (
+																<Button
+																	onClick={() => handleRegister(event.id)}
+																	disabled={processingEvents.has(event.id)}
+																	className="bg-padel-primary text-black hover:bg-padel-primary/90">
+																	{processingEvents.has(event.id) ? "Inscrivint..." : "Inscriure's"}
+																</Button>
+															)}
+															{canUnregister(event) && (
+																<Button
+																	variant="outline"
+																	onClick={() => handleUnregister(event.id)}
+																	disabled={processingEvents.has(event.id)}
+																	className="bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30">
+																	{processingEvents.has(event.id) ? "Cancel·lant..." : "Cancel·lar"}
+																</Button>
+															)}
+															{event.user_registration_status && !canUnregister(event) && (
+																<Button
+																	variant="outline"
+																	disabled
+																	className="bg-white/10 border-white/20 text-white/50">
+																	Inscrit
+																</Button>
+															)}
+														</div>
+													</div>
 												</div>
 											</div>
 										</div>

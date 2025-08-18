@@ -8,6 +8,27 @@
 html,
 body {
 	scroll-behavior: smooth !important;
+	background-color: #000000;
+}
+
+/* Support for iOS safe areas */
+body {
+	padding-top: env(safe-area-inset-top);
+	padding-bottom: env(safe-area-inset-bottom);
+	padding-left: env(safe-area-inset-left);
+	padding-right: env(safe-area-inset-right);
+}
+
+/* Safe area utilities for mobile sidebar */
+.mobile-sidebar-safe {
+	padding-top: env(safe-area-inset-top);
+	padding-bottom: max(env(safe-area-inset-bottom), 20px);
+	padding-left: env(safe-area-inset-left);
+	padding-right: env(safe-area-inset-right);
+}
+
+.mobile-sidebar-content-safe {
+	padding-bottom: max(24px, env(safe-area-inset-bottom));
 }
 
 /* It makes the HTML progress bar filling smooth when value change. */

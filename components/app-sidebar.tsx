@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
 	Sidebar,
@@ -14,6 +15,7 @@ import {
 	SidebarMenuItem,
 	SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import {
 	Settings,
@@ -80,6 +82,16 @@ export function AppSidebar() {
 	const pathname = usePathname();
 	const { user, profile, signOut } = useUser();
 
+	// Access sidebar context to control mobile sheet state
+	const { isMobile, setOpenMobile } = useSidebar();
+
+	// Auto-close the sidebar sheet on mobile after navigation
+	useEffect(() => {
+		if (isMobile) {
+			setOpenMobile(false);
+		}
+	}, [pathname, isMobile, setOpenMobile]);
+
 	const handleLogout = async () => {
 		try {
 			await signOut();
@@ -137,7 +149,13 @@ export function AppSidebar() {
 									)}
 									style={{ animationDelay: `${(idx + 1) * 50}ms` }}
 								>
-									<Link href={item.url} className="flex items-center gap-4">
+									<Link
+										href={item.url}
+										className="flex items-center gap-4"
+										onClick={() => {
+											if (isMobile) setOpenMobile(false);
+										}}
+									>
 										<item.icon className="h-5 w-5 shrink-0 transition-colors group-data-[active=true]:text-padel-primary" />
 										<div className="flex flex-col">
 											<span className="font-medium text-sidebar-foreground">
@@ -178,7 +196,13 @@ export function AppSidebar() {
 										)}
 										style={{ animationDelay: `${(idx + 1) * 50}ms` }}
 									>
-										<Link href={item.url} className="flex items-center gap-4">
+										<Link
+											href={item.url}
+											className="flex items-center gap-4"
+											onClick={() => {
+												if (isMobile) setOpenMobile(false);
+											}}
+										>
 											<item.icon className="h-5 w-5 shrink-0 transition-colors group-data-[active=true]:text-padel-primary" />
 											<div className="flex flex-col">
 												<span className="font-medium text-sidebar-foreground">{item.title}</span>
@@ -216,7 +240,13 @@ export function AppSidebar() {
 								)}
 								style={{ animationDelay: `200ms` }}
 							>
-				<Link href="/dashboard/config" className="flex items-center gap-4">
+				<Link
+					href="/dashboard/config"
+					className="flex items-center gap-4"
+					onClick={() => {
+						if (isMobile) setOpenMobile(false);
+					}}
+				>
 									<Settings className="h-5 w-5 shrink-0 transition-colors group-data-[active=true]:text-padel-primary" />
 									<div className="flex flex-col">
 										<span className="font-medium text-sidebar-foreground">Configuració General</span>

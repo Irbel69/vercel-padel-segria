@@ -4,6 +4,7 @@ import { createClient } from "@/libs/supabase/server";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import ButtonAccount from "@/components/ButtonAccount";
+import AddToHomeScreen from "@/components/AddToHomeScreen";
 import config from "@/config";
 
 // This is a server-side component to ensure the user is logged in.
@@ -67,6 +68,9 @@ export default async function LayoutPrivate({
 					{/* Main content */}
 					<div className="flex-1 space-y-6 p-4 lg:p-8 pt-6">{children}</div>
 				</main>
+				
+				{/* Add to Home Screen component - only shows on mobile when not installed */}
+				<AddToHomeScreen />
 			</SidebarProvider>
 		</div>
 	);
