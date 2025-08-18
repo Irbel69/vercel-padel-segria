@@ -32,6 +32,7 @@ import {
 	Calendar,
 	Target,
 	User,
+	Award,
 } from "lucide-react";
 import { useUser } from "@/hooks/use-user";
 
@@ -68,6 +69,12 @@ const adminItems = [
 		url: "/dashboard/users",
 		icon: Users,
 		description: "Gestió d'usuaris",
+	},
+	{
+		title: "Qualitats",
+		url: "/dashboard/admin/qualities",
+		icon: Award,
+		description: "Gestió de qualitats",
 	},
 ];
 
