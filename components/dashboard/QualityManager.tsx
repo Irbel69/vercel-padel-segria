@@ -12,63 +12,13 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import {
-	Crown,
-	Eye,
-	Flame,
-	Zap,
-	Heart,
-	Activity,
-	Wind,
-	Target,
-	ArrowUpRight,
-	Shield,
-	Swords,
-	BrainCircuit,
-	Award,
-	Trophy,
-	Star,
-	Medal,
-	Users,
-	Gamepad2,
-	Plus,
-	X,
-	Sparkles,
-	type LucideIcon,
-} from "lucide-react";
-
-// Map of quality names to their icons
-const qualityIconMap: Record<string, LucideIcon> = {
-	Lideratge: Crown,
-	Anticipació: Eye,
-	Potència: Flame,
-	Velocitat: Zap,
-	Resistència: Heart,
-	Reflexos: Activity,
-	Flexibilitat: Wind,
-	Equilibri: Target,
-	Mobilitat: ArrowUpRight,
-	Defensa: Shield,
-	Atac: Swords,
-	Control: BrainCircuit,
-	"Col·locació": Target,
-	Volea: Award,
-	Globo: Trophy,
-	Rematada: Flame,
-	Vibora: Zap,
-	Servei: Star,
-	Sortida: ArrowUpRight,
-	Contraatac: Activity,
-	"Baixada de pared": Shield,
-	Bandeja: Medal,
-	Comunicació: Users,
-	Adaptació: Wind,
-	X3: Gamepad2,
-};
+import { getQualityIcon } from "@/lib/qualities";
+import { Plus, X, Sparkles } from "lucide-react";
 
 interface Quality {
 	id: number;
 	name: string;
+	icon?: string;
 }
 
 interface UserQuality {
@@ -255,11 +205,6 @@ export function QualityManager({
 		return allQualities.filter((quality) => !assignedIds.includes(quality.id));
 	};
 
-	const getQualityIcon = (qualityName: string): LucideIcon => {
-		const IconComponent = qualityIconMap[qualityName];
-		return IconComponent || Sparkles;
-	};
-
 	if (isLoadingQualities) {
 		return (
 			<Card className="bg-white/5 border-white/10">
@@ -309,7 +254,7 @@ export function QualityManager({
 									}`}>
 									<div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-padel-primary/20 to-padel-primary/30 flex items-center justify-center border-2 border-padel-primary/40 shadow-lg transition-all duration-200 hover:from-padel-primary/30 hover:to-padel-primary/40 hover:scale-105 cursor-pointer">
 										{(() => {
-											const IconComponent = getQualityIcon(quality.name);
+											const IconComponent = getQualityIcon(quality);
 											return (
 												<IconComponent className="w-12 h-12 text-padel-primary drop-shadow-sm" />
 											);
@@ -354,9 +299,7 @@ export function QualityManager({
 										</DialogHeader>
 										<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[70vh] overflow-y-auto p-2">
 											{getAvailableQualities(index).map((availableQuality) => {
-												const IconComponent = getQualityIcon(
-													availableQuality.name
-												);
+												const IconComponent = getQualityIcon(availableQuality);
 												return (
 													<Button
 														key={availableQuality.id}
