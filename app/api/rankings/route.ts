@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createPublicClient } from "@/libs/supabase/server";
+import { withRateLimit } from "@/libs/rate-limiter-middleware";
 
-export async function GET(req: NextRequest) {
+async function handler(req: NextRequest) {
 	try {
 		const supabase = createPublicClient();
 
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest) {
 		const totalPlayers = count ?? players.length;
 		const totalPages = Math.max(1, Math.ceil(totalPlayers / limit));
 
-		return NextResponse.json(
+			const res = NextResponse.json(
 			{
 				players,
 				pagination: {
@@ -48,6 +49,12 @@ export async function GET(req: NextRequest) {
 			},
 			{ status: 200 }
 		);
+			// Add cache headers to reduce pressure and accidental rate limits
+			res.headers.set(
+				"Cache-Control",
+				"public, s-maxage=60, stale-while-revalidate=30"
+			);
+			return res;
 	} catch (error) {
 		console.error("Error al obtenir el rànking:", error);
 		return NextResponse.json(
@@ -56,3 +63,6 @@ export async function GET(req: NextRequest) {
 		);
 	}
 }
+
+// Apply rate limiting to the GET handler
+export const GET = withRateLimit('rankings', handler);

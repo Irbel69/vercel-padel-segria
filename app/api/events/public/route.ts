@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createPublicClient } from "@/libs/supabase/server";
 import type { Event } from "@/types";
+import { withRateLimit } from "@/libs/rate-limiter-middleware";
 
 // GET /api/events/public - Lista eventos públicos para la landing page (sin autenticación)
-export async function GET(request: NextRequest) {
+async function handler(request: NextRequest) {
 	try {
 		const supabase = createPublicClient();
 
@@ -44,10 +45,15 @@ export async function GET(request: NextRequest) {
 			})
 		);
 
-		return NextResponse.json({
-			events: eventsWithDetails,
-			success: true,
-		});
+			const res = NextResponse.json({
+				events: eventsWithDetails,
+				success: true,
+			});
+			res.headers.set(
+				"Cache-Control",
+				"public, s-maxage=60, stale-while-revalidate=30"
+			);
+			return res;
 	} catch (error) {
 		console.error("Error in GET /api/events/public:", error);
 		return NextResponse.json(
@@ -56,3 +62,6 @@ export async function GET(request: NextRequest) {
 		);
 	}
 }
+
+// Apply rate limiting to the GET handler
+export const GET = withRateLimit('events', handler);

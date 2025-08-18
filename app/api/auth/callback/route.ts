@@ -1,11 +1,12 @@
 import { NextResponse, NextRequest } from "next/server";
 import { createClient } from "@/libs/supabase/server";
 import config from "@/config";
+import { withRateLimit } from "@/libs/rate-limiter-middleware";
 
 export const dynamic = "force-dynamic";
 
 // This route is called after a successful login. It exchanges the code for a session and redirects to the callback URL (see config.js).
-export async function GET(req: NextRequest) {
+async function handler(req: NextRequest) {
 	const requestUrl = new URL(req.url);
 	const code = requestUrl.searchParams.get("code");
 
@@ -49,3 +50,6 @@ export async function GET(req: NextRequest) {
 	// URL to redirect to after sign in process completes
 	return NextResponse.redirect(requestUrl.origin + config.auth.callbackUrl);
 }
+
+// Apply rate limiting to the GET handler
+export const GET = withRateLimit('auth', handler);
