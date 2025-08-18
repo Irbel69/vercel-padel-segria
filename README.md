@@ -1,8 +1,29 @@
-# ShipFast — Typescript
+# Padel Segrià
 
-Hey maker 👋 it's Marc from [ShipFast](https://shipfa.st/docs). Let's get your startup off the ground, FAST ⚡️
+A modern padel tournament management platform built with Next.js, Supabase, and security-first principles.
 
-<sub>**Watch/Star the repo to be notified when updates are pushed**</sub>
+## 🔒 Security Implementation
+
+This application implements comprehensive HTTP security headers and strict Content Security Policy (CSP) for production-ready security:
+
+### Security Headers Included
+- **Content Security Policy (CSP)** - Strict policy with nonces for inline scripts
+- **X-Frame-Options** - Prevents clickjacking attacks
+- **X-Content-Type-Options** - Prevents MIME sniffing
+- **Referrer-Policy** - Controls referrer information leakage
+- **Permissions-Policy** - Restricts browser features
+- **Cross-Origin Policies** - Controls resource sharing and isolation
+- **Strict-Transport-Security** - Forces HTTPS in production
+
+### Supported Third-Party Services
+- ✅ **Supabase** - Authentication and database
+- ✅ **Crisp** - Customer support chat
+- ✅ **Google Fonts** - Typography (Inter font)
+- ✅ **Resend** - Email services
+- ✅ **Vercel** - Hosting and analytics
+- ✅ **Next.js Image** - Optimized image loading
+
+For detailed security configuration, see [Security Documentation](./docs/SECURITY.md).
 
 ## Get Started
 
@@ -12,9 +33,27 @@ Hey maker 👋 it's Marc from [ShipFast](https://shipfa.st/docs). Let's get your
 
 2. Follow the [Ship In 5 Minutes Tutorial](https://shipfa.st/docs/tutorials/ship-in-5-minutes) to learn the foundation and ship your app quickly ⚡️
 
+## Environment Configuration
+
+Create a `.env.local` file with your configuration:
+
+```bash
+# Required for security headers
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Optional - App URL for security context
+NEXT_PUBLIC_APP_URL=http://localhost:3000  # or your production domain
+
+# Email service
+RESEND_API_KEY=your_resend_api_key
+```
+
 ## Links
 
 -   [📚 Documentation](https://shipfa.st/docs)
+-   [🔒 Security Documentation](./docs/SECURITY.md)
 -   [📣 Updates](https://shipfast.beehiiv.com/)
 -   [🧑‍💻 Discord](https://shipfa.st/dashboard)
 -   [🥇 Leaderboard](https://shipfa.st/leaderboard)

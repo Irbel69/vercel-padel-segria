@@ -67,7 +67,7 @@ const CrispChat = (): null => {
 // 2. Toaster: Show Success/Error messages anywhere from the app with toast()
 // 3. Tooltip: Show tooltips if any JSX elements has these 2 attributes: data-tooltip-id="tooltip" data-tooltip-content=""
 // 4. CrispChat: Set Crisp customer chat support (see above)
-const ClientLayout = ({ children }: { children: ReactNode }) => {
+const ClientLayout = ({ children, nonce }: { children: ReactNode; nonce?: string }) => {
   const [queryClient] = useState(() => new QueryClient());
   return (
     <QueryClientProvider client={queryClient}>

@@ -5,6 +5,7 @@ import { getSEOTags } from "@/libs/seo";
 import ClientLayout from "@/components/LayoutClient";
 import DottedBackground from "@/components/DottedBackground";
 import { ThemeProvider } from "@/components/theme-provider";
+import { getNonce } from "@/lib/nonce";
 import config from "@/config";
 import "./globals.css";
 
@@ -22,6 +23,8 @@ export const viewport: Viewport = {
 export const metadata = getSEOTags();
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+	const nonce = getNonce();
+	
 	return (
 		<html
 			lang="en"
@@ -29,6 +32,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 			className={`${font.className} dark`}
 			suppressHydrationWarning
 		>
+			<head>
+				{/* CSP nonce is handled by middleware, but if you need inline scripts, use the nonce */}
+				{nonce && (
+					<meta name="csp-nonce" content={nonce} />
+				)}
+			</head>
 			<body>
 				<ThemeProvider
 					attribute="class"
@@ -41,7 +50,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 					<div className="relative min-h-screen w-full overflow-x-hidden overflow-y-hidden">
 						<DottedBackground />
 						{/* ClientLayout contains all the client wrappers (Crisp chat support, toast messages, tooltips, etc.) */}
-						<ClientLayout>{children}</ClientLayout>
+						<ClientLayout nonce={nonce}>{children}</ClientLayout>
 					</div>
 				</ThemeProvider>
 			</body>

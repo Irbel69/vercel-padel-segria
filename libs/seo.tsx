@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import config from "@/config";
 
 // These are all the SEO tags you can add to your pages.
@@ -36,7 +37,7 @@ export const getSEOTags = ({
       title: openGraph?.title || config.appName,
       description: openGraph?.description || config.appDescription,
       url: openGraph?.url || `https://${config.domainName}/`,
-      siteName: openGraph?.title || config.appName,
+      siteName: (openGraph?.title || config.appName).toString(),
       // If you add an opengraph-image.(jpg|jpeg|png|gif) image to the /app folder, you don't need the code below
       // images: [
       //   {
@@ -76,8 +77,10 @@ export const getSEOTags = ({
 // Fill the fields with your own data
 // See https://shipfa.st/docs/features/seo
 export const renderSchemaTags = () => {
+  const nonce = headers().get("x-nonce") || undefined;
   return (
     <script
+      nonce={nonce}
       type="application/ld+json"
       dangerouslySetInnerHTML={{
         __html: JSON.stringify({

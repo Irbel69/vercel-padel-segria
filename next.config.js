@@ -8,6 +8,13 @@ const nextConfig = {
       "pbs.twimg.com",
       "images.unsplash.com",
       "logos-world.net",
+      // Supabase storage domains (add your project-specific domains)
+      "supabase.co",
+      "supabaseStorage.co",
+      // Crisp chat images
+      "client.crisp.chat",
+      "image.crisp.chat",
+      "storage.crisp.chat",
     ],
   },
 };

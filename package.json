@@ -8,7 +8,8 @@
     "postbuild": "next-sitemap",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest"
+  "test": "jest",
+  "test:security": "node scripts/test-security.js"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.18",

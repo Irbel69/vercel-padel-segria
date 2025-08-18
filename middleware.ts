@@ -1,19 +1,166 @@
-import { type NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/libs/supabase/middleware";
-import { applyRateLimit, detectSuspiciousActivity } from "@/libs/rate-limiter-middleware";
 
 export async function middleware(request: NextRequest) {
-  // Detect suspicious activity (log only, don't block)
-  detectSuspiciousActivity(request);
+  // Handle Supabase session first
+  const sessionResponse = await updateSession(request);
   
-  // Apply rate limiting - returns response if blocked, null if allowed
-  const rateLimitResponse = applyRateLimit(request);
-  if (rateLimitResponse) {
-    return rateLimitResponse;
+  // Edge-safe nonce generator (base64url)
+  function genNonce(): string {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    // Convert to base64url without Buffer
+    let str = "";
+    for (let i = 0; i < bytes.length; i++) str += String.fromCharCode(bytes[i]);
+    const b64 = btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    return b64;
   }
-  
-  // Continue with auth middleware
-  return await updateSession(request);
+
+  // Build a strict CSP string tailored to our stack
+  function buildCSP(nonce: string) {
+    const isDev = process.env.NODE_ENV !== "production";
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+
+    // Derive hosts
+    const supabaseHost = (() => {
+      try {
+        if (!supabaseUrl) return null;
+        return new URL(supabaseUrl).host; // e.g. abcd.supabase.co
+      } catch {
+        return null;
+      }
+    })();
+
+    const scriptSrc = [
+      "'self'",
+      `'nonce-${nonce}'`,
+      isDev ? "'unsafe-eval'" : null, // ONLY in dev
+    ].filter(Boolean).join(" ");
+
+    const styleSrc = [
+      "'self'",
+      "'unsafe-inline'", // acceptable for styles
+      "https://fonts.googleapis.com/",
+      "https://client.crisp.chat/",
+    ].join(" ");
+
+    const scriptSrcElem = [
+      "'self'",
+      `'nonce-${nonce}'`,
+      "https://client.crisp.chat/",
+      "https://settings.crisp.chat/",
+      "https://widget.crisp.chat/",
+    ].join(" ");
+
+    const imgSrc = [
+      "'self'",
+      "data:",
+      "blob:",
+      "https:",
+      "https://lh3.googleusercontent.com/",
+      "https://pbs.twimg.com/",
+      "https://images.unsplash.com/",
+      "https://logos-world.net/",
+      "https://client.crisp.chat/",
+      "https://image.crisp.chat/",
+      "https://storage.crisp.chat/",
+    ];
+
+    const connectSrc = [
+      "'self'",
+      "https:",
+      "wss:",
+      "https://vercel.live/",
+      "https://vitals.vercel-insights.com/",
+      "https://api.resend.com/",
+      "https://client.crisp.chat/",
+      "https://settings.crisp.chat/",
+      "wss://client.crisp.chat/",
+    ];
+
+    if (supabaseHost) {
+      connectSrc.push(`https://${supabaseHost}`, `wss://${supabaseHost}`);
+      imgSrc.push(`https://${supabaseHost}`);
+    }
+
+    if (isDev) {
+      connectSrc.push("http://localhost:*", "ws://localhost:*");
+      imgSrc.push("http://localhost:*");
+    }
+
+    const directives = [
+      `default-src 'self'`,
+      `script-src ${scriptSrc}`,
+      `script-src-elem ${scriptSrcElem}`,
+      `style-src ${styleSrc}`,
+      `style-src-elem ${styleSrc}`,
+      `font-src 'self' data: https://fonts.gstatic.com/ https://client.crisp.chat/`,
+      `img-src ${imgSrc.join(" ")}`,
+      `connect-src ${connectSrc.join(" ")}`,
+      `frame-src 'self' https://client.crisp.chat/`,
+      `worker-src 'self' blob:`,
+      `child-src 'self' blob:`,
+      `object-src 'none'`,
+      `base-uri 'self'`,
+      `form-action 'self'`,
+      `frame-ancestors 'none'`,
+    ];
+
+    return directives.join("; ");
+  }
+
+  // Generate per-request nonce and propagate to request headers so Server Components can read it
+  const nonce = genNonce();
+  const reqHeaders = new Headers(request.headers);
+  reqHeaders.set("x-nonce", nonce);
+
+  // First, let Supabase update the session (may return a redirect and set cookies)
+  const supabaseResponse = sessionResponse;
+
+  // If Supabase triggers a redirect, attach security headers and return it
+  if (supabaseResponse.redirected || (supabaseResponse.status >= 300 && supabaseResponse.status < 400)) {
+    const csp = buildCSP(nonce);
+    supabaseResponse.headers.set("Content-Security-Policy", csp);
+    supabaseResponse.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+    supabaseResponse.headers.set("X-Content-Type-Options", "nosniff");
+    supabaseResponse.headers.set("X-Frame-Options", "DENY");
+    supabaseResponse.headers.set("Permissions-Policy", "browsing-topics=()");
+    // HSTS only in production
+    if (process.env.NODE_ENV === "production") {
+      supabaseResponse.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+    }
+    // Propagate nonce for potential downstream use
+    supabaseResponse.headers.set("x-nonce", nonce);
+    return supabaseResponse;
+  }
+
+  // Normal flow: create a fresh NextResponse with overridden request headers (to expose nonce)
+  const response = NextResponse.next({ request: { headers: reqHeaders } });
+
+  // Merge cookies set by Supabase into our response
+  try {
+    const cookies = supabaseResponse.cookies.getAll();
+    for (const c of cookies) {
+      response.cookies.set(c);
+    }
+  } catch {
+    // ignore if API differs
+  }
+
+  // Apply security headers
+  const csp = buildCSP(nonce);
+  response.headers.set("Content-Security-Policy", csp);
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("Permissions-Policy", "browsing-topics=()");
+  if (process.env.NODE_ENV === "production") {
+    response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+  }
+  // Also expose nonce on the response for debugging
+  response.headers.set("x-nonce", nonce);
+
+  return response;
 }
 
 export const config = {
