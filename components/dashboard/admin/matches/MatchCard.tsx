@@ -163,16 +163,12 @@ export function MatchCard({ match, onDelete, onUpdated, eventId }: MatchCardProp
 						<AlertDialogHeader>
 							<AlertDialogTitle>Eliminar el partit #{match.id}?</AlertDialogTitle>
 							<AlertDialogDescription>
-								Aquesta acció és permanent i no es pot desfer. S'eliminaran les
-								referències dels jugadors a aquest partit.
+								Aquesta acció és permanent i no es pot desfer. S&apos;eliminaran les referències dels jugadors a aquest partit.
 							</AlertDialogDescription>
 						</AlertDialogHeader>
 						<AlertDialogFooter>
 							<AlertDialogCancel>Cancel·lar</AlertDialogCancel>
-							<AlertDialogAction
-								className="bg-red-600 hover:bg-red-700"
-								onClick={handleDeleteConfirm}
-							>
+							<AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={handleDeleteConfirm}>
 								Eliminar
 							</AlertDialogAction>
 						</AlertDialogFooter>
@@ -189,7 +185,7 @@ export function MatchCard({ match, onDelete, onUpdated, eventId }: MatchCardProp
 						onUpdated={() => {
 							setIsEditOpen(false);
 							onUpdated && onUpdated();
-							toast({ title: 'Partit actualitzat', description: `El partit #${match.id} s\'ha actualitzat correctament.` });
+							toast({ title: 'Partit actualitzat', description: `El partit #${match.id} s'ha actualitzat correctament.` });
 						}}
 					/>
 				)}

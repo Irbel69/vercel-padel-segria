@@ -18,9 +18,7 @@ export function LocationMapButton({
 		// Detect platform and open appropriate maps
 		const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
 		const mapsUrl = isMac
-			? `maps://maps.apple.com/?q=${encodeURIComponent(
-					location
-			  )}&ll=${latitude},${longitude}&z=15`
+			? `maps://maps.apple.com/?q=${encodeURIComponent(location)}&ll=${latitude},${longitude}&z=15`
 			: `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
 
 		window.open(mapsUrl, "_blank");

@@ -10,7 +10,6 @@ export interface UserProfile {
 	observations: string | null;
 	avatar_url: string | null;
 	is_admin: boolean;
-	skill_level: number;
 	trend: "up" | "down" | "same";
 	image_rights_accepted: boolean;
 	privacy_policy_accepted: boolean;

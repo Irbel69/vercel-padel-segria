@@ -80,16 +80,9 @@ export function RankingsSection() {
     <section>
       <div className="container mx-auto px-3 sm:px-4 relative z-10">
         {/* Header */}
-        <div className="text-center mb-6 md:mb-12">
-          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-            <Trophy className="w-6 sm:w-8 h-6 sm:h-8 text-padel-primary" />
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white">
-              Classificació Global
-            </h2>
-            <Trophy className="w-6 sm:w-8 h-6 sm:h-8 text-padel-primary" />
-          </div>
+        <div className="text-left sm:text-center mb-6 md:mb-12">
           {pagination && (
-            <p className="text-xs sm:text-sm text-gray-300">
+            <p className="text-center text-xs sm:text-sm text-gray-300">
               <Badge className="bg-padel-primary/20 text-padel-primary border border-padel-primary/20 text-xs sm:text-sm">
                 {pagination.totalPlayers} jugadors
               </Badge>

@@ -262,10 +262,9 @@ export default function UsersPage() {
 												Reg: {formatDate(userData.created_at)}
 											</p>
 											<p className="text-white/60 text-[10px] md:text-xs leading-tight">
-												Nivell {userData.skill_level}
-												{userData.trend === "up" && " ↑"}
-												{userData.trend === "down" && " ↓"}
-												{userData.trend === "same" && " →"}
+												{userData.trend === "up" && "Tendència ↑"}
+												{userData.trend === "down" && "Tendència ↓"}
+												{userData.trend === "same" && "Tendència →"}
 											</p>
 										</div>
 									</div>

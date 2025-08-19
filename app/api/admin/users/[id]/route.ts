@@ -61,8 +61,7 @@ export async function GET(
 				phone,
 				avatar_url,
 				is_admin,
-				score,
-				skill_level,
+					score,
 				trend,
 				observations,
 				image_rights_accepted,
@@ -200,7 +199,6 @@ export async function PUT(
 			"phone",
 			"is_admin",
 			"score",
-			"skill_level",
 			"trend",
 			"observations",
 			"image_rights_accepted",
@@ -231,18 +229,6 @@ export async function PUT(
 		) {
 			return NextResponse.json(
 				{ error: "El cognom ha de ser un text vàlid" },
-				{ status: 400 }
-			);
-		}
-
-		if (
-			filteredUpdates.skill_level &&
-			(typeof filteredUpdates.skill_level !== "number" ||
-				filteredUpdates.skill_level < 0 ||
-				filteredUpdates.skill_level > 10)
-		) {
-			return NextResponse.json(
-				{ error: "El nivell d'habilitat ha de ser un número entre 0 i 10" },
 				{ status: 400 }
 			);
 		}

@@ -133,7 +133,7 @@ export default function Dashboard() {
 							supabase
 								.from("users")
 								.select(
-									"id,name,surname,skill_level,trend,email,phone,observations,created_at,is_admin"
+									"id,name,surname,trend,email,phone,observations,created_at,is_admin"
 								)
 								.eq("id", authUser.id)
 								.single(),

@@ -71,7 +71,7 @@ export function CreateMatchDialog({
 			<Dialog open={open} onOpenChange={onOpenChange}>
 		<DialogContent className="bg-black/90 border-white/20 text-white max-w-2xl max-h-[100dvh] sm:max-h-[90dvh] p-0">
 					<div className="flex flex-col h-full">
-			                        <div className="px-4 sm:px-6 pt-4 sm:pt-6">
+						<div className="px-4 sm:px-6 pt-4 sm:pt-6">
 							<DialogHeader>
 								<DialogTitle className="leading-snug break-words">Crear Nou Partit</DialogTitle>
 								<DialogDescription className="text-white/60">
@@ -109,7 +109,7 @@ export function CreateMatchDialog({
 							</div>
 						</div>
 
-						                        <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+						<div className="px-4 sm:px-6 pb-4 sm:pb-6">
 							<DialogFooter>
 								<Button
 									type="button"

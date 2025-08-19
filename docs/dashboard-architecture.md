@@ -45,7 +45,7 @@ Este documento explica la estructura del dashboard, cómo se gestionan las petic
 - `app/dashboard/page.tsx` (cliente):
   - `supabase.auth.getUser()` → si no hay usuario: `router.push('/signin')`.
   - Perfil y cualidades: ahora se cargan en paralelo con `Promise.all`, seleccionando columnas específicas:
-    - Perfil: `id,name,surname,skill_level,trend,email,phone,observations,created_at,is_admin`.
+  - Perfil: `id,name,surname,trend,email,phone,observations,created_at,is_admin`.
     - Cualidades: `user_qualities` + relación `qualities (id,name)`.
   - Estadísticas: `hooks/use-user-stats.ts` con React Query (`/api/user/stats`).
 

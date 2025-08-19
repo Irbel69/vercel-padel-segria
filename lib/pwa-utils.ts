@@ -164,16 +164,9 @@ export function isSessionDismissed(): boolean {
  * Abre Safari en iOS cuando el usuario está en otro navegador
  */
 export function openInSafari(): void {
-  const currentUrl = window.location.href;
-  
-  // Intenta abrir en Safari
-  const safariUrl = currentUrl.replace(/^https?:\/\//, 'x-web-search://');
-  window.location.href = safariUrl;
-  
-  // Fallback: mostrar instrucciones si no funciona
-  setTimeout(() => {
-    alert("Obre aquesta pàgina en Safari per poder instal·lar l'aplicació.");
-  }, 1000);
+  // No existe un esquema estándar para abrir Safari directamente desde otro navegador.
+  // La mejor opción es mostrar instrucciones claras al usuario.
+  alert("Per instal·lar l'aplicació, obre aquesta pàgina manualment en Safari.");
 }
 
 /**

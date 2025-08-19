@@ -53,7 +53,6 @@ export async function GET(req: NextRequest) {
 				phone,
 				is_admin,
 				score,
-				skill_level,
 				trend,
 				created_at,
 				updated_at

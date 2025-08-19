@@ -3,7 +3,6 @@ export interface RankingPlayer {
   name: string | null;
   surname: string | null;
   avatar_url: string | null;
-  skill_level: number;
   trend: 'up' | 'down' | 'same';
   matches_played: number;
   matches_won: number;

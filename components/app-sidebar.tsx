@@ -227,9 +227,9 @@ export function AppSidebar() {
 							Configuració
 						</h4>
 					</div>
-		    <SidebarMenu className="gap-1.5">
+			<SidebarMenu className="gap-1.5">
 						<SidebarMenuItem>
-			    <SidebarMenuButton
+				<SidebarMenuButton
 								asChild
 								isActive={pathname === "/dashboard/config"}
 								size="lg"

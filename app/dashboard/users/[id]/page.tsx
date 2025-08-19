@@ -73,7 +73,7 @@ export default function UserDetailPage() {
 		phone: "",
 		is_admin: false,
 		score: 0,
-		skill_level: 0,
+		// Removed: skill_level
 		trend: "same" as "up" | "down" | "same",
 		observations: "",
 		image_rights_accepted: false,
@@ -112,7 +112,7 @@ export default function UserDetailPage() {
 					phone: data.user.phone || "",
 					is_admin: data.user.is_admin || false,
 					score: data.user.score || 0,
-					skill_level: data.user.skill_level || 0,
+						// Removed: skill_level
 					trend: data.user.trend || "same",
 					observations: data.user.observations || "",
 					image_rights_accepted: data.user.image_rights_accepted || false,
@@ -385,12 +385,7 @@ export default function UserDetailPage() {
 									</span>
 								</div>
 
-								<div className="flex items-center justify-between">
-									<span className="text-white/60 text-sm">Nivell:</span>
-									<span className="text-white font-medium">
-										{user.skill_level}/10
-									</span>
-								</div>
+								{/* Removed: Skill level display */}
 
 								<div className="flex items-center justify-between">
 									<span className="text-white/60 text-sm">Tendència:</span>
@@ -595,25 +590,7 @@ export default function UserDetailPage() {
 									</div>
 								</div>
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									<div className="space-y-2">
-										<Label htmlFor="skill_level" className="text-white/70">
-											Nivell d&apos;Habilitat (0-10)
-										</Label>
-										<Input
-											id="skill_level"
-											type="number"
-											min="0"
-											max="10"
-											value={formData.skill_level}
-											onChange={(e) =>
-												handleInputChange(
-													"skill_level",
-													parseInt(e.target.value) || 0
-												)
-											}
-											className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
-										/>
-									</div>
+									{/* Removed: Skill level input */}
 									<div className="space-y-2">
 										<Label htmlFor="trend" className="text-white/70">
 											Tendència

@@ -179,7 +179,7 @@ export function EventsSection() {
 						updated_at: new Date().toISOString(),
 						current_participants: mockEvent.participants,
 					})
-			  );
+				);
 
 	// Show a simple loading state if the component hasn't loaded yet
 	if (!isLoaded) {
