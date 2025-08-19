@@ -42,8 +42,9 @@ export default async function LayoutPrivate({
 		<div className="min-h-screen bg-black relative overflow-hidden">
 			{/* Background decorative elements */}
 			<div className="absolute inset-0 overflow-hidden pointer-events-none">
-				<div className="absolute -top-40 -right-40 w-96 h-96 bg-padel-primary/10 rounded-full blur-3xl" />
-				<div className="absolute -bottom-40 -left-40 w-80 h-80 bg-padel-primary/5 rounded-full blur-3xl" />
+				{/* Use transform-based offsets to avoid increasing scroll width on mobile */}
+				<div className="hidden sm:block absolute -top-40 right-0 translate-x-1/2 w-96 h-96 bg-padel-primary/10 rounded-full blur-3xl" />
+				<div className="hidden sm:block absolute -bottom-40 left-0 -translate-x-1/2 w-80 h-80 bg-padel-primary/5 rounded-full blur-3xl" />
 				<div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full">
 					<div className="absolute inset-0 bg-gradient-to-br from-transparent via-padel-primary/3 to-transparent" />
 				</div>

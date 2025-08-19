@@ -30,7 +30,7 @@ export function DottedBackground({
 		<div
 			aria-hidden
 			className={clsx(
-				"pointer-events-none absolute inset-0 -z-10 select-none",
+				"pointer-events-none fixed inset-0 z-0 select-none",
 				withVerticalFade && "[mask-image:linear-gradient(to_bottom,black,black,transparent)]",
 				className,
 			)}

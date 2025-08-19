@@ -180,6 +180,13 @@ export const RATE_LIMIT_CONFIGS = {
     burstAllowance: parseInt(process.env.RATE_LIMIT_AUTH_BURST || '5') // 5 burst requests
   },
   
+  // Admin endpoints - balanced limits for authenticated admin users
+  admin: {
+    windowMs: parseInt(process.env.RATE_LIMIT_ADMIN_WINDOW_MS || '60000'), // 1 minute
+    maxRequests: parseInt(process.env.RATE_LIMIT_ADMIN_MAX || '60'), // 60 requests per minute
+    burstAllowance: parseInt(process.env.RATE_LIMIT_ADMIN_BURST || '15') // 15 burst requests
+  },
+  
   // Default rate limit for other endpoints
   default: {
     windowMs: parseInt(process.env.RATE_LIMIT_DEFAULT_WINDOW_MS || '60000'), // 1 minute

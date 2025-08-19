@@ -8,8 +8,8 @@
     "postbuild": "next-sitemap",
     "start": "next start",
     "lint": "next lint",
-  "test": "jest",
-  "test:security": "node scripts/test-security.js"
+    "test": "jest",
+    "test:security": "node scripts/test-security.js"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.18",
@@ -58,6 +58,7 @@
     "nextjs-toploader": "^1.6.11",
     "nodemailer": "^6.9.13",
     "react": "18.2.0",
+    "react-countup": "^6.5.3",
     "react-day-picker": "^9.8.0",
     "react-dom": "18.2.0",
     "react-hook-form": "^7.60.0",

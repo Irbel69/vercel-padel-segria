@@ -8,14 +8,12 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
 import ButtonAccount from "@/components/ButtonAccount";
 import { useUserStats } from "@/hooks/use-user-stats";
+import { useToast } from "@/hooks/use-toast";
 import {
 	Activity,
 	Trophy,
-	TrendingUp,
 	Target,
 	Award,
 	Star,
@@ -36,11 +34,16 @@ import {
 	BrainCircuit,
 	Users,
 	Gamepad2,
+	Mail,
+	Phone,
+	Edit3,
 	type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/libs/supabase/client";
 import { useEffect, useState } from "react";
+import CountUp from "react-countup";
 import { useRouter } from "next/navigation";
+import EditFieldDialog from "@/components/EditFieldDialog";
 
 export const dynamic = "force-dynamic";
 
@@ -82,11 +85,34 @@ export default function Dashboard() {
 	const router = useRouter();
 	const supabase = createClient();
 	const { stats, loading: statsLoading, error: statsError } = useUserStats();
+	const { toast } = useToast();
 
 	const [user, setUser] = useState<any>(null);
 	const [userProfile, setUserProfile] = useState<any>(null);
 	const [userQualities, setUserQualities] = useState<any[]>([]);
 	const [loading, setLoading] = useState(true);
+
+	// Edit dialog states
+	const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+	const [phoneDialogOpen, setPhoneDialogOpen] = useState(false);
+
+	// Function to update profile field
+	const updateProfileField = async (field: string, value: string) => {
+		const response = await fetch('/api/user/profile', {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({ [field]: value }),
+		});
+
+		if (!response.ok) {
+			throw new Error('Failed to update profile');
+		}
+
+		// Update local state
+		setUserProfile((prev: any) => ({ ...prev, [field]: value }));
+	};
 
 	useEffect(() => {
 		async function loadUserData() {
@@ -143,10 +169,10 @@ export default function Dashboard() {
 	}, [router, supabase]);
 
 	if (loading) {
-			return (
+		return (
 			<div className="space-y-8">
-				<Skeleton className="h-12 w-96" />
-				<Skeleton className="h-64 w-full" />
+				<div className="h-12 w-96 bg-white/10 rounded animate-pulse" />
+				<div className="h-64 w-full bg-white/10 rounded animate-pulse" />
 			</div>
 		);
 	}
@@ -206,27 +232,23 @@ export default function Dashboard() {
 								</div>
 							</div>
 							<div className="text-right">
-								{statsLoading ? (
-									<Skeleton className="h-8 w-12 mb-1" />
-								) : (
-									<div className="text-2xl font-bold text-white">{userScore}</div>
-								)}
+								<div className="text-2xl font-bold text-white">
+									<CountUp end={userScore} duration={2.5} delay={0.5} />
+								</div>
 								<div className="text-xs text-white/60">Punts</div>
 							</div>
 						</div>
 					</CardContent>
 				</Card>
 
-				{/* Mobile Stats Grid - 2x2 */}
-				<div className="grid grid-cols-2 gap-3">
+				{/* Mobile Stats Grid - 1x3 */}
+				<div className="grid grid-cols-3 gap-3">
 					<Card className="border-0 [background:rgba(255,255,255,0.1)] ring-1 ring-white/20">
 						<CardContent className="p-3 text-center">
 							<Trophy className="w-6 h-6 text-green-400 mx-auto mb-2" />
-							{statsLoading ? (
-								<Skeleton className="h-6 w-8 mx-auto mb-1" />
-							) : (
-								<div className="text-xl font-bold text-white">{matchesWon}</div>
-							)}
+							<div className="text-xl font-bold text-white">
+								<CountUp end={matchesWon} duration={2.5} delay={0.7} />
+							</div>
 							<div className="text-xs text-white/60">Guanyats</div>
 						</CardContent>
 					</Card>
@@ -234,11 +256,9 @@ export default function Dashboard() {
 					<Card className="border-0 [background:rgba(255,255,255,0.1)] ring-1 ring-white/20">
 						<CardContent className="p-3 text-center">
 							<Activity className="w-6 h-6 text-blue-400 mx-auto mb-2" />
-							{statsLoading ? (
-								<Skeleton className="h-6 w-8 mx-auto mb-1" />
-							) : (
-								<div className="text-xl font-bold text-white">{matchesPlayed}</div>
-							)}
+							<div className="text-xl font-bold text-white">
+								<CountUp end={matchesPlayed} duration={2.5} delay={0.9} />
+							</div>
 							<div className="text-xs text-white/60">Jugats</div>
 						</CardContent>
 					</Card>
@@ -246,23 +266,10 @@ export default function Dashboard() {
 					<Card className="border-0 [background:rgba(255,255,255,0.1)] ring-1 ring-white/20">
 						<CardContent className="p-3 text-center">
 							<BarChart3 className="w-6 h-6 text-purple-400 mx-auto mb-2" />
-							{statsLoading ? (
-								<Skeleton className="h-6 w-8 mx-auto mb-1" />
-							) : (
-								<div className="text-xl font-bold text-white">{winPercentage}%</div>
-							)}
-							<div className="text-xs text-white/60">Victòries</div>
-						</CardContent>
-					</Card>
-
-					<Card className="border-0 [background:rgba(255,255,255,0.1)] ring-1 ring-white/20">
-						<CardContent className="p-3 text-center">
-							<Target className="w-6 h-6 text-orange-400 mx-auto mb-2" />
 							<div className="text-xl font-bold text-white">
-								{userProfile.skill_level}
-								<span className="text-sm text-white/50">/10</span>
+								<CountUp end={winPercentage} duration={2.5} delay={1.1} suffix="%" />
 							</div>
-							<div className="text-xs text-white/60">Nivell</div>
+							<div className="text-xs text-white/60">Victòries</div>
 						</CardContent>
 					</Card>
 				</div>
@@ -304,22 +311,6 @@ export default function Dashboard() {
 						)}
 					</CardContent>
 				</Card>
-
-				{/* Mobile Level Progress */}
-				<Card className="border-0 [background:rgba(255,255,255,0.1)] ring-1 ring-white/20">
-					<CardContent className="p-4">
-						<div className="flex justify-between items-center mb-3">
-							<h4 className="text-white font-medium text-sm">Progrés del Nivell</h4>
-							<span className="text-sm text-white/60">
-								{userProfile.skill_level}/10
-							</span>
-						</div>
-						<Progress
-							value={(userProfile.skill_level / 10) * 100}
-							className="h-2"
-						/>
-					</CardContent>
-				</Card>
 			</div>
 
 			{/* Desktop Layout - Keep existing */}
@@ -348,11 +339,9 @@ export default function Dashboard() {
 								</div>
 							</div>
 							<div className="text-right">
-								{statsLoading ? (
-									<Skeleton className="h-9 w-16 mb-1" />
-								) : (
-									<div className="text-3xl font-bold text-white">{userScore}</div>
-								)}
+								<div className="text-3xl font-bold text-white">
+									<CountUp end={userScore} duration={2.5} delay={0.5} />
+								</div>
 								<div className="text-sm text-white/60">Puntuació</div>
 							</div>
 						</div>
@@ -360,7 +349,7 @@ export default function Dashboard() {
 
 					<CardContent className="space-y-6">
 						{/* Statistics Grid */}
-						<div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+						<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 							{/* Matches Won */}
 							<div
 								className="text-center p-4 rounded-xl"
@@ -369,13 +358,9 @@ export default function Dashboard() {
 									border: "1px solid rgba(255, 255, 255, 0.1)",
 								}}>
 								<Trophy className="w-8 h-8 text-green-400 mx-auto mb-2" />
-								{statsLoading ? (
-									<Skeleton className="h-8 w-12 mx-auto mb-1" />
-								) : (
-									<div className="text-2xl font-bold text-white">
-										{matchesWon}
-									</div>
-								)}
+								<div className="text-2xl font-bold text-white">
+									<CountUp end={matchesWon} duration={2.5} delay={0.7} />
+								</div>
 								<div className="text-sm text-white/60">Partits Guanyats</div>
 							</div>
 
@@ -387,13 +372,9 @@ export default function Dashboard() {
 									border: "1px solid rgba(255, 255, 255, 0.1)",
 								}}>
 								<Activity className="w-8 h-8 text-blue-400 mx-auto mb-2" />
-								{statsLoading ? (
-									<Skeleton className="h-8 w-12 mx-auto mb-1" />
-								) : (
-									<div className="text-2xl font-bold text-white">
-										{matchesPlayed}
-									</div>
-								)}
+								<div className="text-2xl font-bold text-white">
+									<CountUp end={matchesPlayed} duration={2.5} delay={0.9} />
+								</div>
 								<div className="text-sm text-white/60">Partits Jugats</div>
 							</div>
 
@@ -405,31 +386,10 @@ export default function Dashboard() {
 									border: "1px solid rgba(255, 255, 255, 0.1)",
 								}}>
 								<BarChart3 className="w-8 h-8 text-purple-400 mx-auto mb-2" />
-								{statsLoading ? (
-									<Skeleton className="h-8 w-12 mx-auto mb-1" />
-								) : (
-									<div className="text-2xl font-bold text-white">
-										{winPercentage}%
-									</div>
-								)}
-								<div className="text-sm text-white/60">% Victòries</div>
-							</div>
-
-							{/* Skill Level */}
-							<div
-								className="text-center p-4 rounded-xl"
-								style={{
-									background: "rgba(255, 255, 255, 0.05)",
-									border: "1px solid rgba(255, 255, 255, 0.1)",
-								}}>
-								<Target className="w-8 h-8 text-orange-400 mx-auto mb-2" />
 								<div className="text-2xl font-bold text-white">
-									{userProfile.skill_level}
-									<span className="text-lg text-white/50">/10</span>
+									<CountUp end={winPercentage} duration={2.5} delay={1.1} suffix="%" />
 								</div>
-								<div className="text-sm text-white/60">
-									Nivell d&apos;Habilitat
-								</div>
+								<div className="text-sm text-white/60">% Victòries</div>
 							</div>
 						</div>
 
@@ -440,94 +400,100 @@ export default function Dashboard() {
 								Qualitats Destacades
 							</h3>
 
-							{userQualities && userQualities.length > 0 ? (
-								<div className="flex items-center justify-center gap-6">
-									{userQualities.map((uq: any, index: number) => {
-										const IconComponent = getQualityIcon(uq.qualities.name);
-										return (
-											<div
-												key={uq.quality_id}
-												className="flex flex-col items-center transition-all duration-300 hover:scale-105">
-												<div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-padel-primary/20 to-padel-primary/30 flex items-center justify-center border-2 border-padel-primary/40 shadow-lg">
-													<IconComponent className="w-10 h-10 text-padel-primary drop-shadow-sm" />
-												</div>
-												<span className="text-white text-sm font-medium text-center block mt-3 max-w-20 leading-tight">
-													{uq.qualities.name}
-												</span>
+						{userQualities && userQualities.length > 0 ? (
+							<div className="flex items-center justify-center gap-6">
+								{userQualities.map((uq: any, index: number) => {
+									const IconComponent = getQualityIcon(uq.qualities.name);
+									return (
+										<div
+											key={uq.quality_id}
+											className="flex flex-col items-center transition-all duration-300 hover:scale-105">
+											<div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-padel-primary/20 to-padel-primary/30 flex items-center justify-center border-2 border-padel-primary/40 shadow-lg">
+												<IconComponent className="w-10 h-10 text-padel-primary drop-shadow-sm" />
 											</div>
-										);
-									})}
-								</div>
-							) : (
-								<div
-									className="text-center p-8 rounded-xl"
-									style={{
-										background: "rgba(255, 255, 255, 0.05)",
-										border: "1px solid rgba(255, 255, 255, 0.1)",
-									}}>
-									<Award className="w-12 h-12 text-white/30 mx-auto mb-4" />
-									<div className="text-white/60 mb-2">
-										No tens qualitats assignades encara
-									</div>
-									<div className="text-sm text-white/40">
-										Un administrador pot assignar-te fins a 3 qualitats
-									</div>
-								</div>
-							)}
-						</div>
-
-						{/* Additional Information */}
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-							{/* Player Trend */}
-							<div className="space-y-3">
-								<h4 className="text-white font-medium flex items-center gap-2">
-									<TrendingUp className="w-4 h-4 text-padel-primary" />
-									Tendència del Jugador
-								</h4>
-								<div className="flex items-center gap-3">
-									<div
-										className={`w-8 h-8 rounded-full flex items-center justify-center ${
-											userProfile.trend === "up"
-												? "bg-green-500/20"
-												: userProfile.trend === "down"
-												? "bg-red-500/20"
-												: "bg-gray-500/20"
-										}`}>
-										{userProfile.trend === "up" && (
-											<ArrowUpRight className="h-4 w-4 text-green-400" />
-										)}
-										{userProfile.trend === "down" && (
-											<ArrowUpRight className="h-4 w-4 text-red-400 rotate-180" />
-										)}
-										{userProfile.trend === "same" && (
-											<Activity className="h-4 w-4 text-gray-400" />
-										)}
-									</div>
-									<div>
-										<div className="text-white font-medium capitalize">
-											{userProfile.trend === "up" && "En Ascens"}
-											{userProfile.trend === "down" && "En Descens"}
-											{userProfile.trend === "same" && "Estable"}
+											<span className="text-white text-sm font-medium text-center block mt-3 max-w-20 leading-tight">
+												{uq.qualities.name}
+											</span>
 										</div>
-										<div className="text-xs text-white/50">
-											Evolució recent del rendiment
-										</div>
-									</div>
+									);
+								})}
+							</div>
+						) : (
+							<div
+								className="text-center p-8 rounded-xl"
+								style={{
+									background: "rgba(255, 255, 255, 0.05)",
+									border: "1px solid rgba(255, 255, 255, 0.1)",
+								}}>
+								<Award className="w-12 h-12 text-white/30 mx-auto mb-4" />
+								<div className="text-white/60 mb-2">
+									No tens qualitats assignades encara
+								</div>
+								<div className="text-sm text-white/40">
+									Un administrador pot assignar-te fins a 3 qualitats
 								</div>
 							</div>
+						)}
+					</div>
 
+						{/* Additional Information */}
+						<div className="grid grid-cols-1 gap-6">
 							{/* Contact Information */}
-							<div className="space-y-3">
-								<h4 className="text-white font-medium">Informació de Contacte</h4>
-								<div className="space-y-2">
-									<div className="text-sm">
-										<span className="text-white/50">Email: </span>
-										<span className="text-white">{userProfile.email}</span>
+							<div className="space-y-4">
+								<h4 className="text-white font-medium flex items-center gap-2">
+									<User className="w-5 h-5 text-padel-primary" />
+									Informació de Contacte
+								</h4>
+								<div className="grid gap-4">
+									{/* Email Card */}
+									<div
+										className="group relative overflow-hidden rounded-xl p-4 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] cursor-pointer"
+										style={{
+											background: "linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)",
+											border: "1px solid rgba(255, 255, 255, 0.15)",
+											backdropFilter: "blur(10px)",
+										}}
+										onClick={() => setEmailDialogOpen(true)}
+									>
+										<div className="flex items-center gap-3">
+											<div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/30 flex items-center justify-center border border-blue-400/30">
+												<Mail className="w-6 h-6 text-blue-400" />
+											</div>
+											<div className="flex-1">
+												<div className="text-blue-300 text-sm font-medium mb-1">Correu electrònic</div>
+												<div className="text-white font-medium text-lg">{userProfile.email}</div>
+											</div>
+											<div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+												<Edit3 className="w-5 h-5 text-white/60" />
+											</div>
+										</div>
+										<div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 									</div>
+
+									{/* Phone Card */}
 									{userProfile.phone && (
-										<div className="text-sm">
-											<span className="text-white/50">Telèfon: </span>
-											<span className="text-white">{userProfile.phone}</span>
+										<div
+											className="group relative overflow-hidden rounded-xl p-4 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] cursor-pointer"
+											style={{
+												background: "linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)",
+												border: "1px solid rgba(255, 255, 255, 0.15)",
+												backdropFilter: "blur(10px)",
+											}}
+											onClick={() => setPhoneDialogOpen(true)}
+										>
+											<div className="flex items-center gap-3">
+												<div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-green-600/30 flex items-center justify-center border border-green-400/30">
+													<Phone className="w-6 h-6 text-green-400" />
+												</div>
+												<div className="flex-1">
+													<div className="text-green-300 text-sm font-medium mb-1">Telèfon</div>
+													<div className="text-white font-medium text-lg">{userProfile.phone}</div>
+												</div>
+												<div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+													<Edit3 className="w-5 h-5 text-white/60" />
+												</div>
+											</div>
+											<div className="absolute inset-0 bg-gradient-to-r from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 										</div>
 									)}
 								</div>
@@ -548,23 +514,30 @@ export default function Dashboard() {
 								</div>
 							</div>
 						)}
-
-						{/* Progress Bar */}
-						<div className="space-y-3">
-							<div className="flex justify-between items-center">
-								<h4 className="text-white font-medium">Progrés del Nivell</h4>
-								<span className="text-sm text-white/60">
-									{userProfile.skill_level}/10
-								</span>
-							</div>
-							<Progress
-								value={(userProfile.skill_level / 10) * 100}
-								className="h-3"
-							/>
-						</div>
 					</CardContent>
 				</Card>
 			</div>
+
+			{/* Edit Dialogs */}
+			<EditFieldDialog
+				isOpen={emailDialogOpen}
+				onClose={() => setEmailDialogOpen(false)}
+				fieldName="email"
+				fieldLabel="Correu electrònic"
+				currentValue={userProfile?.email || ""}
+				fieldType="email"
+				onSave={(value) => updateProfileField("email", value)}
+			/>
+
+			<EditFieldDialog
+				isOpen={phoneDialogOpen}
+				onClose={() => setPhoneDialogOpen(false)}
+				fieldName="phone"
+				fieldLabel="Telèfon"
+				currentValue={userProfile?.phone || ""}
+				fieldType="phone"
+				onSave={(value) => updateProfileField("phone", value)}
+			/>
 		</div>
 	);
 }

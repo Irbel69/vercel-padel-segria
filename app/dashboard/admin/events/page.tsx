@@ -475,12 +475,12 @@ export default function AdminEventsPage() {
 		<div className="space-y-4 md:space-y-6 px-4 md:px-0">
 			{/* Header */}
 			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-				<div className="flex flex-col sm:flex-row sm:items-center gap-3">
+				<div className="flex items-center gap-3 min-w-0">
 					<div className="p-2 bg-padel-primary/20 rounded-lg">
 						<Calendar className="h-6 w-6 text-padel-primary" />
 					</div>
-					<div>
-						<h1 className="text-2xl md:text-3xl font-bold text-white">
+					<div className="min-w-0">
+						<h1 className="text-2xl md:text-3xl font-bold text-white truncate">
 							Gestió d&apos;Esdeveniments
 						</h1>
 						<p className="text-white/60 text-sm md:text-base">
@@ -695,7 +695,7 @@ export default function AdminEventsPage() {
 
 			{/* Create/Edit Event Modal */}
 			<Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-				<DialogContent className="bg-black/90 border-white/20 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
+				<DialogContent className="bg-black/90 border-white/20 text-white max-w-4xl max-h-[90dvh] overflow-y-auto">
 					<DialogHeader>
 						<DialogTitle>
 							{isEditing ? "Editar Esdeveniment" : "Crear Nou Esdeveniment"}
@@ -854,7 +854,7 @@ export default function AdminEventsPage() {
 			<Dialog
 				open={isParticipantsModalOpen}
 				onOpenChange={setIsParticipantsModalOpen}>
-				<DialogContent className="bg-black/90 border-white/20 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+				<DialogContent className="bg-black/90 border-white/20 text-white max-w-3xl max-h-[90dvh] overflow-y-auto">
 					<DialogHeader>
 						<DialogTitle>
 							Inscrits {participantsEvent ? `- ${participantsEvent.title}` : ""}

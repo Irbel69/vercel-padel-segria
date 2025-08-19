@@ -299,7 +299,7 @@ const SidebarTrigger = React.forwardRef<
       ) : (
         <ChevronsRight className="h-4 w-4" />
       )}
-  <span className="sr-only">{isOpen ? "Close Sidebar" : "Open Sidebar"}</span>
+  <span className="sr-only">{isOpen ? "Tancar Barra Lateral" : "Obrir Barra Lateral"}</span>
     </Button>
   )
 })

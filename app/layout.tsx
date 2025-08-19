@@ -54,7 +54,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 				<link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
 				<link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png" />
 			</head>
-			<body className="bg-black">
+			<body className="bg-black touch-pan-y"
+				style={{
+					overflowX: 'hidden',
+					overscrollBehaviorX: 'none',
+					width: '100vw',
+					maxWidth: '100vw'
+				}}>
 				<ThemeProvider
 					attribute="class"
 					forcedTheme="dark"
@@ -63,7 +69,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 					disableTransitionOnChange
 				>
 					{/* Global background pattern (single instance) */}
-					<div className="relative min-h-screen w-full overflow-x-hidden overflow-y-hidden bg-black">
+					<div className="relative min-h-screen w-full bg-black"
+						style={{
+							overflowX: 'hidden',
+							paddingLeft: 'env(safe-area-inset-left)',
+							paddingRight: 'env(safe-area-inset-right)',
+							width: '100vw',
+							maxWidth: '100vw'
+						}}>
 						<DottedBackground />
 						<ServiceWorkerRegister />
 						{/* ClientLayout contains all the client wrappers (Crisp chat support, toast messages, tooltips, etc.) */}

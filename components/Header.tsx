@@ -274,8 +274,11 @@ const HeaderContent = ({ transparent = false }: HeaderProps) => {
 											border: "1px solid rgba(255, 255, 255, 0.05)",
 											backdropFilter: "blur(10px)",
 										}}>
-										{/* Hover background effect */}
-										<div className="absolute inset-0 bg-gradient-to-r from-padel-primary/10 to-padel-primary/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+										{/* Hover/active background effect (desktop hover, mobile active) */}
+										<div className="absolute inset-0 bg-gradient-to-r from-padel-primary/10 to-padel-primary/5 rounded-2xl opacity-0 group-hover:opacity-100 active:opacity-100 transition-opacity duration-300" />
+
+										{/* Subtle left accent bar for touch feedback */}
+										<span className="absolute left-3 top-1/2 -translate-y-1/2 h-7 w-1.5 rounded bg-padel-primary/70 opacity-0 active:opacity-100 group-focus-within:opacity-100 sm:group-hover:opacity-100 transition-opacity duration-200" />
 
 										{/* Link content */}
 										<div className="relative flex items-center gap-4">
@@ -300,18 +303,6 @@ const HeaderContent = ({ transparent = false }: HeaderProps) => {
 											</div>
 										</div>
 
-										{/* Animated border */}
-										<div
-											className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-											style={{
-												background: `linear-gradient(90deg, transparent, rgba(229, 240, 0, 0.3), transparent)`,
-												backgroundSize: "200% 1px",
-												backgroundPosition: "-100% 0",
-												animation: "shimmer 2s ease-in-out infinite",
-												height: "1px",
-												top: "0",
-											}}
-										/>
 									</div>
 								</Link>
 							))}
