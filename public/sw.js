@@ -1,4 +1,4 @@
-const CACHE_NAME = 'padel-segria-v1';
+const CACHE_NAME = 'padel-segria-v2';
 const STATIC_ASSETS = [
   '/',
   '/dashboard',
@@ -47,6 +47,15 @@ self.addEventListener('fetch', (event) => {
   // Only handle GET requests
   if (event.request.method !== 'GET') {
     return;
+  }
+
+  const url = new URL(event.request.url);
+  
+  // Skip intercepting authentication routes to avoid redirect caching issues
+  if (url.pathname.startsWith('/api/auth/') || 
+      url.pathname.startsWith('/auth/callback') ||
+      url.hostname.includes('supabase.co')) {
+    return; // Let the browser handle these directly
   }
 
   event.respondWith(
