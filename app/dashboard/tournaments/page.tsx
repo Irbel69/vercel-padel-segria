@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useUser } from "@/hooks/use-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,11 @@ export default function TournamentsPage() {
   const [joinCode, setJoinCode] = useState("");
   const [joining, setJoining] = useState(false);
   const { toast } = useToast();
+
+  // Ref to the visible code text so we can auto-select it (helps on mobile)
+  const inviteCodeRef = useRef<HTMLSpanElement | null>(null);
+  const copyTimerRef = useRef<number | null>(null);
+  const [copyConfirmed, setCopyConfirmed] = useState(false);
 
   // React Query mutations
   const inviteMutation = useCreatePairInvite();
@@ -115,44 +120,106 @@ export default function TournamentsPage() {
   };
 
   const copyToClipboard = async (text: string) => {
+    let success = false;
+    // Strategy 1: Clipboard API (requires secure context and user gesture)
     try {
-      // Prefer modern API when available and in secure context
       if (typeof navigator !== "undefined" && navigator.clipboard && (window as any).isSecureContext) {
         await navigator.clipboard.writeText(text);
-      } else {
-        // Fallback for iOS Safari and older browsers
+        success = true;
+      }
+    } catch {}
+
+    // Strategy 2: Use the currently selected visible code (execCommand from selection)
+    if (!success) {
+      try {
+        // If the code in the dialog is visible and selected, this can succeed on iOS Safari
+        const attempted = document.execCommand && document.execCommand("copy");
+        if (attempted) success = true;
+      } catch {}
+    }
+
+    // Strategy 3: Hidden textarea fallback (works in most browsers including older iOS)
+    if (!success) {
+      try {
         const textarea = document.createElement("textarea");
         textarea.value = text;
-        // Avoid scrolling to bottom
-        textarea.style.position = "fixed";
-        textarea.style.top = "0";
-        textarea.style.left = "0";
-        textarea.style.opacity = "0";
         textarea.setAttribute("readonly", "");
+        textarea.style.position = "absolute";
+        textarea.style.left = "-9999px";
+        textarea.style.top = "0";
         document.body.appendChild(textarea);
-
-        // Select the text (iOS-compatible)
         textarea.focus();
         textarea.select();
-        try {
-          textarea.setSelectionRange(0, text.length);
-        } catch {}
+        try { textarea.setSelectionRange(0, text.length); } catch {}
+        success = document.execCommand && document.execCommand("copy");
+        document.body.removeChild(textarea);
+      } catch {}
+    }
 
-        try {
-          document.execCommand("copy");
-        } finally {
-          document.body.removeChild(textarea);
-        }
-      }
+    // Strategy 4: ContentEditable fallback (notably helps with some iOS Safari versions)
+    if (!success) {
+      try {
+        const container = document.createElement("div");
+        container.contentEditable = "true";
+        container.style.position = "fixed";
+        container.style.left = "-9999px";
+        container.style.top = "0";
+        const span = document.createElement("span");
+        span.textContent = text;
+        container.appendChild(span);
+        document.body.appendChild(container);
+        const range = document.createRange();
+        range.selectNodeContents(container);
+        const selection = window.getSelection?.();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        success = document.execCommand && document.execCommand("copy");
+        document.body.removeChild(container);
+      } catch {}
+    }
+
+    if (success) {
+      // Inline confirmation and auto-hide
+      try {
+        if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current);
+      } catch {}
+      setCopyConfirmed(true);
+      try {
+        copyTimerRef.current = window.setTimeout(() => setCopyConfirmed(false), 2000);
+      } catch {}
       toast({
         title: "Copiat!",
         description: "El codi s'ha copiat al portapapeles",
       });
-    } catch (err) {
+    } else {
+      // As último recurso, dejamos el texto seleccionado para que el usuario pueda copiar manualmente
+      selectInviteCodeText();
       toast({
-        title: "Error",
-        description: "No s'ha pogut copiar el codi",
+        title: "No s'ha pogut copiar",
+        description: "Mantén premut sobre el codi per copiar-lo manualment",
       });
+    }
+  };
+
+  const selectInviteCodeText = () => {
+    try {
+      const el = inviteCodeRef.current;
+      if (!el) return;
+      // Support modern browsers
+      const selection = window.getSelection?.();
+      if (selection && typeof document.createRange === "function") {
+        selection.removeAllRanges();
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        selection.addRange(range);
+      } else if ((document as any).body?.createTextRange) {
+        // Legacy IE fallback
+        const range = (document as any).body.createTextRange();
+        range.moveToElementText(el);
+        range.select();
+      }
+    } catch {
+      // no-op; selection is a best-effort enhancement for mobile UX
     }
   };
 
@@ -768,7 +835,7 @@ export default function TournamentsPage() {
           }
         }}
       >
-        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="bg-zinc-900/90 backdrop-blur-md border-white/10 text-white max-w-md">
+  <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="bg-zinc-900/90 backdrop-blur-md border-white/10 text-white max-w-md">
           <DialogHeader>
             <DialogTitle>Inscripció amb Parella</DialogTitle>
             <DialogDescription>
@@ -791,18 +858,22 @@ export default function TournamentsPage() {
                     role="button"
                     tabIndex={0}
                     aria-label="Copiar codi d'invitació"
-                    onClick={() => copyToClipboard(generatedCode)}
+                    onClick={() => {
+                      selectInviteCodeText();
+                      copyToClipboard(generatedCode);
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
+                        selectInviteCodeText();
                         copyToClipboard(generatedCode);
                       }
                     }}
-                    className="bg-padel-primary rounded-lg p-5 cursor-pointer hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-padel-primary/60 focus:ring-offset-zinc-900 shadow-lg transition-all duration-200 group select-none"
+                    className="bg-padel-primary rounded-lg p-5 cursor-pointer hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-padel-primary/60 focus:ring-offset-zinc-900 shadow-lg transition-all duration-200 group"
                   >
                     <div className="text-center space-y-3">
-                      <div className="font-mono text-3xl md:text-4xl font-extrabold tracking-[0.4em] text-black drop-shadow-sm select-all">
-                        {generatedCode}
+                      <div className="font-mono text-3xl md:text-4xl font-extrabold tracking-[0.4em] text-black drop-shadow-sm">
+                        <span ref={inviteCodeRef} className="select-all">{generatedCode}</span>
                       </div>
                       <div className="flex items-center justify-center space-x-2 text-black/80 group-hover:text-black transition-colors">
                         <Copy className="h-4 w-4" />
@@ -816,6 +887,12 @@ export default function TournamentsPage() {
                   </div>
                 )}
               </div>
+              {copyConfirmed && (
+                <div aria-live="polite" className="flex items-center justify-center gap-2 text-green-400">
+                  <CheckCircle className="h-4 w-4" />
+                  <span className="text-sm">Codi copiat al portapapers</span>
+                </div>
+              )}
               
               {generatedCode && (
                 <p className="text-xs text-white/60 text-center">
@@ -865,6 +942,8 @@ export default function TournamentsPage() {
                 setInviteEmail("");
                 setGeneratedCode(null);
                 setAutoGeneratingCode(false);
+                try { if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current); } catch {}
+                setCopyConfirmed(false);
               }} 
               className="bg-white/10 border-white/20 text-white hover:bg-white/20"
             >
