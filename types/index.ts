@@ -76,6 +76,8 @@ export interface Registration {
 	event_id: number;
 	status: "pending" | "confirmed" | "cancelled";
 	registered_at: string;
+	// Optional group identifier when registered as a pair
+	pair_id?: string | null;
 	event?: Event;
 	user?: UserProfile;
 }
@@ -138,4 +140,22 @@ export interface MatchesListResponse {
 		title: string;
 	};
 	matches: Match[];
+}
+
+// Pair Invites related types
+export type PairInviteStatus = "sent" | "accepted" | "declined" | "revoked" | "expired";
+
+export interface PairInvite {
+	id: number;
+	event_id: number;
+	inviter_id: string;
+	invitee_id: string | null;
+	invitee_email: string | null;
+	status: PairInviteStatus;
+	token: string; // secure random token for email links
+	short_code: string | null; // optional 6-8 char human code for join by code
+	created_at: string;
+	expires_at: string | null;
+	accepted_at?: string | null;
+	declined_at?: string | null;
 }

@@ -120,6 +120,15 @@ export function applyRateLimit(request: NextRequest): NextResponse | null {
   } else if (pathname.startsWith('/api/events')) {
     configKey = 'events';
     identifier = `events:${clientIP}`;
+  } else if (pathname.startsWith('/api/invites/join')) {
+    configKey = 'invites_join';
+    identifier = `invites_join:${clientIP}`;
+  } else if (pathname.startsWith('/api/invites/') && (pathname.endsWith('/accept') || pathname.endsWith('/decline'))) {
+    configKey = 'invites_action';
+    identifier = `invites_action:${clientIP}`;
+  } else if (pathname.startsWith('/api/events/') && pathname.endsWith('/invite')) {
+    configKey = 'invites';
+    identifier = `invites:${clientIP}`;
   } else if (pathname.startsWith('/api/auth')) {
     configKey = 'auth';
     identifier = `auth:${clientIP}`;

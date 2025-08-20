@@ -187,6 +187,27 @@ export const RATE_LIMIT_CONFIGS = {
     burstAllowance: parseInt(process.env.RATE_LIMIT_ADMIN_BURST || '15') // 15 burst requests
   },
   
+  // Pair invite creation (email/code) - stricter to prevent abuse
+  invites: {
+    windowMs: parseInt(process.env.RATE_LIMIT_INVITES_WINDOW_MS || '60000'), // 1 minute
+    maxRequests: parseInt(process.env.RATE_LIMIT_INVITES_MAX || '5'), // 5 requests per minute
+    burstAllowance: parseInt(process.env.RATE_LIMIT_INVITES_BURST || '2') // small burst
+  },
+
+  // Join by code lookups - moderate
+  invites_join: {
+    windowMs: parseInt(process.env.RATE_LIMIT_INVITES_JOIN_WINDOW_MS || '60000'), // 1 minute
+    maxRequests: parseInt(process.env.RATE_LIMIT_INVITES_JOIN_MAX || '15'), // 15 per minute
+    burstAllowance: parseInt(process.env.RATE_LIMIT_INVITES_JOIN_BURST || '5')
+  },
+
+  // Accept/decline actions - low frequency
+  invites_action: {
+    windowMs: parseInt(process.env.RATE_LIMIT_INVITES_ACTION_WINDOW_MS || '60000'), // 1 minute
+    maxRequests: parseInt(process.env.RATE_LIMIT_INVITES_ACTION_MAX || '10'), // 10 per minute
+    burstAllowance: parseInt(process.env.RATE_LIMIT_INVITES_ACTION_BURST || '3')
+  },
+  
   // Default rate limit for other endpoints
   default: {
     windowMs: parseInt(process.env.RATE_LIMIT_DEFAULT_WINDOW_MS || '60000'), // 1 minute

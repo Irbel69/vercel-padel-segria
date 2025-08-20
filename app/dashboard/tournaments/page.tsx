@@ -4,6 +4,15 @@ import { useState, useEffect } from "react";
 import { useUser } from "@/hooks/use-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -40,6 +49,15 @@ export default function TournamentsPage() {
   const [processingEvents, setProcessingEvents] = useState<Set<number>>(
     new Set()
   );
+  // Pair invite UI state
+  const [inviteForEventId, setInviteForEventId] = useState<number | null>(null);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteSubmitting, setInviteSubmitting] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+  const [joinCodeOpen, setJoinCodeOpen] = useState(false);
+  const [joinCode, setJoinCode] = useState("");
+  const [joining, setJoining] = useState(false);
+  const { toast } = useToast();
 
   const fetchEvents = async (page: number = 1, status: string = "") => {
     try {
@@ -134,6 +152,55 @@ export default function TournamentsPage() {
         newSet.delete(eventId);
         return newSet;
       });
+    }
+  };
+
+  const handleInviteSubmit = async (generateCodeOnly = false) => {
+    if (!inviteForEventId) return;
+    setInviteSubmitting(true);
+    setGeneratedCode(null);
+    try {
+      const res = await fetch(`/api/events/${inviteForEventId}/invite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: generateCodeOnly ? undefined : inviteEmail || undefined,
+          generateCodeOnly: !!generateCodeOnly,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || data.message || "Error");
+      const code = data?.data?.short_code as string | undefined;
+      if (code) setGeneratedCode(code);
+      toast({ title: "Invitació creada", description: generateCodeOnly ? "Comparteix el codi amb la teva parella" : "Hem enviat un correu si l'adreça és correcta" });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "No s'ha pogut crear la invitació" });
+    } finally {
+      setInviteSubmitting(false);
+    }
+  };
+
+  const handleJoinByCode = async () => {
+    setJoining(true);
+    try {
+      const res = await fetch(`/api/invites/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: joinCode }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || data.message || "Error");
+      const token = data?.data?.token as string | undefined;
+      if (token) {
+        // Navigate to accept page with token
+        window.location.href = `/invite/accept?token=${encodeURIComponent(token)}`;
+      } else {
+        toast({ title: "Informació", description: data.message || "Si el codi és correcte, pots continuar" });
+      }
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "No s'ha pogut validar el codi" });
+    } finally {
+      setJoining(false);
     }
   };
 
@@ -343,14 +410,24 @@ export default function TournamentsPage() {
                 <span className="text-lg md:text-xl">
                   Esdeveniments Disponibles
                 </span>
-                {pagination && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-padel-primary/20 text-padel-primary self-start sm:self-auto"
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setJoinCodeOpen(true)}
+                    className="bg-white/10 border-white/20 text-white hover:bg-white/20"
                   >
-                    {pagination.totalEvents} esdeveniments
-                  </Badge>
-                )}
+                    Unir-me amb codi
+                  </Button>
+                  {pagination && (
+                    <Badge
+                      variant="secondary"
+                      className="bg-padel-primary/20 text-padel-primary self-start sm:self-auto"
+                    >
+                      {pagination.totalEvents} esdeveniments
+                    </Badge>
+                  )}
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="px-3 md:px-6 max-w-full overflow-hidden">
@@ -590,6 +667,19 @@ export default function TournamentsPage() {
                                     : "Inscriure's"}
                                 </Button>
                               )}
+                              {canRegister(event) && (
+                                <Button
+                                  variant="outline"
+                                  onClick={() => {
+                                    setInviteForEventId(event.id);
+                                    setInviteEmail("");
+                                    setGeneratedCode(null);
+                                  }}
+                                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                                >
+                                  Inscriure'm amb parella
+                                </Button>
+                              )}
                               {canUnregister(event) && (
                                 <Button
                                   variant="outline"
@@ -802,6 +892,73 @@ export default function TournamentsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      {/* Invite dialog */}
+      <Dialog open={inviteForEventId !== null} onOpenChange={(open) => !open && setInviteForEventId(null)}>
+        <DialogContent className="bg-white/5 border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle>Inscripció amb Parella</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <label className="text-sm text-white/80">Convida per email (opcional)</label>
+            <Input
+              type="email"
+              placeholder="amic@example.com"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
+            />
+            <div className="flex gap-2 pt-1">
+              <Button
+                onClick={() => handleInviteSubmit(false)}
+                disabled={inviteSubmitting}
+                className="bg-padel-primary text-black hover:bg-padel-primary/90"
+              >
+                {inviteSubmitting ? "Enviant..." : "Enviar invitació"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleInviteSubmit(true)}
+                disabled={inviteSubmitting}
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              >
+                Generar codi
+              </Button>
+            </div>
+            {generatedCode && (
+              <div className="mt-2 p-3 rounded-md bg-white/10 border border-white/20">
+                <p className="text-sm text-white/80">Codi generat:</p>
+                <p className="font-mono text-lg tracking-widest">{generatedCode}</p>
+                <p className="text-xs text-white/60 mt-1">Comparteix aquest codi amb la teva parella. Ell/a podrà unir-se des de el botó "Unir-me amb codi".</p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setInviteForEventId(null)} className="bg-white/10 border-white/20 text-white hover:bg-white/20">Tancar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Join by code dialog */}
+      <Dialog open={joinCodeOpen} onOpenChange={setJoinCodeOpen}>
+        <DialogContent className="bg-white/5 border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle>Unir-me amb codi</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              placeholder="Introdueix el codi"
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+              className="bg-white/10 border-white/20 text-white placeholder:text-white/40 uppercase tracking-widest"
+            />
+            <div className="flex gap-2 pt-1">
+              <Button onClick={handleJoinByCode} disabled={joining || !joinCode} className="bg-padel-primary text-black hover:bg-padel-primary/90">
+                {joining ? "Validant..." : "Continuar"}
+              </Button>
+              <Button variant="outline" onClick={() => setJoinCodeOpen(false)} className="bg-white/10 border-white/20 text-white hover:bg-white/20">Cancel·lar</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
