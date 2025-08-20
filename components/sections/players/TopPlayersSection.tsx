@@ -175,6 +175,19 @@ export function TopPlayersSection() {
 				{/* Desktop grid */}
 				<div className="hidden md:grid md:grid-cols-3 gap-14 md:mx-14">
 					{topPlayers.map((player) => {
+						const isTop3 = player.rank <= 3;
+						const medalClass =
+							player.rank === 1
+								? "bg-yellow-400 text-black"
+								: player.rank === 2
+								? "bg-slate-300 text-black"
+								: "bg-amber-700 text-white";
+						const overlayClass =
+							player.rank === 1
+								? "bg-yellow-400/6"
+								: player.rank === 2
+								? "bg-slate-300/6"
+								: "bg-amber-700/6";
 						const IconComponent = getRankIcon(player.rank);
 						const fullName = `${player.name || ""} ${
 							player.surname || ""
@@ -193,6 +206,12 @@ export function TopPlayersSection() {
 								style={glassCardStyle}
 								onMouseEnter={() => setHoveredCard(player.id)}
 								onMouseLeave={() => setHoveredCard(null)}>
+								{/* subtle colored overlay for top3 */}
+								{isTop3 && (
+									<div
+										className={`absolute inset-0 pointer-events-none rounded-xl ${overlayClass}`}
+									/>
+								)}
 								{player.isChampion && (
 									<div className="absolute top-4 right-4 z-10">
 										<Badge className="bg-padel-primary/90 text-padel-secondary border-0 font-bold">

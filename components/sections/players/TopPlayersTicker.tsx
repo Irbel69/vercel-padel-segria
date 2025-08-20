@@ -107,6 +107,19 @@ export function TopPlayersTicker({ limit }: TopPlayersTickerProps) {
 										<Crown className="w-3 h-3" />
 									</span>
 								)}
+								{/* Medal indicator for top3 */}
+								{player.rank <= 3 && (
+									<span
+										className={`absolute -bottom-2 text-[10px] px-2 py-1 rounded-full font-bold ${
+											player.rank === 1
+												? "bg-yellow-400 text-black"
+												: player.rank === 2
+												? "bg-slate-300 text-black"
+												: "bg-amber-700 text-white"
+										} shadow-md`}>
+										{player.rank === 1 ? "OR" : player.rank === 2 ? "PL" : "BR"}
+									</span>
+								)}
 							</div>
 							<span
 								className={`text-[10px] text-white/80 font-medium text-center leading-tight w-full ${
