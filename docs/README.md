@@ -8,6 +8,17 @@ Este directorio recoge documentación viva para orientar futuras sesiones de des
 
 ## Resumen de cambios recientes
 
+### React Query para Eventos del Dashboard (2025-08-20)
+
+Implementación de React Query para la gestión de eventos en el dashboard:
+
+- **Nuevo hook**: `hooks/use-events.ts` con funciones para listado paginado, inscripciones y invitaciones.
+- **Dashboard refactorizado**: `app/dashboard/tournaments/page.tsx` usa React Query con invalidación automática de caché.
+- **Landing page sin cambios**: `components/sections/events/EventsSection.tsx` mantiene fetch manual.
+- **Sin localStorage**: solo caché en memoria con `staleTime` y `gcTime` optimizados.
+
+### Arreglos en Invitaciones por Pareja (2025-08-20)
+
 Mejoras y arreglos en el flujo de invitaciones por pareja (pair invites):
 
 - Alineación del esquema de base de datos con la implementación (campos `invitee_*`, `token`, `short_code`, enum de estado, timestamps).
