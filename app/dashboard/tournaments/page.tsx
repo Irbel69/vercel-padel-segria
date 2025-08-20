@@ -55,6 +55,7 @@ export default function TournamentsPage() {
   const [joinCodeOpen, setJoinCodeOpen] = useState(false);
   const [joinCode, setJoinCode] = useState("");
   const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Ref to the visible code text so we can auto-select it (helps on mobile)
@@ -90,6 +91,7 @@ export default function TournamentsPage() {
   };
 
   const handleJoinByCode = async () => {
+    setJoinError(null);
     setJoining(true);
     try {
       const res = await fetch(`/api/invites/join`, {
@@ -98,22 +100,24 @@ export default function TournamentsPage() {
         body: JSON.stringify({ code: joinCode }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || data.message || "Error");
+      if (!res.ok) {
+        // Map API error/message to inline field error
+        setJoinError(data.error || data.message || "No s'ha pogut validar el codi");
+        return;
+      }
       const token = data?.data?.token as string | undefined;
       if (token) {
         // Navigate to accept page with token
         window.location.href = `/invite/accept?token=${encodeURIComponent(token)}`;
       } else {
-        toast({
-          title: "Informació",
-          description: data.message || "Si el codi és correcte, pots continuar",
-        });
+        // No token returned => treat as invalid/unknown code (privacy-preserving)
+        setJoinError(data.message || "Codi incorrecte o expirat");
       }
     } catch (e: any) {
-      toast({
-        title: "Error",
-        description: e.message || "No s'ha pogut validar el codi",
-      });
+      // Network or unexpected error -> toast and inline fallback
+      const msg = e?.message || "No s'ha pogut validar el codi";
+      setJoinError(msg);
+      toast({ title: "Error", description: msg });
     } finally {
       setJoining(false);
     }
@@ -953,7 +957,13 @@ export default function TournamentsPage() {
         </DialogContent>
       </Dialog>
       {/* Join by code dialog */}
-      <Dialog open={joinCodeOpen} onOpenChange={setJoinCodeOpen}>
+      <Dialog open={joinCodeOpen} onOpenChange={(open) => {
+        setJoinCodeOpen(open);
+        if (!open) {
+          setJoinError(null);
+          setJoinCode("");
+        }
+      }}>
         <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="bg-zinc-900/90 backdrop-blur-md border-white/10 text-white max-w-md">
           <DialogHeader>
             <DialogTitle>Unir-me amb codi</DialogTitle>
@@ -962,9 +972,39 @@ export default function TournamentsPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
-            <Input placeholder="Introdueix el codi" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} className="bg-white/10 border-white/20 text-white placeholder:text-white/40 uppercase tracking-widest" />
+            {(() => {
+              const validPattern = /^[A-Z0-9]{6}$/;
+              const isValid = validPattern.test(joinCode);
+              return (
+                <div>
+                  <Input
+                    placeholder="Introdueix el codi"
+                    value={joinCode}
+                    onChange={(e) => {
+                      const raw = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+                      setJoinCode(raw);
+                      if (joinError) setJoinError(null);
+                    }}
+                    aria-invalid={!!joinError || (!isValid && joinCode.length > 0)}
+                    aria-describedby="join-code-help"
+                    className={
+                      `bg-white/10 text-white placeholder:text-white/40 uppercase tracking-widest ` +
+                      `border ${joinError || (!isValid && joinCode.length > 0) ? "border-red-500/50 focus-visible:ring-red-500" : "border-white/20 focus-visible:ring-padel-primary"}`
+                    }
+                    maxLength={6}
+                  />
+                  <p id="join-code-help" className={`mt-2 text-xs ${joinError ? "text-red-400" : "text-white/60"}`}>
+                    {joinError ? joinError : "El codi té 6 caràcters (lletres i números). Exemple: ABC123"}
+                  </p>
+                </div>
+              );
+            })()}
             <div className="flex gap-2 pt-1">
-              <Button onClick={handleJoinByCode} disabled={joining || !joinCode} className="bg-padel-primary text-black hover:bg-padel-primary/90 font-semibold">
+              <Button
+                onClick={handleJoinByCode}
+                disabled={joining || !/^[A-Z0-9]{6}$/.test(joinCode)}
+                className="bg-padel-primary text-black hover:bg-padel-primary/90 font-semibold"
+              >
                 {joining ? "Validant..." : "Continuar"}
               </Button>
               <Button variant="outline" onClick={() => setJoinCodeOpen(false)} className="bg-white/10 border-white/20 text-white hover:bg-white/20">Cancel·lar</Button>

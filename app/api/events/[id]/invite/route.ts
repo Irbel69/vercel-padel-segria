@@ -46,7 +46,7 @@ async function handler(request: NextRequest) {
       return NextResponse.json({ error: "Esdeveniment no vàlid" }, { status: 400 });
     }
 
-    const body = (await request.json()) as Body;
+  const body = (await request.json()) as Body;
     const inviteeEmail = body.email?.toLowerCase().trim();
     const generateCodeOnly = body.generateCodeOnly === true || !inviteeEmail;
     const expiresIn = Math.min(Math.max(body.expiresInMinutes ?? 60 * 24, 10), 60 * 24 * 7); // 10 minutes to 7 days
@@ -88,6 +88,45 @@ async function handler(request: NextRequest) {
       .eq("status", "confirmed");
     if (currentParticipants && currentParticipants >= event.max_participants) {
       return NextResponse.json({ error: "Límit de participants assolit" }, { status: 400 });
+    }
+
+    // Opportunistic cleanup: delete expired SENT invites for this inviter & event
+    try {
+      const nowIso = new Date().toISOString();
+      await supabase
+        .from("pair_invites")
+        .delete()
+        .eq("inviter_id", user.id)
+        .eq("event_id", eventId)
+        .eq("status", "sent")
+        .lt("expires_at", nowIso);
+    } catch (cleanupErr) {
+      console.warn("Cleanup of expired invites failed (non-fatal)", cleanupErr);
+    }
+
+    // Reuse: if there's an active code already, return it instead of generating a new one
+    const { data: existingActive, error: existingActiveErr } = await supabase
+      .from("pair_invites")
+      .select("id, short_code, token, invitee_email, invitee_id, expires_at, status")
+      .eq("inviter_id", user.id)
+      .eq("event_id", eventId)
+      .eq("status", "sent")
+      .gt("expires_at", new Date().toISOString())
+      .order("id", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existingActiveErr) {
+      console.warn("Error checking existing active invite (ignored)", existingActiveErr);
+    }
+
+    if (existingActive && existingActive.short_code) {
+      // Optionally, if caller provided an email but existing invite has none, we could update it.
+      // Keep it simple to avoid side-effects; just return the current active code.
+      return NextResponse.json({
+        message: "Ja tens un codi actiu",
+        data: { short_code: existingActive.short_code },
+      });
     }
 
     // Create invite row

@@ -17,6 +17,20 @@ async function handler(request: NextRequest) {
       return NextResponse.json({ error: "Codi no vàlid" }, { status: 400 });
     }
 
+    // Opportunistic cleanup: remove expired invites to reduce DB bloat
+    try {
+      const nowIso = new Date().toISOString();
+      // Limit cleanup to invites where the current user is involved to satisfy RLS
+      await supabase
+        .from("pair_invites")
+        .delete()
+        .eq("status", "sent")
+        .lt("expires_at", nowIso)
+        .or(`inviter_id.eq.${user.id},invitee_id.eq.${user.id}${user.email ? `,invitee_email.eq.${user.email}` : ""}`);
+    } catch (cleanupErr) {
+      console.warn("Cleanup expired invites (join) non-fatal", cleanupErr);
+    }
+
     // Lookup invite by short code, ensure not expired or already finalized
     const { data: invite, error } = await supabase
       .from("pair_invites")
@@ -27,7 +41,7 @@ async function handler(request: NextRequest) {
 
     // Generic response to avoid enumeration
     if (error || !invite) {
-      return NextResponse.json({ message: "Si el codi és correcte, pots continuar" });
+      return NextResponse.json({ message: "Aquest codi és incorrecte o ha expirat" });
     }
 
     const now = new Date();
