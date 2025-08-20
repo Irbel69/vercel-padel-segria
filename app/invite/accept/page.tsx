@@ -10,6 +10,8 @@ import { AlertCircle, CheckCircle2, XCircle, LogIn } from "lucide-react";
 import AnimatedDottedBackground from "@/components/AnimatedDottedBackground";
 import { useUser } from "@/hooks/use-user";
 import config from "@/config";
+import { useQuery } from "@tanstack/react-query";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 export default function AcceptInvitePage() {
   const params = useSearchParams();
@@ -21,6 +23,7 @@ export default function AcceptInvitePage() {
   const [error, setError] = useState<string | null>(null);
   const [unauthorized, setUnauthorized] = useState<boolean>(false);
   const tokenFormatInvalid = !!token && token.length < 10;
+  const [previewUnauthorized, setPreviewUnauthorized] = useState<boolean>(false);
 
   useEffect(() => {
     // Reset auth-related banner if user logs in
@@ -106,6 +109,23 @@ export default function AcceptInvitePage() {
 
   const isBusy = status === "accepting" || status === "declining";
 
+  // Fetch inviter preview (name, avatar) when token looks valid
+  const { data: preview, isLoading: isPreviewLoading, isError: isPreviewError } = useQuery({
+    queryKey: ["invite_preview", token],
+    queryFn: async () => {
+      const res = await fetch(`/api/invites/${encodeURIComponent(token)}/preview`, { method: "GET" });
+      const data = await res.json();
+      if (res.status === 401) {
+        setPreviewUnauthorized(true);
+        throw new Error("Cal iniciar sessió per veure els detalls de la invitació");
+      }
+      if (!res.ok) throw new Error(data?.error || data?.message || "No disponible");
+      return data as { inviter?: { id: string | null; name: string | null; avatar_url: string | null } };
+    },
+    enabled: !!token && !tokenFormatInvalid,
+    staleTime: 30_000,
+  });
+
   return (
     <main className="min-h-[80vh] flex items-center justify-center relative overflow-hidden">
       {/* Animated brand background */}
@@ -140,6 +160,48 @@ export default function AcceptInvitePage() {
               <p className="text-white/70 mb-4">
                 Vols acceptar aquesta invitació en parella? Si l'acceptes, es confirmarà la inscripció per a tots dos.
               </p>
+
+              {/* Inviter preview */}
+              {!tokenFormatInvalid && (
+                <div className="mb-4 flex items-center gap-3">
+                  <Avatar className="h-12 w-12">
+                    {preview?.inviter?.avatar_url ? (
+                      <AvatarImage src={preview.inviter.avatar_url} alt={preview?.inviter?.name || "Invitador"} />
+                    ) : (
+                      <AvatarFallback className="bg-white/10 text-white/70">
+                        {preview?.inviter?.name?.slice(0, 2).toUpperCase() || "?"}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div>
+                    <div className="text-white font-semibold">
+                      {isPreviewLoading ? <span className="opacity-70">Carregant…</span> : (preview?.inviter?.name || (isPreviewError ? "Jugador desconegut" : "Jugador desconegut"))}
+                    </div>
+                    <div className="text-white/50 text-sm">t'està convidant a jugar en parella</div>
+                  </div>
+                </div>
+              )}
+
+              {previewUnauthorized && (
+                <div className="mb-4">
+                  <Alert className="border-white/10 bg-white/5 text-white/80 rounded-lg">
+                    <LogIn className="h-4 w-4" />
+                    <AlertDescription>
+                      Inicia sessió per veure qui t'està convidant.
+                    </AlertDescription>
+                  </Alert>
+                  <div className="mt-3">
+                    <Button
+                      onClick={() => router.push("/signin")}
+                      className="w-full font-bold text-black"
+                      style={{ background: "#c3fb12" }}
+                    >
+                      <LogIn className="h-4 w-4 mr-2" />
+                      Inicia sessió
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               {tokenFormatInvalid && (
                 <div className="mb-4">

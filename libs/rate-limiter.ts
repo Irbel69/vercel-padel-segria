@@ -208,6 +208,13 @@ export const RATE_LIMIT_CONFIGS = {
     burstAllowance: parseInt(process.env.RATE_LIMIT_INVITES_ACTION_BURST || '3')
   },
   
+  // Invite preview by token - stricter to prevent brute force
+  invites_preview: {
+    windowMs: parseInt(process.env.RATE_LIMIT_INVITES_PREVIEW_WINDOW_MS || '60000'), // 1 minute
+    maxRequests: parseInt(process.env.RATE_LIMIT_INVITES_PREVIEW_MAX || '8'), // 8 per minute
+    burstAllowance: parseInt(process.env.RATE_LIMIT_INVITES_PREVIEW_BURST || '2')
+  },
+  
   // Default rate limit for other endpoints
   default: {
     windowMs: parseInt(process.env.RATE_LIMIT_DEFAULT_WINDOW_MS || '60000'), // 1 minute
