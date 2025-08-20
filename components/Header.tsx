@@ -132,9 +132,7 @@ const HeaderContent = ({ transparent = false }: HeaderProps) => {
 								strokeWidth={1.5}
 								stroke="currentColor"
 								className={`w-6 h-6 ${
-									isHomePage || transparent 
-										? "text-white" 
-										: "text-base-content"
+									isHomePage || transparent ? "text-white" : "text-base-content"
 								}`}>
 								<path
 									strokeLinecap="round"
@@ -183,8 +181,11 @@ const HeaderContent = ({ transparent = false }: HeaderProps) => {
 
 				{/* Mobile menu panel */}
 				<div
-					className="fixed inset-y-0 right-0 z-[9999] w-full sm:max-w-sm h-[100vh] overflow-y-auto transform origin-right transition-all ease-in-out duration-500 mobile-sidebar-safe"
+					className="fixed inset-y-0 right-0 z-[9999] w-full sm:max-w-sm h-screen overflow-y-auto transform origin-right transition-all ease-in-out duration-500 mobile-sidebar-safe"
 					style={{
+						height: "100vh",
+						paddingTop: "env(safe-area-inset-top)",
+						paddingBottom: "env(safe-area-inset-bottom)",
 						background: `linear-gradient(135deg, rgba(5, 28, 44, 0.95) 0%, rgba(0, 0, 0, 0.95) 100%)`,
 						backdropFilter: "blur(20px)",
 						WebkitBackdropFilter: "blur(20px)",
@@ -302,7 +303,6 @@ const HeaderContent = ({ transparent = false }: HeaderProps) => {
 												</svg>
 											</div>
 										</div>
-
 									</div>
 								</Link>
 							))}
@@ -357,62 +357,7 @@ const HeaderContent = ({ transparent = false }: HeaderProps) => {
 								</Link>
 							</div>
 
-							{/* Additional Menu Options */}
-							<div className="grid grid-cols-2 gap-4">
-								<Link
-									href="/contact"
-									className="p-4 rounded-xl text-center transition-all duration-300 hover:scale-105"
-									style={{
-										background: "rgba(255, 255, 255, 0.05)",
-										border: "1px solid rgba(255, 255, 255, 0.1)",
-									}}>
-									<div className="text-padel-primary mb-2">
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											fill="none"
-											viewBox="0 0 24 24"
-											strokeWidth={2}
-											stroke="currentColor"
-											className="w-6 h-6 mx-auto">
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
-											/>
-										</svg>
-									</div>
-									<span className="text-sm font-medium text-white">
-										Contact
-									</span>
-								</Link>
-
-								<Link
-									href="/dashboard"
-									className="p-4 rounded-xl text-center transition-all duration-300 hover:scale-105"
-									style={{
-										background: "rgba(255, 255, 255, 0.05)",
-										border: "1px solid rgba(255, 255, 255, 0.1)",
-									}}>
-									<div className="text-padel-primary mb-2">
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											fill="none"
-											viewBox="0 0 24 24"
-											strokeWidth={2}
-											stroke="currentColor"
-											className="w-6 h-6 mx-auto">
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
-											/>
-										</svg>
-									</div>
-									<span className="text-sm font-medium text-white">
-										Dashboard
-									</span>
-								</Link>
-							</div>
+							{/* Additional Menu Options removed as requested (Contact & Dashboard) */}
 						</div>
 
 						{/* Footer info */}
