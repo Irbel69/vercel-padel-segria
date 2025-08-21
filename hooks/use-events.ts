@@ -82,12 +82,12 @@ export function useUnregisterFromEvent() {
 export function useCreatePairInvite() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (params: { eventId: number; email?: string; generateCodeOnly?: boolean }) => {
-      const { eventId, email, generateCodeOnly } = params;
+    mutationFn: async (params: { eventId: number; email?: string; generateCodeOnly?: boolean; forceNew?: boolean }) => {
+      const { eventId, email, generateCodeOnly, forceNew } = params;
       return fetchJSON<{ data?: { short_code?: string } }>(`/api/events/${eventId}/invite`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, generateCodeOnly: !!generateCodeOnly }),
+        body: JSON.stringify({ email, generateCodeOnly: !!generateCodeOnly, forceNew: !!forceNew }),
       });
     },
     onSuccess: () => {

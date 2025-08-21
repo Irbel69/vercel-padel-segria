@@ -57,6 +57,8 @@ export interface Event {
 	updated_at: string;
 	current_participants?: number;
 	user_registration_status?: "pending" | "confirmed" | "cancelled" | null;
+	// Partner information when user is registered as a pair
+	partner?: UserProfile | null;
 }
 
 export interface EventsListResponse {
@@ -80,6 +82,8 @@ export interface Registration {
 	pair_id?: string | null;
 	event?: Event;
 	user?: UserProfile;
+	// Partner information when registered as a pair
+	partner?: UserProfile | null;
 }
 
 export interface CreateEventData {

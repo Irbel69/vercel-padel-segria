@@ -63,15 +63,39 @@ export async function GET(request: NextRequest) {
 				// Verificar si el usuario actual está registrado
 				const { data: userRegistration } = await supabase
 					.from("registrations")
-					.select("status")
+					.select("status, pair_id")
 					.eq("event_id", event.id)
 					.eq("user_id", user.id)
 					.single();
+
+				// Si hay pair_id, buscar información del compañero
+				let partner = null;
+				if (userRegistration?.pair_id) {
+					const { data: partnerReg } = await supabase
+						.from("registrations")
+						.select(`
+							user_id,
+							users!inner(
+								id,
+								name,
+								surname,
+								avatar_url
+							)
+						`)
+						.eq("pair_id", userRegistration.pair_id)
+						.neq("user_id", user.id)
+						.single();
+
+					if (partnerReg && partnerReg.users) {
+						partner = partnerReg.users;
+					}
+				}
 
 				return {
 					...event,
 					current_participants: participantCount || 0,
 					user_registration_status: userRegistration?.status || null,
+					partner,
 				};
 			})
 		);

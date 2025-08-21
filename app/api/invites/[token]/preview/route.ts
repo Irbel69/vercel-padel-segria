@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withRateLimit } from "@/libs/rate-limiter-middleware";
-import { createClient } from "@/libs/supabase/server";
+import { createClient, createServiceClient } from "@/libs/supabase/server";
 
 async function handler(request: NextRequest) {
-  const supabase = createClient();
-
   try {
-    // Require auth to reduce token enumeration. We can relax later if needed.
+    // First, verify user is authenticated using normal client
+    const supabase = createClient();
     const { data: auth } = await supabase.auth.getUser();
     const user = auth?.user;
     if (!user) {
@@ -23,8 +22,15 @@ async function handler(request: NextRequest) {
       return NextResponse.json({ error: "Token no vàlid" }, { status: 400 });
     }
 
+    // Use Service Role client to access invite and user data (bypasses RLS)
+    // This is safe because:
+    // 1. User is already authenticated
+    // 2. We only return basic public profile info (name, avatar)
+    // 3. Rate limiting is active
+    const serviceSupabase = createServiceClient();
+
     // Look up invite and join inviter profile
-  const { data: invite, error: inviteError } = await supabase
+    const { data: invite, error: inviteError } = await serviceSupabase
       .from("pair_invites")
       .select(
         `id, status, expires_at, inviter:inviter_id ( id, name, surname, avatar_url )`
@@ -53,9 +59,9 @@ async function handler(request: NextRequest) {
 
     return NextResponse.json({
       inviter: {
-  id: inviter?.id || null,
+        id: inviter?.id || null,
         name: fullName,
-  avatar_url: inviter?.avatar_url || null,
+        avatar_url: inviter?.avatar_url || null,
       },
     });
   } catch (err) {

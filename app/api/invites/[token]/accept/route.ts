@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withRateLimit } from "@/libs/rate-limiter-middleware";
-import { createClient } from "@/libs/supabase/server";
+import { createClient, createServiceClient } from "@/libs/supabase/server";
 
 async function handler(request: NextRequest) {
-  const supabase = createClient();
   try {
+    // First, verify user is authenticated using normal client
+    const supabase = createClient();
     const { data: auth } = await supabase.auth.getUser();
     const user = auth?.user;
     if (!user) {
@@ -19,8 +20,15 @@ async function handler(request: NextRequest) {
       return NextResponse.json({ error: "Token no vàlid" }, { status: 400 });
     }
 
+    // Use Service Role client to access invite data (bypasses RLS)
+    // This is safe because:
+    // 1. User is already authenticated
+    // 2. We validate invite permissions below
+    // 3. Rate limiting is active
+    const serviceSupabase = createServiceClient();
+
     // Fetch invite
-    const { data: invite, error: inviteError } = await supabase
+    const { data: invite, error: inviteError } = await serviceSupabase
       .from("pair_invites")
       .select("id, event_id, inviter_id, invitee_id, status, expires_at")
       .eq("token", token)
@@ -60,7 +68,7 @@ async function handler(request: NextRequest) {
       return NextResponse.json({ error: "La data límit ha passat" }, { status: 400 });
     }
 
-  // Check invitee already registered (we tolerate inviter state due to RLS constraints)
+    // Check invitee already registered (we tolerate inviter state due to RLS constraints)
     const { data: existingInviteeReg } = await supabase
       .from("registrations")
       .select("id")
@@ -72,21 +80,52 @@ async function handler(request: NextRequest) {
       return NextResponse.json({ error: "Ja estàs inscrit" }, { status: 400 });
     }
 
-  // Capacity check (for a single new registration in this session)
+    // Check if inviter is already registered
+    const { data: existingInviterReg } = await supabase
+      .from("registrations")
+      .select("id")
+      .eq("event_id", event.id)
+      .eq("user_id", invite.inviter_id)
+      .limit(1)
+      .maybeSingle();
+
+    // Capacity check (for potentially two new registrations if inviter is not registered)
     const { count: currentParticipants } = await supabase
       .from("registrations")
       .select("*", { count: "exact", head: true })
       .eq("event_id", event.id)
       .eq("status", "confirmed");
-  if (currentParticipants && currentParticipants + 1 > event.max_participants) {
-      return NextResponse.json({ error: "No hi ha prou places" }, { status: 400 });
+      
+    const newRegistrations = existingInviterReg ? 1 : 2; // invitee + maybe inviter
+    if (currentParticipants && currentParticipants + newRegistrations > event.max_participants) {
+      return NextResponse.json({ error: "No hi ha prou places per a la parella" }, { status: 400 });
     }
 
-  // Create a shared pair_id and create/update the invitee's registration in an idempotent way
+    // Create a shared pair_id and create/update registrations for both users
     const pair_id = crypto.randomUUID();
 
     // Helper to detect unique violation
     const isUniqueViolation = (err: any) => err && typeof err === "object" && err.code === "23505";
+
+    // For the inviter, ensure they have a registration with the pair_id
+    if (!existingInviterReg) {
+      const { error: reg1Err } = await supabase
+        .from("registrations")
+        .insert({ user_id: invite.inviter_id, event_id: event.id, status: "confirmed", pair_id });
+      if (reg1Err && !isUniqueViolation(reg1Err)) {
+        console.error("Error creating inviter registration", reg1Err);
+        return NextResponse.json({ error: "Error creant la inscripció de l'invitador" }, { status: 500 });
+      }
+    } else {
+      // Update existing inviter registration with pair_id
+      const { error: updateErr } = await supabase
+        .from("registrations")
+        .update({ pair_id })
+        .eq("id", existingInviterReg.id);
+      if (updateErr) {
+        console.warn("Error updating inviter registration with pair_id", updateErr);
+      }
+    }
 
     // For the invitee (current user), upsert to ensure pair_id is set even if a row exists already
     const { error: reg2Err } = await supabase
@@ -100,8 +139,8 @@ async function handler(request: NextRequest) {
       return NextResponse.json({ error: "Error creant la inscripció" }, { status: 500 });
     }
 
-    // Mark invite accepted
-  const { error: updErr } = await supabase
+    // Mark invite accepted using Service Role client
+    const { error: updErr } = await serviceSupabase
       .from("pair_invites")
       .update({ status: "accepted", accepted_at: new Date().toISOString() })
       .eq("id", invite.id);

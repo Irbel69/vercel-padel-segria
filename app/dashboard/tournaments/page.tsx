@@ -31,6 +31,8 @@ import {
   ChevronRight,
   Copy,
   Loader2,
+  RotateCcw,
+  UserCheck,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LocationMapButton } from "@/components/LocationMapButton";
@@ -51,7 +53,9 @@ export default function TournamentsPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteSubmitting, setInviteSubmitting] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+  const [codeExpiresAt, setCodeExpiresAt] = useState<string | null>(null);
   const [autoGeneratingCode, setAutoGeneratingCode] = useState(false);
+  const [regeneratingCode, setRegeneratingCode] = useState(false);
   const [joinCodeOpen, setJoinCodeOpen] = useState(false);
   const [joinCode, setJoinCode] = useState("");
   const [joining, setJoining] = useState(false);
@@ -75,7 +79,10 @@ export default function TournamentsPage() {
         generateCodeOnly: !!generateCodeOnly,
       });
       const code = result?.data?.short_code;
-      if (code) setGeneratedCode(code);
+      if (code) {
+        setGeneratedCode(code);
+        setCodeExpiresAt(null); // Don't store expiration on frontend
+      }
       toast({
         title: "Invitació creada",
         description: generateCodeOnly
@@ -87,6 +94,34 @@ export default function TournamentsPage() {
         title: "Error",
         description: e.message || "No s'ha pogut crear la invitació",
       });
+    }
+  };
+
+  const handleRegenerateCode = async () => {
+    if (!inviteForEventId || regeneratingCode) return;
+    try {
+      setRegeneratingCode(true);
+      const result = await inviteMutation.mutateAsync({
+        eventId: inviteForEventId,
+        generateCodeOnly: true,
+        forceNew: true, // Force generation of new code
+      });
+      const code = result?.data?.short_code;
+      if (code) {
+        setGeneratedCode(code);
+        setCodeExpiresAt(null); // Don't store expiration on frontend
+      }
+      toast({
+        title: "Codi regenerat",
+        description: "S'ha generat un nou codi d'invitació",
+      });
+    } catch (e: any) {
+      toast({
+        title: "Error",
+        description: e.message || "No s'ha pogut regenerar el codi",
+      });
+    } finally {
+      setRegeneratingCode(false);
     }
   };
 
@@ -232,6 +267,7 @@ export default function TournamentsPage() {
     if (inviteForEventId && !generatedCode && !autoGeneratingCode) {
       setAutoGeneratingCode(true);
       setGeneratedCode(null);
+      setCodeExpiresAt(null);
       
       // Auto-generate code immediately
       (async () => {
@@ -241,7 +277,10 @@ export default function TournamentsPage() {
             generateCodeOnly: true,
           });
           const code = result?.data?.short_code;
-          if (code) setGeneratedCode(code);
+          if (code) {
+            setGeneratedCode(code);
+            setCodeExpiresAt(null);
+          }
         } catch (e: any) {
           toast({
             title: "Error",
@@ -569,10 +608,22 @@ export default function TournamentsPage() {
                             </div>
                           </div>
                         )}
-                        {/* Registration Status */}
-                        {event.user_registration_status && (
+                        {/* Registration Status and Partner Information */}
+                        {event.user_registration_status === "confirmed" && event.partner ? (
+                          <div className="mb-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 text-sm text-white/70">
+                                <UserCheck className="h-4 w-4 flex-shrink-0" />
+                                <span>Parella: {[event.partner.name, event.partner.surname].filter(Boolean).join(" ") || "Nom no disponible"}</span>
+                              </div>
+                              <div className="flex-shrink-0">
+                                {getRegistrationStatusBadge(event.user_registration_status)}
+                              </div>
+                            </div>
+                          </div>
+                        ) : event.user_registration_status ? (
                           <div className="mb-2">{getRegistrationStatusBadge(event.user_registration_status)}</div>
-                        )}
+                        ) : null}
                         {/* Urgent Registration Deadline */}
                         {isRegistrationUrgent(event.registration_deadline) && (
                           <div className="mb-2 text-xs text-orange-400 flex items-center gap-1.5 max-w-full">
@@ -598,6 +649,7 @@ export default function TournamentsPage() {
                                 setInviteForEventId(event.id);
                                 setInviteEmail("");
                                 setGeneratedCode(null);
+                                setCodeExpiresAt(null);
                               }}
                               className="bg-padel-primary text-black hover:bg-padel-primary/90 text-sm w-full font-semibold"
                             >
@@ -629,6 +681,15 @@ export default function TournamentsPage() {
                               <span>{event.current_participants || 0}/{event.max_participants} participants</span>
                             </div>
                           </div>
+                          {/* Partner Information */}
+                          {event.partner && event.user_registration_status === "confirmed" && (
+                            <div className="text-sm text-white/70">
+                              <div className="flex items-center gap-2">
+                                <UserCheck className="h-4 w-4 flex-shrink-0" />
+                                <span>Parella: {[event.partner.name, event.partner.surname].filter(Boolean).join(" ") || "Nom no disponible"}</span>
+                              </div>
+                            </div>
+                          )}
                           {/* Location */}
                           {event.location && (
                             <div className="text-sm text-white/60">
@@ -674,6 +735,7 @@ export default function TournamentsPage() {
                                     setInviteForEventId(event.id);
                                     setInviteEmail("");
                                     setGeneratedCode(null);
+                                    setCodeExpiresAt(null);
                                   }}
                                   className="bg-padel-primary text-black hover:bg-padel-primary/90 font-semibold"
                                 >
@@ -793,9 +855,18 @@ export default function TournamentsPage() {
                               <span className="truncate">{registration.event?.current_participants || 0}/{registration.event?.max_participants} participants</span>
                             </div>
                           </div>
+                              {registration.partner && (
+                            <div className="mt-2">
+                              <div className="flex items-center gap-2 text-sm text-white/70">
+                                <UserCheck className="h-4 w-4 flex-shrink-0" />
+                                <span>Parella: {[registration.partner.name, registration.partner.surname].filter(Boolean).join(" ") || "Nom no disponible"}</span>
+                              </div>
+                            </div>
+                          )}
                           <div className="mt-2 text-xs text-white/50">
                             <span>Inscrit el: {formatDateTime(registration.registered_at)}</span>
                           </div>
+                      
                           {registration.event?.prizes && (
                             <div className="mt-2">
                               <div className="flex items-center gap-2 text-sm text-white/60">
@@ -835,7 +906,9 @@ export default function TournamentsPage() {
             setInviteForEventId(null);
             setInviteEmail("");
             setGeneratedCode(null);
+            setCodeExpiresAt(null);
             setAutoGeneratingCode(false);
+            setRegeneratingCode(false);
           }
         }}
       >
@@ -851,39 +924,62 @@ export default function TournamentsPage() {
             {/* Code section - primary */}
             <div className="space-y-3">
               <div className="text-center">
-                <h3 className="text-lg font-semibold text-white mb-2">Codi d'invitació</h3>
+                {/* Header with title centered and reload button on the right */}
+                <div className="relative mb-2">
+                  <h3 className="text-lg font-semibold text-white">Codi d'invitació</h3>
+                  {generatedCode && (
+                    <button
+                      onClick={handleRegenerateCode}
+                      disabled={regeneratingCode}
+                      className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-zinc-800/90 border border-white/20 text-white hover:bg-zinc-700 rounded-full p-2 shadow-lg transition-all duration-200 disabled:opacity-50"
+                      title="Generar nou codi"
+                    >
+                      {regeneratingCode ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <RotateCcw className="h-4 w-4" />
+                      )}
+                    </button>
+                  )}
+                </div>
+                
                 {autoGeneratingCode ? (
                   <div className="flex items-center justify-center space-x-2 py-4">
                     <Loader2 className="h-5 w-5 animate-spin text-padel-primary" />
                     <span className="text-white/60">Generant codi...</span>
                   </div>
                 ) : generatedCode ? (
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    aria-label="Copiar codi d'invitació"
-                    onClick={() => {
-                      selectInviteCodeText();
-                      copyToClipboard(generatedCode);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
+                  <div className="space-y-3">
+                    {/* Code display centered */}
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Copiar codi d'invitació"
+                      onClick={() => {
                         selectInviteCodeText();
                         copyToClipboard(generatedCode);
-                      }
-                    }}
-                    className="bg-padel-primary rounded-lg p-5 cursor-pointer hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-padel-primary/60 focus:ring-offset-zinc-900 shadow-lg transition-all duration-200 group"
-                  >
-                    <div className="text-center space-y-3">
-                      <div className="font-mono text-3xl md:text-4xl font-extrabold tracking-[0.4em] text-black drop-shadow-sm">
-                        <span ref={inviteCodeRef} className="select-all">{generatedCode}</span>
-                      </div>
-                      <div className="flex items-center justify-center space-x-2 text-black/80 group-hover:text-black transition-colors">
-                        <Copy className="h-4 w-4" />
-                        <span className="text-sm font-semibold">Clic per copiar</span>
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          selectInviteCodeText();
+                          copyToClipboard(generatedCode);
+                        }
+                      }}
+                      className={`bg-padel-primary rounded-lg p-5 cursor-pointer hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-padel-primary/60 focus:ring-offset-zinc-900 shadow-lg transition-all duration-200 group`}
+                    >
+                      <div className="text-center space-y-3">
+                        <div className="font-mono text-3xl md:text-4xl font-extrabold tracking-[0.4em] text-black drop-shadow-sm">
+                          <span ref={inviteCodeRef} className="select-all">{generatedCode}</span>
+                        </div>
+                        <div className="flex items-center justify-center space-x-2 text-black/80 group-hover:text-black transition-colors">
+                          <Copy className="h-4 w-4" />
+                          <span className="text-sm font-semibold">Clic per copiar</span>
+                        </div>
                       </div>
                     </div>
+
+                    {/* Expiration info - removed since we don't check client-side anymore */}
                   </div>
                 ) : (
                   <div className="text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
@@ -945,7 +1041,9 @@ export default function TournamentsPage() {
                 setInviteForEventId(null);
                 setInviteEmail("");
                 setGeneratedCode(null);
+                setCodeExpiresAt(null);
                 setAutoGeneratingCode(false);
+                setRegeneratingCode(false);
                 try { if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current); } catch {}
                 setCopyConfirmed(false);
               }} 

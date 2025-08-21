@@ -10,6 +10,7 @@ type Body = {
   email?: string; // invitee email (optional)
   generateCodeOnly?: boolean; // if true, skip email and just return a join code
   expiresInMinutes?: number; // optional override for expiry
+  forceNew?: boolean; // if true, force generation of new code even if one exists
 };
 
 // Robust token generator using Node crypto to avoid runtime differences
@@ -49,6 +50,7 @@ async function handler(request: NextRequest) {
   const body = (await request.json()) as Body;
     const inviteeEmail = body.email?.toLowerCase().trim();
     const generateCodeOnly = body.generateCodeOnly === true || !inviteeEmail;
+    const forceNew = body.forceNew === true;
     const expiresIn = Math.min(Math.max(body.expiresInMinutes ?? 60 * 24, 10), 60 * 24 * 7); // 10 minutes to 7 days
 
     // Validate event exists and open, and capacity/deadline
@@ -104,29 +106,44 @@ async function handler(request: NextRequest) {
       console.warn("Cleanup of expired invites failed (non-fatal)", cleanupErr);
     }
 
-    // Reuse: if there's an active code already, return it instead of generating a new one
-    const { data: existingActive, error: existingActiveErr } = await supabase
-      .from("pair_invites")
-      .select("id, short_code, token, invitee_email, invitee_id, expires_at, status")
-      .eq("inviter_id", user.id)
-      .eq("event_id", eventId)
-      .eq("status", "sent")
-      .gt("expires_at", new Date().toISOString())
-      .order("id", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    // Reuse: if there's an active code already and not forcing new, return it instead of generating a new one
+    if (!forceNew) {
+      const { data: existingActive, error: existingActiveErr } = await supabase
+        .from("pair_invites")
+        .select("id, short_code, token, invitee_email, invitee_id, expires_at, status")
+        .eq("inviter_id", user.id)
+        .eq("event_id", eventId)
+        .eq("status", "sent")
+        .gt("expires_at", new Date().toISOString())
+        .order("id", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-    if (existingActiveErr) {
-      console.warn("Error checking existing active invite (ignored)", existingActiveErr);
-    }
+      if (existingActiveErr) {
+        console.warn("Error checking existing active invite (ignored)", existingActiveErr);
+      }
 
-    if (existingActive && existingActive.short_code) {
-      // Optionally, if caller provided an email but existing invite has none, we could update it.
-      // Keep it simple to avoid side-effects; just return the current active code.
-      return NextResponse.json({
-        message: "Ja tens un codi actiu",
-        data: { short_code: existingActive.short_code },
-      });
+      if (existingActive && existingActive.short_code) {
+        // Return the current active code with expiration info
+        return NextResponse.json({
+          message: "Ja tens un codi actiu",
+          data: { 
+            short_code: existingActive.short_code
+          },
+        });
+      }
+    } else {
+      // Force new: mark any existing active invite as revoked
+      try {
+        await supabase
+          .from("pair_invites")
+          .update({ status: "revoked", updated_at: new Date().toISOString() })
+          .eq("inviter_id", user.id)
+          .eq("event_id", eventId)
+          .eq("status", "sent");
+      } catch (revokeErr) {
+        console.warn("Error revoking existing invites (non-fatal)", revokeErr);
+      }
     }
 
     // Create invite row
@@ -191,6 +208,7 @@ async function handler(request: NextRequest) {
       message: "Invitació creada",
       data: {
         short_code: invite.short_code,
+        // expires_at not returned for security (server handles expiration)
         // token is only for email links; not returned in API response
       },
     });

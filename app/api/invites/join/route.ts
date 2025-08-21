@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withRateLimit } from "@/libs/rate-limiter-middleware";
-import { createClient } from "@/libs/supabase/server";
+import { createClient, createServiceClient } from "@/libs/supabase/server";
 
 async function handler(request: NextRequest) {
   try {
+    // First, verify user is authenticated using normal client
     const supabase = createClient();
     const { data: auth } = await supabase.auth.getUser();
     const user = auth?.user;
@@ -17,22 +18,28 @@ async function handler(request: NextRequest) {
       return NextResponse.json({ error: "Codi no vàlid" }, { status: 400 });
     }
 
+    // Use Service Role client only for invite code lookup (bypasses RLS)
+    // This is safe because:
+    // 1. User is already authenticated
+    // 2. We only search by short_code (no sensitive data exposure)
+    // 3. We only return minimal data needed (token)
+    // 4. Rate limiting is active
+    const serviceSupabase = createServiceClient();
+
     // Opportunistic cleanup: remove expired invites to reduce DB bloat
     try {
       const nowIso = new Date().toISOString();
-      // Limit cleanup to invites where the current user is involved to satisfy RLS
-      await supabase
+      await serviceSupabase
         .from("pair_invites")
         .delete()
         .eq("status", "sent")
-        .lt("expires_at", nowIso)
-        .or(`inviter_id.eq.${user.id},invitee_id.eq.${user.id}${user.email ? `,invitee_email.eq.${user.email}` : ""}`);
+        .lt("expires_at", nowIso);
     } catch (cleanupErr) {
       console.warn("Cleanup expired invites (join) non-fatal", cleanupErr);
     }
 
-    // Lookup invite by short code, ensure not expired or already finalized
-    const { data: invite, error } = await supabase
+    // Lookup invite by short code using Service Role (bypasses RLS)
+    const { data: invite, error } = await serviceSupabase
       .from("pair_invites")
       .select("id, event_id, inviter_id, status, token, expires_at")
       .eq("short_code", short_code)
@@ -41,7 +48,7 @@ async function handler(request: NextRequest) {
 
     // Generic response to avoid enumeration
     if (error || !invite) {
-      return NextResponse.json({ message: "Aquest codi és incorrecte o ha expirat" });
+      return NextResponse.json({ message: "Aquest codi és incorrecte o ha expirat" }, { status: 400 });
     }
 
     const now = new Date();
