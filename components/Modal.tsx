@@ -8,11 +8,13 @@ import React from "react";
 interface ModalProps {
   isModalOpen: boolean;
   setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  title?: string;
+  children?: React.ReactNode;
 }
 
 // A simple modal component which can be shown/hidden with a boolean and a function
 // Because of the setIsModalOpen function, you can't use it in a server component.
-const Modal = ({ isModalOpen, setIsModalOpen }: ModalProps) => {
+const Modal = ({ isModalOpen, setIsModalOpen, title, children }: ModalProps) => {
   return (
     <Transition appear show={isModalOpen} as={Fragment}>
       <Dialog
@@ -43,14 +45,20 @@ const Modal = ({ isModalOpen, setIsModalOpen }: ModalProps) => {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="relative w-full max-w-3xl h-full overflow-visible transform text-left align-middle shadow-xl transition-all rounded-xl bg-base-100 p-6 md:p-8">
+              <Dialog.Panel className="relative w-full max-w-3xl h-full overflow-visible transform text-left align-middle shadow-xl transition-all rounded-xl bg-base-100 p-4 md:p-8">
                 <div className="flex justify-between items-center mb-4">
-                  <Dialog.Title as="h2" className="font-semibold">
-                    I&apos;m a modal
-                  </Dialog.Title>
+                  {title ? (
+                    <Dialog.Title as="h2" className="font-semibold">
+                      {title}
+                    </Dialog.Title>
+                  ) : (
+                    <div />
+                  )}
+
                   <button
                     className="btn btn-square btn-ghost btn-sm"
                     onClick={() => setIsModalOpen(false)}
+                    aria-label="Close"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -63,7 +71,7 @@ const Modal = ({ isModalOpen, setIsModalOpen }: ModalProps) => {
                   </button>
                 </div>
 
-                <section>And here is my content</section>
+                <div>{children}</div>
               </Dialog.Panel>
             </Transition.Child>
           </div>

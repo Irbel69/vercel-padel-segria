@@ -5,15 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { Send } from "lucide-react";
 import {
-  Mail,
-  Phone,
-  MapPin,
-  Send,
-  Users,
-  Trophy,
-  Calendar,
-} from "lucide-react";
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { ContactInfoBlocks } from "./ContactInfoBlocks";
+import { CommunityStats } from "./CommunityStats";
 
 export function ContactSection() {
   const [formData, setFormData] = useState({
@@ -79,14 +79,10 @@ export function ContactSection() {
     console.log("Form submitted:", formData);
   };
 
-  const stats = [
-    { icon: Users, label: "Jugadors actius", value: "2,500+", progress: 85 },
-    { icon: Trophy, label: "Tornejos aquest any", value: "45", progress: 75 },
-    { icon: Calendar, label: "Partits jugats", value: "12,000+", progress: 92 },
-  ];
+  // Stats handled via CommunityStats component defaults
 
   return (
-    <section id="contact" className="py-24 relative overflow-visible">
+    <section id="contact" className="py-12 md:py-24 relative overflow-visible">
       {/* Background decorative elements */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute -top-40 -right-20 w-80 h-80 bg-padel-primary/10 rounded-full blur-3xl" />
@@ -95,7 +91,7 @@ export function ContactSection() {
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-8 md:mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Contacta amb nosaltres
           </h2>
@@ -106,7 +102,7 @@ export function ContactSection() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-16 items-stretch">
+        <div className="grid lg:grid-cols-2 gap-8 md:gap-16 items-stretch">
           {/* Contact Form */}
           <div className="order-2 lg:order-1">
             <Card
@@ -120,8 +116,8 @@ export function ContactSection() {
                 border: "1px solid rgba(255, 255, 255, 0.2)",
               }}
             >
-              <CardContent className="p-8">
-                <form onSubmit={handleSubmit} className="space-y-6">
+              <CardContent className="p-4 md:p-8">
+                <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
                   <div className="space-y-2">
                     <label
                       htmlFor="name"
@@ -138,7 +134,7 @@ export function ContactSection() {
                       onChange={handleInputChange}
                       required
                       style={{
-                        height: "3rem",
+                        height: "2.5rem",
                         background: "rgba(255, 255, 255, 0)",
                         borderRadius: "8px",
                         boxShadow: "0 4px 30px rgba(0, 0, 0, 0.1)",
@@ -146,7 +142,7 @@ export function ContactSection() {
                         WebkitBackdropFilter: "blur(5px)",
                         border: "1px solid rgba(255, 255, 255, 0.2)",
                       }}
-                      className="text-white placeholder-gray-300 focus:border-padel-primary transition-colors"
+                      className="text-white placeholder-gray-300 focus:border-padel-primary transition-colors md:h-12"
                     />
                   </div>
 
@@ -166,7 +162,7 @@ export function ContactSection() {
                       onChange={handleInputChange}
                       required
                       style={{
-                        height: "3rem",
+                        height: "2.5rem",
                         background: "rgba(255, 255, 255, 0)",
                         borderRadius: "8px",
                         boxShadow: "0 4px 30px rgba(0, 0, 0, 0.1)",
@@ -174,7 +170,7 @@ export function ContactSection() {
                         WebkitBackdropFilter: "blur(5px)",
                         border: "1px solid rgba(255, 255, 255, 0.2)",
                       }}
-                      className="text-white placeholder-gray-300 focus:border-padel-primary transition-colors"
+                      className="text-white placeholder-gray-300 focus:border-padel-primary transition-colors md:h-12"
                     />
                   </div>
 
@@ -194,7 +190,7 @@ export function ContactSection() {
                       onChange={handleInputChange}
                       required
                       style={{
-                        height: "3rem",
+                        height: "2.5rem",
                         background: "rgba(255, 255, 255, 0)",
                         borderRadius: "8px",
                         boxShadow: "0 4px 30px rgba(0, 0, 0, 0.1)",
@@ -202,7 +198,7 @@ export function ContactSection() {
                         WebkitBackdropFilter: "blur(5px)",
                         border: "1px solid rgba(255, 255, 255, 0.2)",
                       }}
-                      className="text-white placeholder-gray-300 focus:border-padel-primary transition-colors"
+                      className="text-white placeholder-gray-300 focus:border-padel-primary transition-colors md:h-12"
                     />
                   </div>
 
@@ -219,7 +215,7 @@ export function ContactSection() {
                       placeholder="Explica'ns com et podem ajudar..."
                       value={formData.message}
                       onChange={handleInputChange}
-                      rows={5}
+                      className="text-white placeholder-gray-300 focus:border-padel-primary transition-colors h-20 md:h-32"
                       style={{
                         background: "rgba(255, 255, 255, 0)",
                         borderRadius: "8px",
@@ -229,7 +225,6 @@ export function ContactSection() {
                         border: "1px solid rgba(255, 255, 255, 0.2)",
                         resize: "none",
                       }}
-                      className="text-white placeholder-gray-300 focus:border-padel-primary transition-colors"
                     />
                   </div>
 
@@ -255,105 +250,33 @@ export function ContactSection() {
             </Card>
           </div>
 
-          {/* Contact Info & Stats */}
-          <div className="order-1 lg:order-2 space-y-6 h-full flex flex-col">
-            {/* Contact Information */}
-            <div className="space-y-4">
-              <a
-                href="mailto:info@padelsegria.cat"
-                className="flex items-center gap-4 p-4 rounded-xl transition-all duration-300 hover:scale-[1.02]"
-                style={{
-                  background: "rgba(255, 255, 255, 0.1)",
-                  borderRadius: "16px",
-                  boxShadow: "0 4px 30px rgba(0, 0, 0, 0.2)",
-                  backdropFilter: "blur(5px)",
-                  WebkitBackdropFilter: "blur(5px)",
-                  border: "1px solid rgba(255, 255, 255, 0.2)",
-                  cursor: "pointer",
-                }}
-              >
-                <div className="w-12 h-12 bg-padel-primary/20 rounded-xl flex items-center justify-center">
-                  <Mail className="w-6 h-6 text-padel-primary" />
-                </div>
-                <div>
-                  <p className="font-semibold text-white">Correu electrònic</p>
-                  <p className="text-gray-300">info@padelsegria.cat</p>
-                </div>
-              </a>
-
-              <a
-                href="tel:+34973123456"
-                className="flex items-center gap-4 p-4 rounded-xl transition-all duration-300 hover:scale-[1.02]"
-                style={{
-                  background: "rgba(255, 255, 255, 0.1)",
-                  borderRadius: "16px",
-                  boxShadow: "0 4px 30px rgba(0, 0, 0, 0.2)",
-                  backdropFilter: "blur(5px)",
-                  WebkitBackdropFilter: "blur(5px)",
-                  border: "1px solid rgba(255, 255, 255, 0.2)",
-                  cursor: "pointer",
-                }}
-              >
-                <div className="w-12 h-12 bg-padel-primary/20 rounded-xl flex items-center justify-center">
-                  <Phone className="w-6 h-6 text-padel-primary" />
-                </div>
-                <div>
-                  <p className="font-semibold text-white">Telèfon</p>
-                  <p className="text-gray-300">+34 973 123 456</p>
-                </div>
-              </a>
-
-              <div
-                className="flex items-center gap-4 p-4 rounded-xl"
-                style={{
-                  background: "rgba(255, 255, 255, 0.1)",
-                  borderRadius: "16px",
-                  boxShadow: "0 4px 30px rgba(0, 0, 0, 0.2)",
-                  backdropFilter: "blur(5px)",
-                  WebkitBackdropFilter: "blur(5px)",
-                  border: "1px solid rgba(255, 255, 255, 0.2)",
-                }}
-              >
-                <div className="w-12 h-12 bg-padel-primary/20 rounded-xl flex items-center justify-center">
-                  <MapPin className="w-6 h-6 text-padel-primary" />
-                </div>
-                <div>
-                  <p className="font-semibold text-white">Ubicació</p>
-                  <p className="text-gray-300">Lleida, Segrià, Catalunya</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Statistics */}
-            <div
-              className="p-6 text-white rounded-2xl flex-1"
-              style={{
-                background: "rgba(255, 255, 255, 0.1)",
-                borderRadius: "16px",
-                boxShadow: "0 4px 30px rgba(0, 0, 0, 0.2)",
-                backdropFilter: "blur(5px)",
-                WebkitBackdropFilter: "blur(5px)",
-                border: "1px solid rgba(255, 255, 255, 0.2)",
-              }}
-            >
-              <h3 className="text-2xl font-bold mb-6 text-center">
-                La nostra comunitat
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-5">
-                {stats.map((stat, index) => (
-                  <div key={index} className="text-center">
-                    <div className="w-14 h-14 bg-padel-primary/20 rounded-xl flex items-center justify-center m-auto mb-3 relative">
-                      <stat.icon className="w-7 h-7 text-padel-primary absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
-                    </div>
-                    <p className="text-2xl font-bold text-padel-primary mb-1">
-                      {stat.value}
-                    </p>
-                    <p className="text-sm text-gray-300">{stat.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {/* Desktop Contact Info & Stats (now using extracted components) */}
+          <div className="order-1 lg:order-2 space-y-4 md:space-y-6 h-full flex flex-col hidden md:flex">
+            <ContactInfoBlocks className="animate-fade-in-up" />
+            <CommunityStats className="animate-fade-in-up" />
           </div>
+        </div>
+
+        {/* Mobile Accordion for Contact Info & Stats */}
+  <div className="mt-8 md:hidden">
+          <Accordion type="multiple" className="w-full" defaultValue={[]}>
+            <AccordionItem value="info">
+              <AccordionTrigger className="text-white">
+                Informació de contacte
+              </AccordionTrigger>
+              <AccordionContent>
+    <ContactInfoBlocks />
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="stats">
+              <AccordionTrigger className="text-white">
+                La nostra comunitat
+              </AccordionTrigger>
+              <AccordionContent>
+    <CommunityStats compact />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
       </div>
     </section>
