@@ -33,6 +33,7 @@ import {
   Loader2,
   RotateCcw,
   UserCheck,
+  Share2,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LocationMapButton } from "@/components/LocationMapButton";
@@ -89,6 +90,8 @@ export default function TournamentsPage() {
     };
     try { window.setTimeout(tick, delay); } catch {}
   };
+
+  // ...existing code...
 
   // React Query mutations
   const inviteMutation = useCreatePairInvite();
@@ -178,6 +181,71 @@ export default function TournamentsPage() {
       toast({ title: "Error", description: msg });
     } finally {
       setJoining(false);
+    }
+  };
+
+  const handleShare = async (code: string) => {
+    const shareData = {
+      title: "Únete a mi equipo en Padel Segria",
+      text: `Usa aquest codi per unir-te al meu equip en el torneig: ${code}`,
+      url: window.location.origin, // Optional: link to the app
+    };
+
+    // Check if Web Share API is supported and can share
+    if (typeof navigator !== "undefined" && navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+        toast({
+          title: "Compartit!",
+          description: "La invitació s'ha compartit correctament",
+        });
+        return;
+      } catch (error: any) {
+        // User cancelled or error occurred, continue to fallbacks
+        if (error.name !== "AbortError") {
+          console.warn("Error sharing:", error);
+        }
+      }
+    }
+
+    // Fallback 1: Copy to clipboard
+    const fullMessage = `${shareData.title}\n\n${shareData.text}\n\n${shareData.url}`;
+    let success = false;
+
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard && (window as any).isSecureContext) {
+        await navigator.clipboard.writeText(fullMessage);
+        success = true;
+      }
+    } catch {}
+
+    if (!success) {
+      try {
+        const textarea = document.createElement("textarea");
+        textarea.value = fullMessage;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "absolute";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        success = document.execCommand && document.execCommand("copy");
+        document.body.removeChild(textarea);
+      } catch {}
+    }
+
+    if (success) {
+      toast({
+        title: "Copiat al portapapers!",
+        description: "Pots enganxar la invitació en qualsevol aplicació",
+      });
+    } else {
+      // Last fallback: Show the text to copy manually
+      toast({
+        title: "Comparteix aquesta invitació:",
+        description: fullMessage,
+        duration: 10000, // Show longer so user can read it
+      });
     }
   };
 
@@ -959,21 +1027,17 @@ export default function TournamentsPage() {
             {/* Code section - primary */}
             <div className="space-y-3">
               <div className="text-center">
-                {/* Header with title centered and reload button on the right */}
+                {/* Header with title centered and share button on the right */}
                 <div className="relative mb-2">
                   <h3 className="text-lg font-semibold text-white">Codi d'invitació</h3>
                   {generatedCode && (
                     <button
-                      onClick={handleRegenerateCode}
-                      disabled={regeneratingCode}
-                      className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-zinc-800/90 border border-white/20 text-white hover:bg-zinc-700 rounded-full p-2 shadow-lg transition-all duration-200 disabled:opacity-50"
-                      title="Generar nou codi"
+                      onClick={() => handleShare(generatedCode)}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 p-0.5 flex items-center justify-center text-white hover:text-white rounded-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-padel-primary/40"
+                      title="Compartir codi d'invitació"
+                      aria-label="Compartir codi d'invitació"
                     >
-                      {regeneratingCode ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <RotateCcw className="h-4 w-4" />
-                      )}
+                      <Share2 className="h-5 w-5 text-white" />
                     </button>
                   )}
                 </div>
