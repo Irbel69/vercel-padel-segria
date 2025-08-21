@@ -66,6 +66,29 @@ export default function TournamentsPage() {
   const inviteCodeRef = useRef<HTMLSpanElement | null>(null);
   const copyTimerRef = useRef<number | null>(null);
   const [copyConfirmed, setCopyConfirmed] = useState(false);
+  
+  // Ref to the join code input for auto-focus
+  const joinCodeInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Safari sometimes blocks programmatic focus/select immediately after opening a dialog.
+  // retryFocus will attempt to focus/select multiple times with short delays to improve reliability.
+  const retryFocus = (attempts = 6, delay = 120) => {
+    let tries = 0;
+    const tick = () => {
+      tries += 1;
+      try {
+        const el = joinCodeInputRef.current;
+        if (el) {
+          el.focus();
+          try { el.select(); } catch {}
+        }
+      } catch {}
+      if (tries < attempts && (!joinCodeInputRef.current || document.activeElement !== joinCodeInputRef.current)) {
+        try { window.setTimeout(tick, delay); } catch {}
+      }
+    };
+    try { window.setTimeout(tick, delay); } catch {}
+  };
 
   // React Query mutations
   const inviteMutation = useCreatePairInvite();
@@ -389,6 +412,18 @@ export default function TournamentsPage() {
     }
     return parts[0]?.trim();
   };
+
+  // Auto-focus join code input when dialog opens
+  useEffect(() => {
+    if (joinCodeOpen && joinCodeInputRef.current) {
+      // Use a small delay to ensure the dialog is fully rendered
+      const timer = setTimeout(() => {
+        joinCodeInputRef.current?.focus();
+        joinCodeInputRef.current?.select();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [joinCodeOpen]);
 
   const isRegistrationUrgent = (deadline: string) => {
     const deadlineDate = new Date(deadline);
@@ -1062,7 +1097,15 @@ export default function TournamentsPage() {
           setJoinCode("");
         }
       }}>
-        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="bg-zinc-900/90 backdrop-blur-md border-white/10 text-white max-w-md">
+        <DialogContent
+          onOpenAutoFocus={(e) => {
+            // Prevent the dialog's default auto-focus behavior so we can focus the inner input
+            e.preventDefault();
+            // Use retryFocus to handle Safari focus restrictions by retrying a few times
+            try { retryFocus(6, 120); } catch {}
+          }}
+          className="bg-zinc-900/90 backdrop-blur-md border-white/10 text-white max-w-md"
+        >
           <DialogHeader>
             <DialogTitle>Unir-me amb codi</DialogTitle>
             <DialogDescription>
@@ -1076,6 +1119,7 @@ export default function TournamentsPage() {
               return (
                 <div>
                   <Input
+                    ref={joinCodeInputRef}
                     placeholder="Introdueix el codi"
                     value={joinCode}
                     onChange={(e) => {
