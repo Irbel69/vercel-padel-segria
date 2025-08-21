@@ -73,7 +73,7 @@ export default function AcceptInvitePage() {
   // Quick missing token UI
   if (!token) {
     return (
-      <main className="min-h-[80vh] flex items-center justify-center relative overflow-hidden">
+      <main className="min-h-screen flex items-center justify-center relative overflow-hidden">
         <AnimatedDottedBackground />
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#c3fb12]/10 rounded-full blur-3xl" />
@@ -120,14 +120,14 @@ export default function AcceptInvitePage() {
         throw new Error("Cal iniciar sessió per veure els detalls de la invitació");
       }
       if (!res.ok) throw new Error(data?.error || data?.message || "No disponible");
-      return data as { inviter?: { id: string | null; name: string | null; avatar_url: string | null } };
+      return data as { inviter?: { id: string | null; name: string | null; avatar_url: string | null }, event?: { id: number | null; title: string | null } };
     },
     enabled: !!token && !tokenFormatInvalid,
     staleTime: 30_000,
   });
 
   return (
-    <main className="min-h-[80vh] flex items-center justify-center relative overflow-hidden">
+    <main className="min-h-screen flex items-center justify-center relative overflow-hidden">
       {/* Animated brand background */}
       <AnimatedDottedBackground />
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -177,7 +177,13 @@ export default function AcceptInvitePage() {
                     <div className="text-white font-semibold">
                       {isPreviewLoading ? <span className="opacity-70">Carregant…</span> : (preview?.inviter?.name || (isPreviewError ? "Jugador desconegut" : "Jugador desconegut"))}
                     </div>
-                    <div className="text-white/50 text-sm">t'està convidant a jugar en parella</div>
+                    <div className="text-white/50 text-sm">
+                      {preview?.event?.title ? (
+                        <span>t'està convidant a jugar en parella a <span className="font-semibold text-white">{preview.event.title}</span></span>
+                      ) : (
+                        "t'està convidant a jugar en parella"
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

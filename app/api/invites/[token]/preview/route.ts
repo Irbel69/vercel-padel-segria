@@ -29,11 +29,11 @@ async function handler(request: NextRequest) {
     // 3. Rate limiting is active
     const serviceSupabase = createServiceClient();
 
-    // Look up invite and join inviter profile
+    // Look up invite and join inviter profile and event title
     const { data: invite, error: inviteError } = await serviceSupabase
       .from("pair_invites")
       .select(
-        `id, status, expires_at, inviter:inviter_id ( id, name, surname, avatar_url )`
+        `id, status, expires_at, inviter:inviter_id ( id, name, surname, avatar_url ), event:event_id ( id, title )`
       )
       .eq("token", token)
       .maybeSingle();
@@ -62,6 +62,10 @@ async function handler(request: NextRequest) {
         id: inviter?.id || null,
         name: fullName,
         avatar_url: inviter?.avatar_url || null,
+      },
+      event: {
+        id: (invite as any)?.event?.id ?? null,
+        title: (invite as any)?.event?.title ?? null,
       },
     });
   } catch (err) {
