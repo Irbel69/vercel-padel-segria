@@ -21,14 +21,23 @@ import {
 } from "lucide-react";
 import { useRankings } from "@/hooks/use-rankings";
 import type { RankingPlayer } from "@/hooks/use-rankings";
+import { useUser } from "@/hooks/use-user";
 
 const DEFAULT_LIMIT = 10;
 
 export function RankingsSection() {
 	const [page, setPage] = useState(1);
-	const { data, isLoading, error } = useRankings(page, DEFAULT_LIMIT);
+	const { user } = useUser();
+	const userId = user?.id;
+	const { data, isLoading, error } = useRankings(page, DEFAULT_LIMIT, userId);
 	const players = data?.players ?? [];
 	const pagination = data?.pagination ?? null;
+	const contextRows = data?.contextRows ?? [];
+
+	const userInPage = userId ? players.some((p) => p.id === userId) : false;
+
+	// Merge extra context rows if needed (user present? don't render extras). Also dedupe if any overlap.
+	const extraRows: RankingPlayer[] = !userId || userInPage ? [] : contextRows.filter((row) => !players.some((p) => p.id === row.id));
 
 	const getRankIcon = (rank: number) => {
 		switch (rank) {
@@ -110,7 +119,7 @@ export function RankingsSection() {
 						border: "1px solid rgba(255, 255, 255, 0.2)",
 					}}>
 					<CardContent className="p-0">
-						<div className="overflow-x-auto">
+						<div key={page} className="overflow-x-auto animate-in fade-in slide-in-from-bottom-2 duration-300">
 							{isLoading ? (
 								<div className="p-4 sm:p-6 text-center text-white/70 text-sm sm:text-base">
 									Carregant...
@@ -126,7 +135,9 @@ export function RankingsSection() {
 										{players.map((player: RankingPlayer) => (
 											<div
 												key={player.id}
-												className="flex items-center justify-between p-3 hover:bg-white/5">
+												className={`flex items-center justify-between p-3 hover:bg-white/5 ${
+													userId && player.id === userId ? "bg-padel-primary/10 border-l-2 border-padel-primary" : ""
+												}`}> 
 												<div className="flex items-center gap-3 min-w-0">
 													{getRankIcon(player.ranking_position)}
 													<div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold bg-gray-600 text-white flex-shrink-0">
@@ -152,9 +163,9 @@ export function RankingsSection() {
 												</div>
 											</div>
 										))}
-									</div>
+										</div>
 
-									{/* Table for >= xs (>=480px) */}
+										{/* Table for >= xs (>=480px) */}
 									<div className="hidden xs:block">
 										<Table>
 											<TableHeader>
@@ -177,7 +188,9 @@ export function RankingsSection() {
 												{players.map((player: RankingPlayer) => (
 													<TableRow
 														key={player.id}
-														className="border-b border-white/5 hover:bg-white/5 transition-colors">
+														className={`border-b border-white/5 hover:bg-white/5 transition-colors ${
+															userId && player.id === userId ? "bg-padel-primary/10" : ""
+														}`}> 
 														<TableCell className="py-3 sm:py-4 px-3 sm:px-6">
 															<div className="flex items-center gap-1 sm:gap-2">
 																{getRankIcon(player.ranking_position)}
@@ -207,6 +220,47 @@ export function RankingsSection() {
 														</TableCell>
 													</TableRow>
 												))}
+												{/* Extra context rows when user not on this page */}
+												{extraRows.length > 0 && (
+													<>
+														<TableRow className="border-b border-white/10">
+															<TableCell colSpan={4} className="py-2 text-center text-white/60 text-xs">
+																La teva posició
+															</TableCell>
+														</TableRow>
+														{extraRows.map((player) => (
+															<TableRow
+																key={player.id}
+																className={`border-b border-white/10 ${
+																	userId && player.id === userId ? "bg-padel-primary/5" : "bg-transparent"
+																}`}>
+																<TableCell className="py-3 sm:py-4 px-3 sm:px-6">
+																	<div className="flex items-center gap-1 sm:gap-2">
+																		<span className="text-gray-400 font-bold text-xs sm:text-sm">#{player.ranking_position}</span>
+																	</div>
+																</TableCell>
+																<TableCell className="py-3 sm:py-4 px-2 sm:px-4">
+																	<div className="flex items-center gap-2 sm:gap-3">
+																		<div className="w-8 sm:w-10 h-8 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold bg-gray-600 text-white flex-shrink-0">
+																			{`${player.name?.[0] ?? ""}${player.surname?.[0] ?? ""}`}
+																		</div>
+																		<div className="min-w-0">
+																			<p className="font-semibold text-white text-xs sm:text-sm truncate">
+																				{player.name} {player.surname}
+																			</p>
+																		</div>
+																	</div>
+																</TableCell>
+																<TableCell className="py-3 sm:py-4 text-center">
+																	<span className="text-padel-primary font-bold text-xs sm:text-sm">{player.total_points}</span>
+																</TableCell>
+																<TableCell className="py-3 sm:py-4 text-center hidden xs:table-cell">
+																	{getTrendIcon(player.trend)}
+																</TableCell>
+															</TableRow>
+														))}
+													</>
+												)}
 											</TableBody>
 										</Table>
 									</div>

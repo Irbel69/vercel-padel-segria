@@ -12,6 +12,10 @@ export interface RankingPlayer {
 
 export interface RankingsResponse {
   players: RankingPlayer[];
+  // When a userId is provided to the endpoint and the user is not present in the
+  // current page, the API will return up to 3 extra rows providing context:
+  // [current user, immediate superior, immediate inferior]
+  contextRows?: RankingPlayer[];
   pagination: {
     currentPage: number;
     totalPages: number;

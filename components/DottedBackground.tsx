@@ -25,14 +25,17 @@ export function DottedBackground({
 	gap = 26,
 	withVerticalFade = false,
 }: DottedBackgroundProps) {
-	const pattern = `radial-gradient(circle at center, ${dotColor} ${dotSize}px, transparent ${dotSize + 0.5}px)`;
+	const pattern = `radial-gradient(circle at center, ${dotColor} ${dotSize}px, transparent ${
+		dotSize + 0.5
+	}px)`;
 	return (
 		<div
 			aria-hidden
 			className={clsx(
 				"pointer-events-none fixed inset-0 z-0 select-none",
-				withVerticalFade && "[mask-image:linear-gradient(to_bottom,black,black,transparent)]",
-				className,
+				withVerticalFade &&
+					"[mask-image:linear-gradient(to_bottom,black,black,transparent)]",
+				className
 			)}
 			style={{
 				backgroundImage: pattern,
