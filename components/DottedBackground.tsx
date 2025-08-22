@@ -20,8 +20,8 @@ export interface DottedBackgroundProps {
 
 export function DottedBackground({
 	className,
-	dotColor = "rgba(255,255,255,0.08)",
-	dotSize = 1,
+	dotColor = "rgba(255,255,255,0.14)",
+	dotSize = 1.5,
 	gap = 26,
 	withVerticalFade = false,
 }: DottedBackgroundProps) {
