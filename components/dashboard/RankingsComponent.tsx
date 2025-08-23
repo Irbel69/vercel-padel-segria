@@ -123,7 +123,7 @@ export function RankingsComponent() {
 						</TabsList>
 
 						{/* Top Players Tab */}
-						<TabsContent value="top" className="space-y-6" forceMount>
+						<TabsContent value="top" className="space-y-6 animate-in fade-in duration-300" forceMount>
 							<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 								{getTopPlayers().map((player, index) => (
 									<Card
@@ -198,7 +198,7 @@ export function RankingsComponent() {
 						</TabsContent>
 
 						{/* All Players Tab */}
-						<TabsContent value="all" forceMount>
+						<TabsContent value="all" className="animate-in fade-in duration-300" forceMount>
 							<div className="rounded-md border border-white/10 overflow-hidden">
 								<Table>
 									<TableHeader className="bg-white/5">
