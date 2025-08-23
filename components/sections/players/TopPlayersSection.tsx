@@ -293,11 +293,14 @@ export function TopPlayersSection() {
 									Uneix-te als nostres tornejos i demostra el teu talent!
 								</p>
 								<div className="flex flex-col sm:flex-row gap-3">
-									<Button
-										size="lg"
-										className="bg-padel-primary text-padel-secondary hover:bg-padel-primary/90 font-semibold flex-1 py-2">
-										<Trophy className="w-4 h-4 mr-2" /> Uneix-te
-									</Button>
+										<Button
+											asChild
+											size="lg"
+											className="bg-padel-primary text-padel-secondary hover:bg-padel-primary/90 font-semibold flex-1 py-2">
+											<a href="/dashboard">
+												<Trophy className="w-4 h-4 mr-2" /> Uneix-te
+											</a>
+										</Button>
 									<Button
 										variant="outline"
 										size="lg"

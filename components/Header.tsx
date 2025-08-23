@@ -26,7 +26,7 @@ const LoginButton = ({
 		href="/signin"
 		className={`${
 			isHomePage || transparent
-				? "bg-[#c3fb12] text-black hover:bg-white"
+				? "bg-padel-primary text-black hover:bg-white"
 				: "btn btn-primary"
 		} font-bold px-3 lg:px-4 xl:px-6 py-2 rounded-md flex items-center justify-center gap-1 lg:gap-2 text-xs lg:text-sm xl:text-base`}>
 		<svg
@@ -109,7 +109,7 @@ const HeaderContent = ({ transparent = false }: HeaderProps) => {
 								width={40}
 								height={40}
 							/>
-							<span className="font-extrabold text-lg text-[#c3fb12]">
+							<span className="font-extrabold text-lg text-padel-primary">
 								Padel Segrià
 							</span>
 						</Link>
@@ -155,8 +155,8 @@ const HeaderContent = ({ transparent = false }: HeaderProps) => {
 								key={link.href}
 								className={`text-xs xl:text-sm font-medium whitespace-nowrap ${
 									isHomePage || transparent || isOpen
-										? "text-white hover:text-[#c3fb12]"
-										: "hover:text-[#c3fb12]"
+										? "text-white hover:text-padel-primary"
+										: "hover:text-padel-primary"
 								} transition-colors`}
 								title={link.label}>
 								{link.label}
@@ -363,7 +363,7 @@ const Header = ({ transparent = false }: HeaderProps) => {
 									width={40}
 									height={40}
 								/>
-								<span className="font-extrabold text-lg text-[#c3fb12]">
+								<span className="font-extrabold text-lg text-padel-primary">
 									Padel Segrià
 								</span>
 							</Link>

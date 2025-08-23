@@ -170,9 +170,10 @@ export function EventsSection() {
 							Vols veure tots els nostres tornejos i esdeveniments?
 						</p>
 						<Button
+							asChild
 							size="lg"
 							className="bg-padel-primary text-padel-secondary hover:bg-padel-primary/90 hover:text-white transition-all duration-300 px-12 py-6 text-xl font-semibold rounded-2xl transform hover:scale-105 shadow-lg hover:shadow-xl hover:shadow-padel-primary/30">
-							Veure tots els tornejos
+							<a href="/dashboard/tournaments">Veure tots els tornejos</a>
 						</Button>
 					</div>
 				</div>
