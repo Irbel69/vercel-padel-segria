@@ -38,10 +38,12 @@ import {
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { Event, EventsListResponse, CreateEventData } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AdminEventsPage() {
 	const { user, profile, isLoading: userLoading } = useUser();
 	const router = useRouter();
+	const { toast } = useToast();
 	const [events, setEvents] = useState<Event[]>([]);
 	const [pagination, setPagination] = useState<
 		EventsListResponse["pagination"] | null
@@ -68,15 +70,18 @@ export default function AdminEventsPage() {
 	const [participantsEvent, setParticipantsEvent] = useState<
 		(Event & { participants?: any[] }) | null
 	>(null);
-	const [participants, setParticipants] = useState<
-		{
-			id: string;
-			name: string | null;
-			surname: string | null;
-			email: string;
-			avatar_url: string | null;
-		}[]
-	>([]);
+	type SimpleUser = {
+		id: string;
+		name: string | null;
+		surname: string | null;
+		email: string;
+		avatar_url: string | null;
+	};
+	type ParticipantsGroupItem =
+		| { kind: "single"; user: SimpleUser }
+		| { kind: "pair"; pair_id: string; users: [SimpleUser, SimpleUser] };
+
+	const [participants, setParticipants] = useState<ParticipantsGroupItem[]>([]);
 	const [userSearch, setUserSearch] = useState("");
 	const [userSearchResults, setUserSearchResults] = useState<
 		{
@@ -89,6 +94,31 @@ export default function AdminEventsPage() {
 	const [userSearchLoading, setUserSearchLoading] = useState(false);
 	const [addingUserId, setAddingUserId] = useState<string | null>(null);
 	const [removingUserId, setRemovingUserId] = useState<string | null>(null);
+	// Pair add states
+	const [userSearchA, setUserSearchA] = useState("");
+	const [userSearchB, setUserSearchB] = useState("");
+	const [userSearchResultsA, setUserSearchResultsA] = useState<
+		{
+			id: string;
+			name: string | null;
+			surname: string | null;
+			avatar_url: string | null;
+		}[]
+	>([]);
+	const [userSearchResultsB, setUserSearchResultsB] = useState<
+		{
+			id: string;
+			name: string | null;
+			surname: string | null;
+			avatar_url: string | null;
+		}[]
+	>([]);
+	const [userSearchLoadingA, setUserSearchLoadingA] = useState(false);
+	const [userSearchLoadingB, setUserSearchLoadingB] = useState(false);
+	const [selectedA, setSelectedA] = useState<SimpleUser | null>(null);
+	const [selectedB, setSelectedB] = useState<SimpleUser | null>(null);
+	const [addingPair, setAddingPair] = useState(false);
+	const [removingPairId, setRemovingPairId] = useState<string | null>(null);
 	const [formData, setFormData] = useState<CreateEventData>({
 		title: "",
 		date: "",
@@ -233,20 +263,78 @@ export default function AdminEventsPage() {
 		setParticipantsLoading(true);
 		setUserSearch("");
 		setUserSearchResults([]);
+		setUserSearchA("");
+		setUserSearchB("");
+		setUserSearchResultsA([]);
+		setUserSearchResultsB([]);
+		setSelectedA(null);
+		setSelectedB(null);
 		try {
 			const res = await fetch(`/api/admin/events/${event.id}`);
 			const data = await res.json();
 			if (!res.ok)
 				throw new Error(data.error || "Error carregant participants");
-			// data.participants holds registrations with embedded users
-			const mapped = (data.participants || []).map((r: any) => ({
-				id: r.users?.id,
-				name: r.users?.name ?? null,
-				surname: r.users?.surname ?? null,
-				email: r.users?.email,
-				avatar_url: r.users?.avatar_url ?? null,
-			}));
-			setParticipants(mapped);
+			// Group by pair_id when two confirmed users share same pair_id
+			const regs: any[] = data.participants || [];
+			const byPair: Record<string, any[]> = {};
+			const singles: any[] = [];
+			for (const r of regs) {
+				const pid = r.pair_id as string | null;
+				if (pid) {
+					byPair[pid] = byPair[pid] || [];
+					byPair[pid].push(r);
+				} else {
+					singles.push(r);
+				}
+			}
+			const grouped: ParticipantsGroupItem[] = [];
+			// Pairs only when exactly two users in that pair_id
+			for (const [pid, arr] of Object.entries(byPair)) {
+				if (arr.length === 2) {
+					const uA: SimpleUser = {
+						id: arr[0].users?.id,
+						name: arr[0].users?.name ?? null,
+						surname: arr[0].users?.surname ?? null,
+						email: arr[0].users?.email,
+						avatar_url: arr[0].users?.avatar_url ?? null,
+					};
+					const uB: SimpleUser = {
+						id: arr[1].users?.id,
+						name: arr[1].users?.name ?? null,
+						surname: arr[1].users?.surname ?? null,
+						email: arr[1].users?.email,
+						avatar_url: arr[1].users?.avatar_url ?? null,
+					};
+					grouped.push({ kind: "pair", pair_id: pid, users: [uA, uB] });
+				} else {
+					// Incomplete pair -> treat each as single
+					for (const r of arr) {
+						grouped.push({
+							kind: "single",
+							user: {
+								id: r.users?.id,
+								name: r.users?.name ?? null,
+								surname: r.users?.surname ?? null,
+								email: r.users?.email,
+								avatar_url: r.users?.avatar_url ?? null,
+							},
+						});
+					}
+				}
+			}
+			for (const r of singles) {
+				grouped.push({
+					kind: "single",
+					user: {
+						id: r.users?.id,
+						name: r.users?.name ?? null,
+						surname: r.users?.surname ?? null,
+						email: r.users?.email,
+						avatar_url: r.users?.avatar_url ?? null,
+					},
+				});
+			}
+			setParticipants(grouped);
 			setParticipantsEvent({
 				...event,
 				current_participants: data.current_participants,
@@ -281,6 +369,50 @@ export default function AdminEventsPage() {
 		};
 	}, [userSearch, isParticipantsModalOpen]);
 
+	// Pair search A
+	useEffect(() => {
+		if (!isParticipantsModalOpen) return;
+		if (userSearchA.trim().length < 2) {
+			setUserSearchResultsA([]);
+			return;
+		}
+		let active = true;
+		setUserSearchLoadingA(true);
+		fetch(`/api/admin/users/search?search=${encodeURIComponent(userSearchA)}`)
+			.then((r) => r.json())
+			.then((data) => {
+				if (!active) return;
+				setUserSearchResultsA(data.users || []);
+			})
+			.catch(() => {})
+			.finally(() => active && setUserSearchLoadingA(false));
+		return () => {
+			active = false;
+		};
+	}, [userSearchA, isParticipantsModalOpen]);
+
+	// Pair search B
+	useEffect(() => {
+		if (!isParticipantsModalOpen) return;
+		if (userSearchB.trim().length < 2) {
+			setUserSearchResultsB([]);
+			return;
+		}
+		let active = true;
+		setUserSearchLoadingB(true);
+		fetch(`/api/admin/users/search?search=${encodeURIComponent(userSearchB)}`)
+			.then((r) => r.json())
+			.then((data) => {
+				if (!active) return;
+				setUserSearchResultsB(data.users || []);
+			})
+			.catch(() => {})
+			.finally(() => active && setUserSearchLoadingB(false));
+		return () => {
+			active = false;
+		};
+	}, [userSearchB, isParticipantsModalOpen]);
+
 	const addUserToEvent = async (userId: string) => {
 		if (!participantsEvent) return;
 		setAddingUserId(userId);
@@ -297,8 +429,17 @@ export default function AdminEventsPage() {
 			if (!res.ok) throw new Error(data.error || "Error afegint usuari");
 			// Refresh list
 			openParticipantsModal(participantsEvent);
+			toast({
+				title: "Usuari afegit",
+				description: "S'ha afegit correctament a l'esdeveniment.",
+			});
 		} catch (e: any) {
 			setParticipantsError(e.message);
+			toast({
+				variant: "destructive",
+				title: "Error",
+				description: e.message || "No s'ha pogut afegir l'usuari",
+			});
 		} finally {
 			setAddingUserId(null);
 		}
@@ -314,18 +455,105 @@ export default function AdminEventsPage() {
 			);
 			const data = await res.json();
 			if (!res.ok) throw new Error(data.error || "Error eliminant usuari");
-			setParticipants((prev) => prev.filter((p) => p.id !== userId));
+			setParticipants((prev) =>
+				prev.filter((p) => !(p.kind === "single" && p.user.id === userId))
+			);
 			setParticipantsEvent((prev) =>
 				prev
 					? {
 							...prev,
-							current_participants: (prev.current_participants || 1) - 1,}
+							current_participants: (prev.current_participants || 1) - 1,
+					  }
 					: prev
 			);
+			toast({
+				title: "Usuari eliminat",
+				description: "S'ha eliminat de l'esdeveniment.",
+			});
 		} catch (e: any) {
 			setParticipantsError(e.message);
+			toast({
+				variant: "destructive",
+				title: "Error",
+				description: e.message || "No s'ha pogut eliminar l'usuari",
+			});
 		} finally {
 			setRemovingUserId(null);
+		}
+	};
+
+	const addPairToEvent = async (userIdA: string, userIdB: string) => {
+		if (!participantsEvent) return;
+		setAddingPair(true);
+		try {
+			const res = await fetch(
+				`/api/admin/events/${participantsEvent.id}/participants`,
+				{
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ user_id: userIdA, pair_user_id: userIdB }),
+				}
+			);
+			const data = await res.json();
+			if (!res.ok) throw new Error(data.error || "Error afegint parella");
+			// Refresh list
+			await openParticipantsModal(participantsEvent);
+			setUserSearchA("");
+			setUserSearchB("");
+			setSelectedA(null);
+			setSelectedB(null);
+			toast({
+				title: "Parella afegida",
+				description: "La parella s'ha afegit correctament.",
+			});
+		} catch (e: any) {
+			setParticipantsError(e.message);
+			toast({
+				variant: "destructive",
+				title: "Error",
+				description: e.message || "No s'ha pogut afegir la parella",
+			});
+		} finally {
+			setAddingPair(false);
+		}
+	};
+
+	const removePairFromEvent = async (pairId: string) => {
+		if (!participantsEvent) return;
+		setRemovingPairId(pairId);
+		try {
+			const res = await fetch(
+				`/api/admin/events/${
+					participantsEvent.id
+				}/participants?pair_id=${encodeURIComponent(pairId)}`,
+				{ method: "DELETE" }
+			);
+			const data = await res.json();
+			if (!res.ok) throw new Error(data.error || "Error eliminant parella");
+			setParticipants((prev) =>
+				prev.filter((p) => !(p.kind === "pair" && p.pair_id === pairId))
+			);
+			setParticipantsEvent((prev) =>
+				prev
+					? {
+							...prev,
+							current_participants: (prev.current_participants || 2) - 2,
+					  }
+					: prev
+			);
+			toast({
+				title: "Parella eliminada",
+				description: "La parella s'ha eliminat correctament.",
+			});
+		} catch (e: any) {
+			setParticipantsError(e.message);
+			toast({
+				variant: "destructive",
+				title: "Error",
+				description: e.message || "No s'ha pogut eliminar la parella",
+			});
+		} finally {
+			setRemovingPairId(null);
 		}
 	};
 
@@ -876,7 +1104,7 @@ export default function AdminEventsPage() {
 							)}
 						</DialogDescription>
 					</DialogHeader>
-					<div className="space-y-4">
+					<div className="space-y-6">
 						{/* Add user search */}
 						<div className="space-y-2">
 							<label className="text-xs uppercase tracking-wide text-white/60">
@@ -896,7 +1124,11 @@ export default function AdminEventsPage() {
 								userSearchResults.length > 0 && (
 									<ul className="max-h-40 overflow-y-auto bg-white/5 border border-white/10 rounded-md divide-y divide-white/10">
 										{userSearchResults.map((u) => {
-											const already = participants.some((p) => p.id === u.id);
+											const already = participants.some((p) =>
+												p.kind === "single"
+													? p.user.id === u.id
+													: p.users.some((x) => x.id === u.id)
+											);
 											return (
 												<li
 													key={u.id}
@@ -927,6 +1159,182 @@ export default function AdminEventsPage() {
 									</ul>
 								)}
 						</div>
+
+						{/* Add pair search */}
+						<div className="space-y-2">
+							<label className="text-xs uppercase tracking-wide text-white/60">
+								Afegir parella
+							</label>
+							<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+								<div>
+									<Input
+										value={userSearchA}
+										onChange={(e) => {
+											setUserSearchA(e.target.value);
+											setSelectedA(null);
+										}}
+										placeholder="Jugador A (mínim 2 car.)"
+										className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
+									/>
+									{userSearchLoadingA && (
+										<p className="text-xs text-white/40">Cercant...</p>
+									)}
+									{!userSearchLoadingA &&
+										userSearchA.length >= 2 &&
+										userSearchResultsA.length > 0 && (
+											<ul className="max-h-40 overflow-y-auto bg-white/5 border border-white/10 rounded-md divide-y divide-white/10 mt-1">
+												{userSearchResultsA.map((u) => {
+													const already = participants.some((p) =>
+														p.kind === "single"
+															? p.user.id === u.id
+															: p.users.some((x) => x.id === u.id)
+													);
+													return (
+														<li
+															key={u.id}
+															className="p-2 flex items-center gap-3 text-sm cursor-pointer hover:bg-white/10"
+															onClick={() => {
+																if (already) {
+																	toast({
+																		variant: "destructive",
+																		title: "Ja inscrit",
+																		description:
+																			"Aquest jugador ja està inscrit en aquest esdeveniment.",
+																	});
+																	return;
+																}
+																setSelectedA({
+																	id: u.id,
+																	name: u.name ?? null,
+																	surname: u.surname ?? null,
+																	email: "",
+																	avatar_url: u.avatar_url ?? null,
+																});
+															}}>
+															<div className="h-7 w-7 rounded-full bg-white/10 flex items-center justify-center text-[10px]">
+																{(u.name?.[0] || "?") + (u.surname?.[0] || "")}
+															</div>
+															<div className="flex-1 min-w-0 truncate">
+																{u.name || u.surname
+																	? `${u.name || ""} ${u.surname || ""}`.trim()
+																	: u.id}
+															</div>
+															{already && (
+																<span className="text-[10px] text-white/40">
+																	Ja inscrit
+																</span>
+															)}
+														</li>
+													);
+												})}
+											</ul>
+										)}
+									{selectedA && (
+										<p className="text-xs text-white/60 mt-1">
+											Seleccionat:{" "}
+											{selectedA.name || selectedA.surname
+												? `${selectedA.name || ""} ${
+														selectedA.surname || ""
+												  }`.trim()
+												: selectedA.id}
+										</p>
+									)}
+								</div>
+								<div>
+									<Input
+										value={userSearchB}
+										onChange={(e) => {
+											setUserSearchB(e.target.value);
+											setSelectedB(null);
+										}}
+										placeholder="Jugador B (mínim 2 car.)"
+										className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
+									/>
+									{userSearchLoadingB && (
+										<p className="text-xs text-white/40">Cercant...</p>
+									)}
+									{!userSearchLoadingB &&
+										userSearchB.length >= 2 &&
+										userSearchResultsB.length > 0 && (
+											<ul className="max-h-40 overflow-y-auto bg-white/5 border border-white/10 rounded-md divide-y divide-white/10 mt-1">
+												{userSearchResultsB.map((u) => {
+													const already = participants.some((p) =>
+														p.kind === "single"
+															? p.user.id === u.id
+															: p.users.some((x) => x.id === u.id)
+													);
+													return (
+														<li
+															key={u.id}
+															className="p-2 flex items-center gap-3 text-sm cursor-pointer hover:bg-white/10"
+															onClick={() => {
+																if (already) {
+																	toast({
+																		variant: "destructive",
+																		title: "Ja inscrit",
+																		description:
+																			"Aquest jugador ja està inscrit en aquest esdeveniment.",
+																	});
+																	return;
+																}
+																setSelectedB({
+																	id: u.id,
+																	name: u.name ?? null,
+																	surname: u.surname ?? null,
+																	email: "",
+																	avatar_url: u.avatar_url ?? null,
+																});
+															}}>
+															<div className="h-7 w-7 rounded-full bg-white/10 flex items-center justify-center text-[10px]">
+																{(u.name?.[0] || "?") + (u.surname?.[0] || "")}
+															</div>
+															<div className="flex-1 min-w-0 truncate">
+																{u.name || u.surname
+																	? `${u.name || ""} ${u.surname || ""}`.trim()
+																	: u.id}
+															</div>
+															{already && (
+																<span className="text-[10px] text-white/40">
+																	Ja inscrit
+																</span>
+															)}
+														</li>
+													);
+												})}
+											</ul>
+										)}
+									{selectedB && (
+										<p className="text-xs text-white/60 mt-1">
+											Seleccionat:{" "}
+											{selectedB.name || selectedB.surname
+												? `${selectedB.name || ""} ${
+														selectedB.surname || ""
+												  }`.trim()
+												: selectedB.id}
+										</p>
+									)}
+								</div>
+							</div>
+							<div className="flex justify-end">
+								<Button
+									variant="outline"
+									size="sm"
+									disabled={
+										addingPair ||
+										!selectedA ||
+										!selectedB ||
+										selectedA.id === selectedB.id
+									}
+									onClick={() =>
+										selectedA &&
+										selectedB &&
+										addPairToEvent(selectedA.id, selectedB.id)
+									}
+									className="h-7 px-3 text-[11px] bg-padel-primary/20 border-padel-primary/30 text-padel-primary hover:bg-padel-primary/30">
+									{addingPair ? "Afegint..." : "Afegir parella"}
+								</Button>
+							</div>
+						</div>
 						{participantsLoading && (
 							<div className="space-y-2">
 								{Array.from({ length: 5 }).map((_, i) => (
@@ -949,31 +1357,83 @@ export default function AdminEventsPage() {
 							)}
 						{!participantsLoading && participants.length > 0 && (
 							<ul className="divide-y divide-white/10">
-								{participants.map((p) => (
-									<li key={p.id} className="py-2 flex items-center gap-3">
-										<div className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-medium">
-											{(p.name?.[0] || "?") + (p.surname?.[0] || "")}
-										</div>
-										<div className="flex-1 min-w-0">
-											<p className="text-sm font-medium text-white truncate">
-												{p.name || p.surname
-													? `${p.name || ""} ${p.surname || ""}`.trim()
-													: p.email}
-											</p>
-											<p className="text-xs text-white/50 truncate">
-												{p.email}
-											</p>
-										</div>
-										<Button
-											variant="outline"
-											size="sm"
-											disabled={removingUserId === p.id}
-											onClick={() => removeUserFromEvent(p.id)}
-											className="h-6 px-2 text-[10px] bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30">
-											{removingUserId === p.id ? "..." : "Treure"}
-										</Button>
-									</li>
-								))}
+								{participants.map((item) =>
+									item.kind === "single" ? (
+										<li
+											key={`single-${item.user.id}`}
+											className="py-2 flex items-center gap-3">
+											<div className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-medium">
+												{(item.user.name?.[0] || "?") +
+													(item.user.surname?.[0] || "")}
+											</div>
+											<div className="flex-1 min-w-0">
+												<p className="text-sm font-medium text-white truncate">
+													{item.user.name || item.user.surname
+														? `${item.user.name || ""} ${
+																item.user.surname || ""
+														  }`.trim()
+														: item.user.email}
+												</p>
+												<p className="text-xs text-white/50 truncate">
+													{item.user.email}
+												</p>
+											</div>
+											<Button
+												variant="outline"
+												size="sm"
+												disabled={removingUserId === item.user.id}
+												onClick={() => removeUserFromEvent(item.user.id)}
+												className="h-6 px-2 text-[10px] bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30">
+												{removingUserId === item.user.id ? "..." : "Treure"}
+											</Button>
+										</li>
+									) : (
+										<li
+											key={`pair-${item.pair_id}`}
+											className="py-2 flex items-center gap-3">
+											<div className="relative h-8 w-8">
+												<div className="absolute left-0 top-0 h-8 w-8 rounded-full bg-white/10 flex items-center justify-center text-[10px]">
+													{(item.users[0].name?.[0] || "?") +
+														(item.users[0].surname?.[0] || "")}
+												</div>
+												<div className="absolute left-4 top-0 h-8 w-8 rounded-full bg-white/10 flex items-center justify-center text-[10px] border border-white/10">
+													{(item.users[1].name?.[0] || "?") +
+														(item.users[1].surname?.[0] || "")}
+												</div>
+											</div>
+											<div className="flex-1 min-w-0">
+												<p className="text-sm font-medium text-white truncate">
+													{`${
+														item.users[0].name || item.users[0].surname
+															? `${item.users[0].name || ""} ${
+																	item.users[0].surname || ""
+															  }`.trim()
+															: item.users[0].email
+													} + ${
+														item.users[1].name || item.users[1].surname
+															? `${item.users[1].name || ""} ${
+																	item.users[1].surname || ""
+															  }`.trim()
+															: item.users[1].email
+													}`}
+												</p>
+												<p className="text-xs text-white/50 truncate">
+													Parella
+												</p>
+											</div>
+											<Button
+												variant="outline"
+												size="sm"
+												disabled={removingPairId === item.pair_id}
+												onClick={() => removePairFromEvent(item.pair_id)}
+												className="h-6 px-2 text-[10px] bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30">
+												{removingPairId === item.pair_id
+													? "..."
+													: "Treure parella"}
+											</Button>
+										</li>
+									)
+								)}
 							</ul>
 						)}
 					</div>
