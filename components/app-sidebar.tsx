@@ -44,6 +44,12 @@ const menuItems = [
 		description: "Pàgina principal",
 	},
 	{
+		title: "Classes",
+		url: "/dashboard/lessons",
+		icon: Calendar,
+		description: "Reserva classes",
+	},
+	{
 		title: "Tornejos",
 		url: "/dashboard/tournaments",
 		icon: Target,
@@ -63,6 +69,12 @@ const adminItems = [
 		url: "/dashboard/admin/events",
 		icon: Calendar,
 		description: "Gestió de tornejos",
+	},
+	{
+		title: "Classes",
+		url: "/dashboard/admin/lessons",
+		icon: Calendar,
+		description: "Gestió de classes",
 	},
 	{
 		title: "Usuaris",
@@ -121,8 +133,12 @@ export function AppSidebar() {
 						/>
 					</div>
 					<div className="flex flex-col">
-						<span className="font-bold text-sidebar-foreground text-lg">Padel Segrià</span>
-						<span className="text-xs text-sidebar-foreground/60">Dashboard</span>
+						<span className="font-bold text-sidebar-foreground text-lg">
+							Padel Segrià
+						</span>
+						<span className="text-xs text-sidebar-foreground/60">
+							Dashboard
+						</span>
 					</div>
 				</div>
 			</SidebarHeader>
@@ -138,7 +154,7 @@ export function AppSidebar() {
 					<SidebarMenu className="gap-1.5">
 						{menuItems.map((item, idx) => (
 							<SidebarMenuItem key={item.title}>
-				<SidebarMenuButton
+								<SidebarMenuButton
 									asChild
 									isActive={pathname === item.url}
 									size="lg"
@@ -147,15 +163,13 @@ export function AppSidebar() {
 										pathname === item.url &&
 											"bg-white/5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)] before:absolute before:left-0 before:top-0 before:h-full before:w-[3px] before:bg-padel-primary before:rounded-l-xl before:shadow-[0_0_6px_rgba(229,240,0,0.35)]"
 									)}
-									style={{ animationDelay: `${(idx + 1) * 50}ms` }}
-								>
+									style={{ animationDelay: `${(idx + 1) * 50}ms` }}>
 									<Link
 										href={item.url}
 										className="flex items-center gap-4"
 										onClick={() => {
 											if (isMobile) setOpenMobile(false);
-										}}
-									>
+										}}>
 										<item.icon className="h-5 w-5 shrink-0 transition-colors group-data-[active=true]:text-padel-primary" />
 										<div className="flex flex-col">
 											<span className="font-medium text-sidebar-foreground">
@@ -194,18 +208,18 @@ export function AppSidebar() {
 											pathname === item.url &&
 												"bg-white/5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)] before:absolute before:left-0 before:top-0 before:h-full before:w-[3px] before:bg-padel-primary before:rounded-l-xl before:shadow-[0_0_6px_rgba(229,240,0,0.35)]"
 										)}
-										style={{ animationDelay: `${(idx + 1) * 50}ms` }}
-									>
+										style={{ animationDelay: `${(idx + 1) * 50}ms` }}>
 										<Link
 											href={item.url}
 											className="flex items-center gap-4"
 											onClick={() => {
 												if (isMobile) setOpenMobile(false);
-											}}
-										>
+											}}>
 											<item.icon className="h-5 w-5 shrink-0 transition-colors group-data-[active=true]:text-padel-primary" />
 											<div className="flex flex-col">
-												<span className="font-medium text-sidebar-foreground">{item.title}</span>
+												<span className="font-medium text-sidebar-foreground">
+													{item.title}
+												</span>
 												<span className="text-[13px] leading-4 text-sidebar-foreground/60">
 													{item.description}
 												</span>
@@ -227,9 +241,9 @@ export function AppSidebar() {
 							Configuració
 						</h4>
 					</div>
-			<SidebarMenu className="gap-1.5">
+					<SidebarMenu className="gap-1.5">
 						<SidebarMenuItem>
-				<SidebarMenuButton
+							<SidebarMenuButton
 								asChild
 								isActive={pathname === "/dashboard/config"}
 								size="lg"
@@ -238,19 +252,19 @@ export function AppSidebar() {
 									pathname === "/dashboard/config" &&
 										"bg-white/5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)] before:absolute before:left-0 before:top-0 before:h-full before:w-[3px] before:bg-padel-primary before:rounded-l-xl before:shadow-[0_0_6px_rgba(229,240,0,0.35)]"
 								)}
-								style={{ animationDelay: `200ms` }}
-							>
-				<Link
-					href="/dashboard/config"
-					className="flex items-center gap-4"
-					onClick={() => {
-						if (isMobile) setOpenMobile(false);
-					}}
-				>
+								style={{ animationDelay: `200ms` }}>
+								<Link
+									href="/dashboard/config"
+									className="flex items-center gap-4"
+									onClick={() => {
+										if (isMobile) setOpenMobile(false);
+									}}>
 									<Settings className="h-5 w-5 shrink-0 transition-colors group-data-[active=true]:text-padel-primary" />
 									<div className="flex flex-col">
-										<span className="font-medium text-sidebar-foreground">Configuració General</span>
-					<span className="text-[13px] leading-4 text-sidebar-foreground/60">
+										<span className="font-medium text-sidebar-foreground">
+											Configuració General
+										</span>
+										<span className="text-[13px] leading-4 text-sidebar-foreground/60">
 											Preferències i ajustos
 										</span>
 									</div>
