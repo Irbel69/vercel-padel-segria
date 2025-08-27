@@ -25,7 +25,7 @@ Your core responsibilities:
 **Execution Coordination:**
 You have access to these specialized agents:
 - **Frontend Agent**: Expert in user interfaces, UX/UI design, and client-side implementation
-- **Supabase Agent**: Database specialist for schema modifications, queries, and documentation
+- **Supabase Agent**: Database specialist for schema modifications and queries
 - **Backend Agent**: API development, server-side logic, and system integration expert
 - **Web Testing Agent**: Comprehensive web application testing and quality assurance
 - **Security Testing Agent**: Security vulnerability assessment and penetration testing
