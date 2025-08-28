@@ -8,24 +8,16 @@ import {
 	DialogTitle,
 	DialogFooter,
 } from "@/components/ui/dialog";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import type {
 	CalendarDay,
 	LessonSlotWithBookings,
 } from "@/components/lessons/AdminCalendarView";
 import type { ScheduleBlock } from "@/types/lessons";
-import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import PreviewView from "./day-editor-dialog/PreviewView";
+import EditView from "./day-editor-dialog/EditView";
+import { formatTimeHHMM, minutesBetween } from "./day-editor-dialog/utils";
 
 type Props = {
 	open: boolean;
@@ -35,14 +27,6 @@ type Props = {
 	defaultLocation?: string;
 	onSaved?: () => void; // called after successful apply
 };
-
-function formatTimeHHMM(d: Date) {
-	return d.toTimeString().slice(0, 5);
-}
-
-function minutesBetween(a: Date, b: Date) {
-	return Math.round((b.getTime() - a.getTime()) / 60000);
-}
 
 export default function DayEditorDialog({
 	open,
@@ -59,7 +43,10 @@ export default function DayEditorDialog({
 	const [defaults, setDefaults] = useState<{
 		max_capacity?: number;
 		joinable?: boolean;
-	}>({ max_capacity: 4, joinable: true });
+	}>({
+		max_capacity: 4,
+		joinable: true,
+	});
 	const [policy, setPolicy] = useState<"skip" | "protect" | "replace">(
 		"protect"
 	);
@@ -135,6 +122,33 @@ export default function DayEditorDialog({
 		if (!day) return 0;
 		const dateStr = day.date.toISOString().slice(0, 10);
 		return new Date(dateStr + "T00:00:00Z").getUTCDay();
+	}, [day]);
+
+	// Build a preview list that includes lessons and pauses with concrete start/end times
+	const previewItems = useMemo(() => {
+		if (!day) return [] as Array<any>;
+		const sorted = [...day.slots].sort(
+			(a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime()
+		);
+		const items: Array<{
+			kind: "lesson" | "break";
+			start: Date;
+			end: Date;
+			slot?: LessonSlotWithBookings;
+		}> = [];
+		for (let i = 0; i < sorted.length; i++) {
+			const s = sorted[i];
+			const start = new Date(s.start_at);
+			const end = new Date(s.end_at);
+			items.push({ kind: "lesson", start, end, slot: s });
+			if (i < sorted.length - 1) {
+				const nextStart = new Date(sorted[i + 1].start_at);
+				const breakMin = minutesBetween(end, nextStart);
+				if (breakMin > 0)
+					items.push({ kind: "break", start: end, end: nextStart });
+			}
+		}
+		return items;
 	}, [day]);
 
 	const buildPayload = () => {
@@ -216,10 +230,15 @@ export default function DayEditorDialog({
 		}
 	};
 
+	const onChangeBlock = (idx: number, patch: Partial<ScheduleBlock>) =>
+		setBlocks((prev) =>
+			prev.map((x, i) => (i === idx ? { ...x, ...patch } : x))
+		);
+
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="max-w-[95vw] md:max-w-3xl max-h-[85vh] overflow-y-auto">
-				<DialogHeader>
+			<DialogContent className="w-[100vw] sm:w-auto max-w-[100vw] sm:max-w-[95vw] md:max-w-3xl h-[100dvh] sm:h-auto sm:max-h-[85vh] overflow-y-auto overflow-x-hidden p-0 sm:p-6 rounded-none sm:rounded-lg">
+				<DialogHeader className="px-4 pt-4 sm:px-0 sm:pt-0">
 					<DialogTitle className="text-white">
 						{day
 							? day.date.toLocaleDateString("ca-ES", {
@@ -233,304 +252,41 @@ export default function DayEditorDialog({
 				</DialogHeader>
 
 				{!day ? null : (
-					<div className="space-y-4">
+					<div className="space-y-4 px-4 pb-4 sm:px-0 sm:pb-0">
 						{mode === "view" ? (
 							<div className="space-y-3">
-								<div className="text-white/80">
-									{day.slots.length} classes programades
-								</div>
-								<div className="space-y-2">
-									{day.slots
-										.sort(
-											(a, b) =>
-												new Date(a.start_at).getTime() -
-												new Date(b.start_at).getTime()
-										)
-										.map((s: LessonSlotWithBookings) => (
-											<Card
-												key={s.id}
-												className="p-2 text-sm text-white/90 flex items-center gap-3">
-												<span>
-													{new Date(s.start_at).toLocaleTimeString([], {
-														hour: "2-digit",
-														minute: "2-digit",
-													})}
-												</span>
-												<span>—</span>
-												<span>
-													{new Date(s.end_at).toLocaleTimeString([], {
-														hour: "2-digit",
-														minute: "2-digit",
-													})}
-												</span>
-												<span className="ml-auto">
-													Capacitat: {s.max_capacity}
-												</span>
-											</Card>
-										))}
-								</div>
+								<PreviewView day={day} previewItems={previewItems} />
 								<div className="pt-2">
 									<Button onClick={() => setMode("edit")}>Editar</Button>
 								</div>
 							</div>
 						) : (
-							<div className="space-y-4">
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-									<div className="space-y-2">
-										<Label className="text-white/90">Hora base inici</Label>
-										<Input
-											type="time"
-											value={baseStart}
-											onChange={(e) => setBaseStart(e.target.value)}
-											className="w-full"
-										/>
-									</div>
-									<div className="space-y-2">
-										<Label className="text-white/90">Ubicació</Label>
-										<Input
-											value={location}
-											onChange={(e) => setLocation(e.target.value)}
-											className="w-full"
-										/>
-									</div>
-									<div className="space-y-2">
-										<Label className="text-white/90">
-											Defectes (capacitat / joinable)
-										</Label>
-										<div className="grid grid-cols-2 gap-2">
-											<Input
-												type="number"
-												min={1}
-												max={4}
-												placeholder="Capacitat"
-												value={defaults.max_capacity ?? 4}
-												onChange={(e) =>
-													setDefaults((d) => ({
-														...d,
-														max_capacity: Number(e.target.value || 4),
-													}))
-												}
-												className="w-full"
-											/>
-											<Select
-												value={String(defaults.joinable ?? true)}
-												onValueChange={(v) =>
-													setDefaults((d) => ({ ...d, joinable: v === "true" }))
-												}>
-												<SelectTrigger className="w-full">
-													<SelectValue placeholder="Joinable" />
-												</SelectTrigger>
-												<SelectContent>
-													<SelectItem value="true">Permetre omplir</SelectItem>
-													<SelectItem value="false">No omplible</SelectItem>
-												</SelectContent>
-											</Select>
-										</div>
-									</div>
-									<div className="space-y-2">
-										<Label className="text-white/90">
-											Política de conflicte
-										</Label>
-										<Select
-											value={policy}
-											onValueChange={(v) => setPolicy(v as any)}>
-											<SelectTrigger className="w-full">
-												<SelectValue />
-											</SelectTrigger>
-											<SelectContent>
-												<SelectItem value="skip">Saltar conflictes</SelectItem>
-												<SelectItem value="protect">
-													Protegir reserves
-												</SelectItem>
-												<SelectItem value="replace">
-													Reemplaçar sense reserves
-												</SelectItem>
-											</SelectContent>
-										</Select>
-									</div>
-								</div>
-
-								<div className="space-y-2">
-									<Label className="text-white/90">Blocs del dia</Label>
-									<div className="space-y-2">
-										{blocks.map((b, idx) => (
-											<Card
-												key={idx}
-												className="p-3 flex flex-wrap items-center gap-3">
-												<Select
-													value={b.kind}
-													onValueChange={(v) =>
-														setBlocks((prev) =>
-															prev.map((x, i) =>
-																i === idx ? { ...x, kind: v as any } : x
-															)
-														)
-													}>
-													<SelectTrigger className="w-32">
-														<SelectValue />
-													</SelectTrigger>
-													<SelectContent>
-														<SelectItem value="lesson">Classe</SelectItem>
-														<SelectItem value="break">Pausa</SelectItem>
-													</SelectContent>
-												</Select>
-												<Input
-													type="number"
-													className="w-28"
-													value={b.duration_minutes}
-													onChange={(e) =>
-														setBlocks((prev) =>
-															prev.map((x, i) =>
-																i === idx
-																	? {
-																			...x,
-																			duration_minutes: Number(
-																				e.target.value || 60
-																			),
-																	  }
-																	: x
-															)
-														)
-													}
-												/>
-												{b.kind === "lesson" && (
-													<>
-														<Input
-															placeholder="Etiqueta"
-															className="w-40 min-w-0"
-															value={b.label || ""}
-															onChange={(e) =>
-																setBlocks((prev) =>
-																	prev.map((x, i) =>
-																		i === idx
-																			? { ...x, label: e.target.value }
-																			: x
-																	)
-																)
-															}
-														/>
-														<Input
-															type="number"
-															className="w-24"
-															placeholder="Cap"
-															value={b.max_capacity ?? ""}
-															onChange={(e) =>
-																setBlocks((prev) =>
-																	prev.map((x, i) =>
-																		i === idx
-																			? {
-																					...x,
-																					max_capacity: e.target.value
-																						? Number(e.target.value)
-																						: undefined,
-																			  }
-																			: x
-																	)
-																)
-															}
-														/>
-														<Select
-															value={
-																b.joinable === undefined
-																	? "default"
-																	: String(b.joinable)
-															}
-															onValueChange={(v) =>
-																setBlocks((prev) =>
-																	prev.map((x, i) =>
-																		i === idx
-																			? {
-																					...x,
-																					joinable:
-																						v === "default"
-																							? undefined
-																							: v === "true",
-																			  }
-																			: x
-																	)
-																)
-															}>
-															<SelectTrigger className="w-32">
-																<SelectValue placeholder="Joinable?" />
-															</SelectTrigger>
-															<SelectContent>
-																<SelectItem value="default">
-																	(per defecte)
-																</SelectItem>
-																<SelectItem value="true">Sí</SelectItem>
-																<SelectItem value="false">No</SelectItem>
-															</SelectContent>
-														</Select>
-													</>
-												)}
-												<div className="ml-auto flex gap-2">
-													<Button
-														variant="ghost"
-														size="icon"
-														onClick={() => moveBlock(idx, -1)}>
-														<ArrowUp className="w-4 h-4" />
-													</Button>
-													<Button
-														variant="ghost"
-														size="icon"
-														onClick={() => moveBlock(idx, 1)}>
-														<ArrowDown className="w-4 h-4" />
-													</Button>
-													<Button
-														variant="destructive"
-														size="icon"
-														onClick={() => removeBlock(idx)}>
-														<Trash2 className="w-4 h-4" />
-													</Button>
-												</div>
-											</Card>
-										))}
-									</div>
-									<div className="flex gap-2">
-										<Button
-											variant="outline"
-											onClick={() => addBlock("lesson")}>
-											<Plus className="w-4 h-4 mr-1" /> Afegir classe
-										</Button>
-										<Button variant="outline" onClick={() => addBlock("break")}>
-											<Plus className="w-4 h-4 mr-1" /> Afegir pausa
-										</Button>
-									</div>
-								</div>
-
-								<div className="flex gap-2">
-									<Button onClick={checkConflicts} disabled={loading}>
-										Previsualitzar conflictes
-									</Button>
-									<Button onClick={applyChanges} disabled={loading}>
-										{loading ? "Guardant..." : "Guardar canvis"}
-									</Button>
-									<Button variant="ghost" onClick={() => setMode("view")}>
-										Cancel·lar edició
-									</Button>
-								</div>
-
-								{result && (
-									<Card className="p-3 text-white/90 space-y-2">
-										{typeof result.created_count === "number" && (
-											<div className="text-sm">
-												Previsualització/Resultat — creats:{" "}
-												<b>{result.created_count ?? 0}</b>, reemplaçats:{" "}
-												<b>{result.replaced_count ?? 0}</b>, saltats:{" "}
-												<b>{result.skipped_count ?? 0}</b>
-											</div>
-										)}
-										<pre className="whitespace-pre-wrap text-xs opacity-75">
-											{JSON.stringify(result, null, 2)}
-										</pre>
-									</Card>
-								)}
-							</div>
+							<EditView
+								baseStart={baseStart}
+								setBaseStart={setBaseStart}
+								location={location}
+								setLocation={setLocation}
+								defaults={defaults}
+								setDefaults={setDefaults}
+								policy={policy}
+								setPolicy={setPolicy}
+								blocks={blocks}
+								setBlocks={setBlocks}
+								addBlock={addBlock}
+								checkConflicts={checkConflicts}
+								applyChanges={applyChanges}
+								loading={loading}
+								setMode={setMode}
+								result={result}
+								onChangeBlock={onChangeBlock}
+								moveBlock={moveBlock}
+								removeBlock={removeBlock}
+							/>
 						)}
 					</div>
 				)}
 
-				<DialogFooter>
+				<DialogFooter className="px-4 pb-[env(safe-area-inset-bottom)] sm:px-0">
 					<Button variant="secondary" onClick={() => onOpenChange(false)}>
 						Tancar
 					</Button>
