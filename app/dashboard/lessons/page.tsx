@@ -1,16 +1,18 @@
 export const dynamic = "force-dynamic";
-import { ScheduleGrid } from "@/components/lessons/ScheduleGrid";
+import UserCalendarView from "@/components/lessons/UserCalendarView";
+import UpcomingBookingsList from "@/components/lessons/UpcomingBookingsList";
 
 export default function LessonsPage() {
-	const now = new Date();
-	const from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-	const to = new Date(from);
-	to.setDate(from.getDate() + 7);
-
 	return (
-		<div className="space-y-4">
+		<div className="space-y-4 overflow-x-hidden">
 			<h1 className="text-2xl font-bold text-white">Classes</h1>
-			<ScheduleGrid fromISO={from.toISOString()} toISO={to.toISOString()} />
+			<UserCalendarView />
+			<div className="mt-6">
+				<h2 className="text-lg font-semibold text-white mb-2">
+					Les meves reserves
+				</h2>
+				<UpcomingBookingsList />
+			</div>
 		</div>
 	);
 }

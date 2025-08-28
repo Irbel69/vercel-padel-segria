@@ -11,6 +11,7 @@ import {
 } from "@/components/lessons/AdminCalendarView";
 import ScheduleBuilder from "@/components/lessons/ScheduleBuilder";
 import DayEditorDialog from "@/components/lessons/DayEditorDialog";
+import AdminSlotDetailDialog from "@/components/lessons/AdminSlotDetailDialog";
 
 export default function ImprovedAdminLessonsPage() {
 	const [currentDate, setCurrentDate] = useState(new Date());
@@ -19,11 +20,13 @@ export default function ImprovedAdminLessonsPage() {
 	const [dayEditorOpen, setDayEditorOpen] = useState(false);
 	const [selectedDay, setSelectedDay] = useState<CalendarDay | null>(null);
 	const [refreshKey, setRefreshKey] = useState(0);
+	const [slotDetailOpen, setSlotDetailOpen] = useState(false);
+	const [selectedSlotId, setSelectedSlotId] = useState<number | null>(null);
 	// Legacy rules and overrides removed
 
 	const handleSlotClick = (slot: LessonSlotWithBookings, date: Date) => {
-		console.log("Slot clicked:", slot, date);
-		// Here you could open a slot detail dialog
+		setSelectedSlotId(slot.id);
+		setSlotDetailOpen(true);
 	};
 
 	const handleDayClick = (day: CalendarDay) => {
@@ -49,7 +52,7 @@ export default function ImprovedAdminLessonsPage() {
 	};
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-6 overflow-x-hidden">
 			<div className="flex items-center justify-between">
 				<h1 className="text-2xl font-bold text-white">Gestió de Classes</h1>
 				<Button variant="secondary" onClick={() => window.location.reload()}>
@@ -70,6 +73,12 @@ export default function ImprovedAdminLessonsPage() {
 						onDateChange={setCurrentDate}
 						onSlotClick={handleSlotClick}
 						onDayClick={handleDayClick}
+					/>
+
+					<AdminSlotDetailDialog
+						slotId={selectedSlotId}
+						open={slotDetailOpen}
+						onOpenChange={(o) => setSlotDetailOpen(o)}
 					/>
 
 					<DayEditorDialog

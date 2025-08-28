@@ -1,47 +1,29 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Clock, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Check, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { LessonSlot } from "@/types/lessons";
+import { BookingDialog } from "@/components/lessons/BookingDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
+import DaySlotsSheet from "@/components/lessons/DaySlotsSheet";
 
-export interface LessonSlotWithBookings {
-	id: number;
-	start_at: string;
-	end_at: string;
-	max_capacity: number;
-	location: string;
-	status: "open" | "full" | "cancelled" | "closed";
-	joinable: boolean;
-	booking_count?: number;
-	participants_count?: number;
-}
-
-export interface CalendarDay {
+interface CalendarDay {
 	date: Date;
 	isCurrentMonth: boolean;
-	slots: LessonSlotWithBookings[];
+	slots: LessonSlot[];
 }
 
-interface Props {
-	currentDate?: Date;
-	onDateChange?: (date: Date) => void;
-	onSlotClick?: (slot: LessonSlotWithBookings, date: Date) => void;
-	onDayClick?: (day: CalendarDay) => void;
-}
-
-export function AdminCalendarView({
-	currentDate = new Date(),
-	onDateChange,
-	onSlotClick,
-	onDayClick,
-}: Props) {
-	const [viewDate, setViewDate] = useState(currentDate);
-	const [slots, setSlots] = useState<LessonSlotWithBookings[]>([]);
+export default function UserCalendarView() {
+	const [viewDate, setViewDate] = useState(new Date());
+	const [slots, setSlots] = useState<LessonSlot[]>([]);
 	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 	const isMobile = useIsMobile();
+	const [sheetOpen, setSheetOpen] = useState(false);
+	const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
 	useEffect(() => {
 		const startOfMonth = new Date(
@@ -58,10 +40,11 @@ export function AdminCalendarView({
 		const to = endOfMonth.toISOString().slice(0, 10);
 
 		setLoading(true);
-		fetch(`/api/lessons/admin/slots?from=${from}&to=${to}`)
+		setError(null);
+		fetch(`/api/lessons/slots?from=${from}&to=${to}`)
 			.then((r) => r.json())
-			.then((slotsData) => setSlots(slotsData.slots || []))
-			.catch(console.error)
+			.then((json) => setSlots(json.slots ?? []))
+			.catch((e) => setError(e?.message ?? "Error carregant slots"))
 			.finally(() => setLoading(false));
 	}, [viewDate]);
 
@@ -85,19 +68,23 @@ export function AdminCalendarView({
 
 		const days: CalendarDay[] = [];
 		const current = new Date(startDate);
+
 		while (current <= endDate) {
 			const dateStr = current.toISOString().slice(0, 10);
 			const daySlots = slots.filter((slot) => {
 				const slotDate = new Date(slot.start_at).toISOString().slice(0, 10);
 				return slotDate === dateStr;
 			});
+
 			days.push({
 				date: new Date(current),
 				isCurrentMonth: current.getMonth() === viewDate.getMonth(),
 				slots: daySlots,
 			});
+
 			current.setDate(current.getDate() + 1);
 		}
+
 		return days;
 	}, [viewDate, slots]);
 
@@ -105,10 +92,13 @@ export function AdminCalendarView({
 		const newDate = new Date(viewDate);
 		newDate.setMonth(newDate.getMonth() + (direction === "next" ? 1 : -1));
 		setViewDate(newDate);
-		onDateChange?.(newDate);
 	};
 
-	const getSlotStatusColor = (slot: LessonSlotWithBookings) => {
+	const getSlotStatusColor = (slot: LessonSlot) => {
+		if (slot.user_booked) {
+			// Primary color for user's own bookings
+			return "bg-blue-500/30 text-blue-200 ring-1 ring-blue-400/40";
+		}
 		switch (slot.status) {
 			case "open":
 				return "bg-green-500/20 text-green-300";
@@ -124,6 +114,8 @@ export function AdminCalendarView({
 	};
 
 	const getDayIndicator = (day: CalendarDay) => {
+		// Priority: booked > open > full > cancelled
+		if (day.slots.some((s) => s.user_booked)) return "bg-blue-400";
 		if (day.slots.some((s) => s.status === "open")) return "bg-green-400";
 		if (day.slots.some((s) => s.status === "full")) return "bg-yellow-400";
 		if (day.slots.some((s) => s.status === "cancelled")) return "bg-red-400";
@@ -136,6 +128,10 @@ export function AdminCalendarView({
 				<div className="text-white/70">Carregant calendari...</div>
 			</div>
 		);
+	}
+
+	if (error) {
+		return <div className="text-red-400">{error}</div>;
 	}
 
 	return (
@@ -189,18 +185,24 @@ export function AdminCalendarView({
 					<Card
 						key={index}
 						className={cn(
-							"relative p-2 cursor-pointer transition-colors hover:bg-white/5",
+							"relative p-2 transition-colors hover:bg-white/5",
 							isMobile ? "min-h-[56px]" : "min-h-24",
 							!day.isCurrentMonth && "opacity-50",
 							day.date.toDateString() === new Date().toDateString() &&
 								"ring-1 ring-blue-400"
 						)}
-						onClick={() => onDayClick?.(day)}>
+						onClick={() => {
+							if (isMobile) {
+								setSelectedDate(day.date);
+								setSheetOpen(true);
+							}
+						}}>
 						<div className="text-sm font-medium text-white mb-1">
 							{day.date.getDate()}
 						</div>
 
 						{isMobile ? (
+							// Mobile: indicator only
 							<div className="absolute right-1 bottom-1">
 								{(() => {
 									const color = getDayIndicator(day);
@@ -214,42 +216,92 @@ export function AdminCalendarView({
 								})()}
 							</div>
 						) : (
+							// Desktop: show slot chips as before
 							<div className="space-y-1">
-								{day.slots.slice(0, 3).map((slot) => (
-									<div
-										key={slot.id}
-										className={cn(
-											"text-xs p-1 rounded cursor-pointer transition-opacity hover:opacity-80",
-											getSlotStatusColor(slot)
-										)}
-										onClick={(e) => {
-											e.stopPropagation();
-											onSlotClick?.(slot, day.date);
-										}}>
-										<div className="flex items-center gap-1 justify-between">
-											<div className="flex items-center gap-1">
-												<Clock className="w-3 h-3" />
-												<span>
-													{new Date(slot.start_at).toLocaleTimeString([], {
-														hour: "2-digit",
-														minute: "2-digit",
-													})}
-												</span>
-											</div>
-											{typeof slot.participants_count === "number" && (
-												<div className="flex items-center gap-1 text-[11px]">
-													<Users className="w-3 h-3" />
-													<span>
-														{slot.participants_count}/{slot.max_capacity}
-													</span>
+								{day.slots.slice(0, 4).map((slot) => {
+									const timeLabel = new Date(slot.start_at).toLocaleTimeString(
+										[],
+										{
+											hour: "2-digit",
+											minute: "2-digit",
+										}
+									);
+									const isBookable =
+										slot.status === "open" && !slot.user_booked;
+									return (
+										<div key={slot.id} className="flex items-center gap-1">
+											{isBookable ? (
+												<BookingDialog
+													slotId={slot.id}
+													trigger={
+														<button
+															className={cn(
+																"w-full text-left text-xs p-1 rounded cursor-pointer transition-opacity hover:opacity-80",
+																getSlotStatusColor(slot)
+															)}
+															aria-label={`Apuntar-me ${timeLabel}`}>
+															<div className="flex items-center gap-1 justify-between">
+																<div className="flex items-center gap-1">
+																	<Clock className="w-3 h-3" />
+																	<span>{timeLabel}</span>
+																</div>
+																{typeof slot.participants_count ===
+																	"number" && (
+																	<div className="flex items-center gap-1 text-[11px]">
+																		<Users className="w-3 h-3" />
+																		<span>
+																			{slot.participants_count}/
+																			{slot.max_capacity}
+																		</span>
+																	</div>
+																)}
+															</div>
+														</button>
+													}
+												/>
+											) : (
+												<div
+													className={cn(
+														"w-full text-left text-xs p-1 rounded",
+														getSlotStatusColor(slot)
+													)}>
+													<div className="flex items-center gap-1 justify-between">
+														{slot.user_booked ? (
+															<>
+																<Check className="w-3 h-3" />
+																<span>{timeLabel} · Reservada per tu</span>
+															</>
+														) : (
+															<>
+																<Clock className="w-3 h-3" />
+																<span>
+																	{timeLabel} ·{" "}
+																	{slot.status === "full"
+																		? "Complet"
+																		: slot.status === "cancelled"
+																		? "Cancel·lat"
+																		: "Tancat"}
+																</span>
+															</>
+														)}
+														{typeof slot.participants_count === "number" && (
+															<div className="flex items-center gap-1 text-[11px]">
+																<Users className="w-3 h-3" />
+																<span>
+																	{slot.participants_count}/{slot.max_capacity}
+																</span>
+															</div>
+														)}
+													</div>
 												</div>
 											)}
 										</div>
-									</div>
-								))}
-								{day.slots.length > 3 && (
+									);
+								})}
+
+								{day.slots.length > 4 && (
 									<div className="text-xs text-white/50 px-1">
-										+{day.slots.length - 3} més
+										+{day.slots.length - 4} més
 									</div>
 								)}
 							</div>
@@ -258,7 +310,7 @@ export function AdminCalendarView({
 				))}
 			</div>
 
-			<div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+			<div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
 				<div className="flex items-center gap-2">
 					<div className="w-3 h-3 rounded bg-green-500/20"></div>
 					<span className="text-white/70">Disponible</span>
@@ -271,7 +323,29 @@ export function AdminCalendarView({
 					<div className="w-3 h-3 rounded bg-red-500/20"></div>
 					<span className="text-white/70">Cancel·lat</span>
 				</div>
+				<div className="flex items-center gap-2">
+					<div className="w-3 h-3 rounded bg-blue-500/30 ring-1 ring-blue-400/40"></div>
+					<span className="text-white/70">Reservada per tu</span>
+				</div>
 			</div>
+
+			{/* Mobile day slots sheet */}
+			{isMobile && (
+				<DaySlotsSheet
+					open={sheetOpen}
+					onOpenChange={setSheetOpen}
+					date={selectedDate}
+					slots={
+						selectedDate
+							? slots.filter(
+									(s) =>
+										new Date(s.start_at).toISOString().slice(0, 10) ===
+										selectedDate.toISOString().slice(0, 10)
+							  )
+							: []
+					}
+				/>
+			)}
 		</div>
 	);
 }

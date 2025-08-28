@@ -9,6 +9,10 @@ export interface LessonSlot {
 	location: string; // default Soses
 	status: LessonSlotStatus;
 	joinable: boolean;
+	// Present when fetched as an authenticated user
+	user_booked?: boolean;
+	// Aggregated participants per slot (non-cancelled)
+	participants_count?: number;
 }
 
 export interface LessonBookingParticipant {
@@ -41,6 +45,18 @@ export interface CreateBookingPayload {
 export interface BookLessonResponse {
 	booking_id: number;
 	final_total_cents: number;
+}
+
+// User bookings list (simplified)
+export interface UserLessonBookingItem {
+	booking_id: number;
+	status: string; // booking status
+	group_size: number;
+	created_at: string; // ISO
+	slot: Pick<
+		LessonSlot,
+		"id" | "start_at" | "end_at" | "location" | "status" | "joinable"
+	>;
 }
 
 export interface LessonAvailabilityRule {

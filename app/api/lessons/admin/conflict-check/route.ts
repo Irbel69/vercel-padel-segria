@@ -1,14 +1,24 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/libs/supabase/server";
 
+interface ConflictRule {
+	id: number;
+	title: string;
+	valid_from: string | null;
+	valid_to: string | null;
+	days_of_week: number[];
+	time_start: string;
+	time_end: string;
+}
+
 interface ConflictCheckRequest {
 	title?: string;
 	valid_from?: string;
 	valid_to?: string;
 	days_of_week: number[];
-	base_time_start: string; // HH:mm
-	template: any; // ScheduleTemplate
-	exclude_batch_id?: number;
+	time_start: string;
+	time_end: string;
+	exclude_rule_id?: number; // For when editing existing rules
 }
 
 export async function POST(request: Request) {
@@ -16,65 +26,92 @@ export async function POST(request: Request) {
 	const body: ConflictCheckRequest = await request.json();
 
 	try {
-		// Build proposed slots for the preview based on template
-		const proposedSlots: Array<{start_at: string; end_at: string; date: string}> = [];
-		const tmpl = body.template;
-		if (!tmpl || !Array.isArray(tmpl.blocks)) {
-			return NextResponse.json({ error: 'Invalid template' }, { status: 400 });
+		// Get all active rules
+		const { data: rules, error: rulesError } = await supabase
+			.from("lesson_availability_rules")
+			.select("*")
+			.eq("active", true);
+
+		if (rulesError) {
+			return NextResponse.json({ error: rulesError.message }, { status: 500 });
 		}
 
-		// iterate days in date range and create proposed lesson blocks
-		const from = body.valid_from ? new Date(body.valid_from) : new Date('1970-01-01');
-		const to = body.valid_to ? new Date(body.valid_to) : new Date('2100-12-31');
-		const dayMs = 24 * 60 * 60 * 1000;
-		for (let ts = from.getTime(); ts <= to.getTime(); ts += dayMs) {
-			const day = new Date(ts);
-			const dow = day.getUTCDay();
-			if (!body.days_of_week.includes(dow)) continue;
+		const conflicts: Array<{
+			rule: ConflictRule;
+			conflictDates: string[];
+			conflictReasons: string[];
+		}> = [];
 
-			const [bh, bm] = String(body.base_time_start || '00:00').split(':').map(Number);
-			let cursor = new Date(day);
-			cursor.setUTCHours(bh, bm || 0, 0, 0);
+		const newRuleStart = parseTime(body.time_start);
+		const newRuleEnd = parseTime(body.time_end);
 
-			for (const block of tmpl.blocks) {
-				if (block.kind !== 'lesson') {
-					cursor = new Date(cursor.getTime() + (block.duration_minutes || 0) * 60000);
-					continue;
-				}
-				const start = new Date(cursor);
-				const end = new Date(cursor.getTime() + (block.duration_minutes || 0) * 60000);
-				proposedSlots.push({ start_at: start.toISOString(), end_at: end.toISOString(), date: start.toISOString().slice(0,10) });
-				cursor = end;
+		for (const rule of rules || []) {
+			// Skip if this is the same rule being edited
+			if (body.exclude_rule_id && rule.id === body.exclude_rule_id) {
+				continue;
 			}
-		}
 
-		// Check proposed slots against existing lesson_slots for overlaps
-		const conflicts: any[] = [];
-		for (const ps of proposedSlots) {
-			const { data: existing, error } = await supabase
-				.from('lesson_slots')
-				.select('id,start_at,end_at,location')
-				.gte('start_at', new Date(ps.date + 'T00:00:00Z').toISOString())
-				.lte('start_at', new Date(ps.date + 'T23:59:59Z').toISOString());
-			if (error) continue;
-			for (const ex of existing || []) {
-				const exStart = new Date(ex.start_at).getTime();
-				const exEnd = new Date(ex.end_at).getTime();
-				const psStart = new Date(ps.start_at).getTime();
-				const psEnd = new Date(ps.end_at).getTime();
-				if (psStart < exEnd && psEnd > exStart) {
-					conflicts.push({ date: ps.date, proposed_start_at: ps.start_at, proposed_end_at: ps.end_at, existing_slot: ex });
-				}
+			const existingStart = parseTime(rule.time_start);
+			const existingEnd = parseTime(rule.time_end);
+
+			// Check for day overlap
+			const dayOverlap = body.days_of_week.some(day => 
+				(rule.days_of_week || []).includes(day)
+			);
+
+			if (!dayOverlap) continue;
+
+			// Check for time overlap
+			const timeOverlap = timesOverlap(
+				newRuleStart, newRuleEnd,
+				existingStart, existingEnd
+			);
+
+			if (!timeOverlap) continue;
+
+			// Check for date range overlap
+			const dateOverlap = dateRangesOverlap(
+				body.valid_from, body.valid_to,
+				rule.valid_from, rule.valid_to
+			);
+
+			if (!dateOverlap.overlaps) continue;
+
+			// We have a conflict
+			const conflictReasons: string[] = [];
+			const overlappingDays = body.days_of_week.filter(day => 
+				(rule.days_of_week || []).includes(day)
+			);
+			
+			conflictReasons.push(
+				`Dies coincidents: ${overlappingDays.map(d => getDayName(d)).join(", ")}`
+			);
+			
+			conflictReasons.push(
+				`Horari coincident: ${formatTimeOverlap(newRuleStart, newRuleEnd, existingStart, existingEnd)}`
+			);
+
+			if (dateOverlap.conflictDates.length > 0) {
+				conflictReasons.push(
+					`Dates coincidents: ${dateOverlap.conflictDates.join(" - ")}`
+				);
 			}
+
+			conflicts.push({
+				rule,
+				conflictDates: dateOverlap.conflictDates,
+				conflictReasons
+			});
 		}
 
+		// Check if there are existing bookings that would be affected
 		const affectedBookings = await checkAffectedBookings(supabase, body);
 
 		return NextResponse.json({
 			hasConflicts: conflicts.length > 0,
-			slotConflicts: conflicts,
+			conflicts,
 			affectedBookings,
-			canProceed: conflicts.length === 0 && (affectedBookings?.protected_bookings?.length || 0) === 0
+			canProceed: conflicts.length === 0 && affectedBookings.length === 0
 		});
 
 	} catch (error: any) {

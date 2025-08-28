@@ -25,28 +25,19 @@ export async function POST(request: Request) {
 	if (rulesErr)
 		return NextResponse.json({ error: rulesErr.message }, { status: 500 });
 
-	// Load overrides in range — if table doesn't exist (we removed it), treat as no overrides
-	let closedByDay = new Set<string>();
-	try {
-		const { data: overrides, error: ovErr } = await supabase
-			.from("lesson_availability_overrides")
-			.select("*")
-			.gte("date", from.toISOString().slice(0, 10))
-			.lte("date", to.toISOString().slice(0, 10));
-		if (ovErr) {
-			// If the table doesn't exist, Supabase returns an error — treat as empty overrides
-			console.warn('Overrides table missing or error:', ovErr.message);
-		} else {
-			closedByDay = new Set(
-				(overrides || [])
-					.filter((o: any) => o.kind === "closed")
-					.map((o: any) => o.date)
-			);
-		}
-	} catch (e) {
-		// fallback: no overrides
-		closedByDay = new Set();
-	}
+	// Load overrides in range
+	const { data: overrides, error: ovErr } = await supabase
+		.from("lesson_availability_overrides")
+		.select("*")
+		.gte("date", from.toISOString().slice(0, 10))
+		.lte("date", to.toISOString().slice(0, 10));
+	if (ovErr)
+		return NextResponse.json({ error: ovErr.message }, { status: 500 });
+	const closedByDay = new Set(
+		(overrides || [])
+			.filter((o: any) => o.kind === "closed")
+			.map((o: any) => o.date)
+	);
 
 	const created: any[] = [];
 	const tasks: any[] = [];
