@@ -96,11 +96,38 @@ CREATE TABLE public.lesson_slots (
   joinable boolean NOT NULL DEFAULT true,
   locked_by_booking_id bigint,
   created_from_rule_id bigint,
+  created_from_batch_id bigint,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT lesson_slots_pkey PRIMARY KEY (id),
   CONSTRAINT lesson_slots_created_from_rule_id_fkey FOREIGN KEY (created_from_rule_id) REFERENCES public.lesson_availability_rules(id)
 );
+
+-- New modular schedules (batches)
+CREATE TABLE public.lesson_slot_batches (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  title text,
+  valid_from date NOT NULL,
+  valid_to date NOT NULL,
+  days_of_week integer[] NOT NULL,
+  base_time_start time without time zone NOT NULL,
+  location text NOT NULL DEFAULT 'Soses'::text,
+  timezone text NOT NULL DEFAULT 'Europe/Madrid'::text,
+  template jsonb NOT NULL,
+  options jsonb,
+  created_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT lesson_slot_batches_pkey PRIMARY KEY (id)
+);
+
+ALTER TABLE public.lesson_slots
+  ADD CONSTRAINT lesson_slots_created_from_batch_id_fkey
+  FOREIGN KEY (created_from_batch_id) REFERENCES public.lesson_slot_batches(id);
+
+-- Recommended unique index to avoid duplicate slots for the same location and time
+-- CREATE UNIQUE INDEX IF NOT EXISTS uq_lesson_slots_start_location
+--   ON public.lesson_slots (start_at, location);
 CREATE TABLE public.matches (
   id integer NOT NULL DEFAULT nextval('matches_id_seq'::regclass),
   event_id integer NOT NULL,

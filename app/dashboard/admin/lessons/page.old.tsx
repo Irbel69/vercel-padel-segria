@@ -20,28 +20,22 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Calendar as CalendarIcon, RefreshCw, Plus, Settings } from "lucide-react";
-import { AdminCalendarView, CalendarDay, LessonSlotWithBookings } from "@/components/lessons/AdminCalendarView";
-import { ConflictResolutionDialog } from "@/components/lessons/ConflictResolutionDialog";
-import ScheduleBuilder from "@/components/lessons/ScheduleBuilder";
+import { Calendar as CalendarIcon, RefreshCw } from "lucide-react";
 
-export default function ImprovedAdminLessonsPage() {
-	const [currentDate, setCurrentDate] = useState(new Date());
+export default function AdminLessonsPage() {
+	const [slots, setSlots] = useState<any[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const [rules, setRules] = useState<any[]>([]);
-	
-	// Conflict resolution state
-	const [showConflictDialog, setShowConflictDialog] = useState(false);
-	const [conflictData, setConflictData] = useState<any>(null);
-	const [pendingRule, setPendingRule] = useState<any>(null);
+	const [rulesList, setRulesList] = useState<any[]>([]);
+	const [genRangeOpen, setGenRangeOpen] = useState(false);
+	const [genRange, setGenRange] = useState<{ from?: Date; to?: Date }>({});
 
-	// Rule form state
+	// Rule form state (simple)
 	const [rule, setRule] = useState<any>({
 		title: "Horari d'estiu",
 		valid_from: undefined as Date | undefined,
 		valid_to: undefined as Date | undefined,
-		days_of_week: [1, 2, 3, 4, 5] as number[],
+		days_of_week: [1, 2, 3, 4, 5] as number[], // Mon-Fri
 		time_start: "16:00",
 		time_end: "21:00",
 		duration_minutes: 60,
@@ -50,7 +44,7 @@ export default function ImprovedAdminLessonsPage() {
 	});
 	const [ruleDateOpen, setRuleDateOpen] = useState(false);
 
-	// Override form for exceptions
+	// Override form
 	const [overrideItem, setOverrideItem] = useState<any>({
 		date: undefined as Date | undefined,
 		time_start: "",
@@ -61,25 +55,55 @@ export default function ImprovedAdminLessonsPage() {
 	});
 	const [overrideDateOpen, setOverrideDateOpen] = useState(false);
 
-	// Fetch rules on component mount
+	// Ad-hoc slot form
+	const [adhoc, setAdhoc] = useState<any>({
+		start_at: "",
+		end_at: "",
+		max_capacity: 4,
+		location: "Soses",
+		status: "open",
+		joinable: true,
+	});
+
 	useEffect(() => {
-		fetchRules();
+		setLoading(true);
+		fetch("/api/lessons/admin/slots")
+			.then((r) => r.json())
+			.then((json) => setSlots(json.slots ?? []))
+			.catch((e) => setError(e?.message ?? "Unknown error"))
+			.finally(() => setLoading(false));
+		// fetch rules
+		fetch("/api/lessons/admin/rules")
+			.then((r) => r.json())
+			.then((json) => setRulesList(json.rules ?? []))
+			.catch(() => {})
+			.finally(() => {});
 	}, []);
 
-	const fetchRules = async () => {
-		try {
-			const response = await fetch("/api/lessons/admin/rules");
-			const data = await response.json();
-			setRules(data.rules || []);
-		} catch (error) {
-			console.error("Error fetching rules:", error);
-		}
+	const generateSlots = async () => {
+		setLoading(true);
+		setError(null);
+		const res = await fetch("/api/lessons/admin/generate", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				from: genRange.from
+					? genRange.from.toISOString().slice(0, 10)
+					: undefined,
+				to: genRange.to ? genRange.to.toISOString().slice(0, 10) : undefined,
+			}),
+		});
+		const json = await res.json().catch(() => ({}));
+		if (!res.ok) setError(json?.error || "Error generant slots");
+		// refresh list
+		await fetch("/api/lessons/admin/slots")
+			.then((r) => r.json())
+			.then((j) => setSlots(j.slots ?? []));
+		setLoading(false);
 	};
 
-	const createRule = async (forceCreate = false) => {
+	const createRule = async () => {
 		setError(null);
-		setLoading(true);
-
 		const payload = {
 			title: rule.title,
 			valid_from: rule.valid_from
@@ -92,45 +116,14 @@ export default function ImprovedAdminLessonsPage() {
 			duration_minutes: Number(rule.duration_minutes) || 60,
 			location: rule.location,
 			active: !!rule.active,
-			force_create: forceCreate,
 		};
-
-		try {
-			const res = await fetch("/api/lessons/admin/rules", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(payload),
-			});
-
-			const json = await res.json();
-
-			if (res.status === 409) {
-				// Conflict detected
-				setConflictData(json);
-				setPendingRule(payload);
-				setShowConflictDialog(true);
-			} else if (!res.ok) {
-				setError(json?.error || "Error creant regla");
-			} else {
-				// Success
-				await fetchRules();
-				setRule({
-					title: "Horari d'estiu",
-					valid_from: undefined,
-					valid_to: undefined,
-					days_of_week: [1, 2, 3, 4, 5],
-					time_start: "16:00",
-					time_end: "21:00",
-					duration_minutes: 60,
-					location: "Soses",
-					active: true,
-				});
-			}
-		} catch (error: any) {
-			setError(error.message || "Error de xarxa");
-		} finally {
-			setLoading(false);
-		}
+		const res = await fetch("/api/lessons/admin/rules", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(payload),
+		});
+		const json = await res.json().catch(() => ({}));
+		if (!res.ok) setError(json?.error || "Error creant regla");
 	};
 
 	const createOverride = async () => {
@@ -145,64 +138,25 @@ export default function ImprovedAdminLessonsPage() {
 			reason: overrideItem.reason,
 			location: overrideItem.location,
 		};
-		
-		try {
-			const res = await fetch("/api/lessons/admin/overrides", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(body),
-			});
-			const json = await res.json();
-			if (!res.ok) setError(json?.error || "Error creant excepció");
-			else {
-				setOverrideItem({
-					date: undefined,
-					time_start: "",
-					time_end: "",
-					kind: "closed",
-					reason: "",
-					location: "Soses",
-				});
-			}
-		} catch (error: any) {
-			setError(error.message || "Error de xarxa");
-		}
-	};
-
-	const handleConflictResolution = (resolution: 'force' | 'modify' | 'exception') => {
-		if (resolution === 'force' && pendingRule) {
-			createRule(true);
-		} else if (resolution === 'exception') {
-			// This would typically create specific exceptions for the conflict dates
-			// For now, we'll just close the dialog
-			console.log('Would create exceptions for conflict dates');
-		}
-		setShowConflictDialog(false);
-		setConflictData(null);
-		setPendingRule(null);
-	};
-
-	const handleSlotClick = (slot: LessonSlotWithBookings, date: Date) => {
-		console.log('Slot clicked:', slot, date);
-		// Here you could open a slot detail dialog
-	};
-
-	const handleDayClick = (day: CalendarDay) => {
-		console.log('Day clicked:', day);
-		// Here you could open a day detail dialog or quick add form
-	};
-
-	const handleScheduleCheck = async (payload: any) => {
-		const res = await fetch('/api/lessons/admin/schedules/check-conflicts', {
-			method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+		const res = await fetch("/api/lessons/admin/overrides", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(body),
 		});
-		return await res.json();
+		const json = await res.json().catch(() => ({}));
+		if (!res.ok) setError(json?.error || "Error creant excepció");
 	};
-	const handleScheduleApply = async (payload: any) => {
-		const res = await fetch('/api/lessons/admin/schedules/apply', {
-			method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+
+	const createAdhoc = async () => {
+		setError(null);
+		const res = await fetch("/api/lessons/admin/slots", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(adhoc),
 		});
-		return await res.json();
+		const json = await res.json().catch(() => ({}));
+		if (!res.ok) setError(json?.error || "Error creant slot");
+		else setSlots((prev) => [json.slot, ...prev]);
 	};
 
 	return (
@@ -214,32 +168,74 @@ export default function ImprovedAdminLessonsPage() {
 				</Button>
 			</div>
 
-			<Tabs defaultValue="calendar" className="w-full">
-				<TabsList className="grid grid-cols-3 w-full">
-					<TabsTrigger value="calendar">Calendari</TabsTrigger>
+			<Tabs defaultValue="generate" className="w-full">
+				<TabsList className="grid grid-cols-4 w-full">
+					<TabsTrigger value="generate">Generar</TabsTrigger>
 					<TabsTrigger value="rules">Regles</TabsTrigger>
-					<TabsTrigger value="exceptions">Excepcions</TabsTrigger>
+					<TabsTrigger value="overrides">Excepcions</TabsTrigger>
+					<TabsTrigger value="adhoc">Slots ad-hoc</TabsTrigger>
 				</TabsList>
 
-				<TabsContent value="calendar" className="mt-4">
-					<AdminCalendarView
-						currentDate={currentDate}
-						onDateChange={setCurrentDate}
-						onSlotClick={handleSlotClick}
-						onDayClick={handleDayClick}
-					/>
+				<TabsContent value="generate" className="mt-4 space-y-4">
+					<Card className="p-4 space-y-4">
+						<div className="space-y-2">
+							<Label className="text-white/90">Rang de dates</Label>
+							<Popover open={genRangeOpen} onOpenChange={setGenRangeOpen}>
+								<PopoverTrigger asChild>
+									<Button
+										variant="outline"
+										className="justify-start w-full text-left">
+										<CalendarIcon className="mr-2 h-4 w-4" />
+										{genRange.from && genRange.to
+											? `${genRange.from.toLocaleDateString()} - ${genRange.to.toLocaleDateString()}`
+											: "Selecciona interval"}
+									</Button>
+								</PopoverTrigger>
+								<PopoverContent className="p-0" align="start">
+									<Calendar
+										mode="range"
+										selected={genRange as any}
+										onSelect={(r: any) => setGenRange(r ?? {})}
+										numberOfMonths={2}
+									/>
+								</PopoverContent>
+							</Popover>
+						</div>
+						<Button
+							onClick={generateSlots}
+							disabled={loading || !genRange.from || !genRange.to}>
+							Generar slots
+						</Button>
+					</Card>
+
+					<Card className="p-4">
+						<h3 className="text-white font-semibold mb-3">Slots existents</h3>
+						<div className="grid gap-3">
+							{slots.map((s) => (
+								<Card key={s.id} className="p-3">
+									<div className="text-white font-medium">
+										{new Date(s.start_at).toLocaleString()} →{" "}
+										{new Date(s.end_at).toLocaleTimeString([], {
+											hour: "2-digit",
+											minute: "2-digit",
+										})}
+									</div>
+									<div className="text-white/70 text-sm">
+										{s.location} • {s.status} • joinable: {String(s.joinable)}
+									</div>
+								</Card>
+							))}
+							{!loading && !error && slots.length === 0 && (
+								<div className="text-white/70">
+									Encara no hi ha slots creats.
+								</div>
+							)}
+						</div>
+					</Card>
 				</TabsContent>
 
-				<TabsContent value="rules" className="mt-4 space-y-4">
-					<ScheduleBuilder onCheckConflicts={handleScheduleCheck} onApply={handleScheduleApply} />
-
-					{/* Legacy rules UI retained temporarily below */}
+				<TabsContent value="rules" className="mt-4">
 					<Card className="p-4 space-y-4">
-						<div className="flex items-center justify-between mb-4">
-							<h3 className="text-lg font-semibold text-white">Crear nova regla</h3>
-							<Plus className="w-5 h-5 text-white/60" />
-						</div>
-						
 						<div className="grid md:grid-cols-2 gap-4">
 							<div className="space-y-2">
 								<Label className="text-white/90">Títol</Label>
@@ -374,17 +370,13 @@ export default function ImprovedAdminLessonsPage() {
 							</div>
 						</div>
 						<div className="pt-2">
-							<Button onClick={() => createRule()} disabled={loading}>
-								{loading ? "Creant..." : "Crear regla"}
-							</Button>
+							<Button onClick={createRule}>Crear regla</Button>
 						</div>
 					</Card>
-
-					{/* Existing Rules */}
-					<Card className="p-4">
+					<Card className="p-4 mt-4">
 						<h3 className="text-white font-semibold mb-3">Regles existents</h3>
 						<div className="grid gap-3">
-							{rules.map((r) => (
+							{rulesList.map((r) => (
 								<Card key={r.id} className="p-3">
 									<div className="flex justify-between items-center">
 										<div>
@@ -403,31 +395,23 @@ export default function ImprovedAdminLessonsPage() {
 												Vàlid: {r.valid_from || "∞"} → {r.valid_to || "∞"}
 											</div>
 										</div>
-										<div className="flex items-center gap-2">
+										<div className="text-right">
 											<div className="text-sm text-white/80">
 												{r.active ? "Activa" : "Inactiva"}
 											</div>
-											<Button variant="ghost" size="sm">
-												<Settings className="w-4 h-4" />
-											</Button>
 										</div>
 									</div>
 								</Card>
 							))}
-							{rules.length === 0 && (
+							{rulesList.length === 0 && (
 								<div className="text-white/70">Encara no hi ha regles.</div>
 							)}
 						</div>
 					</Card>
 				</TabsContent>
 
-				<TabsContent value="exceptions" className="mt-4">
+				<TabsContent value="overrides" className="mt-4">
 					<Card className="p-4 space-y-4">
-						<div className="flex items-center justify-between mb-4">
-							<h3 className="text-lg font-semibold text-white">Crear excepció</h3>
-							<Plus className="w-5 h-5 text-white/60" />
-						</div>
-						
 						<div className="grid md:grid-cols-2 gap-4">
 							<div className="space-y-2">
 								<Label className="text-white/90">Data</Label>
@@ -514,21 +498,69 @@ export default function ImprovedAdminLessonsPage() {
 						</div>
 					</Card>
 				</TabsContent>
+
+				<TabsContent value="adhoc" className="mt-4">
+					<Card className="p-4 space-y-4">
+						<div className="grid md:grid-cols-2 gap-4">
+							<div className="space-y-2">
+								<Label className="text-white/90">Inici</Label>
+								<Input
+									type="datetime-local"
+									value={adhoc.start_at}
+									onChange={(e) =>
+										setAdhoc({ ...adhoc, start_at: e.target.value })
+									}
+								/>
+							</div>
+							<div className="space-y-2">
+								<Label className="text-white/90">Fi</Label>
+								<Input
+									type="datetime-local"
+									value={adhoc.end_at}
+									onChange={(e) =>
+										setAdhoc({ ...adhoc, end_at: e.target.value })
+									}
+								/>
+							</div>
+							<div className="space-y-2">
+								<Label className="text-white/90">Capacitat (1-4)</Label>
+								<Select
+									value={String(adhoc.max_capacity)}
+									onValueChange={(v) =>
+										setAdhoc({ ...adhoc, max_capacity: Number(v) })
+									}>
+									<SelectTrigger>
+										<SelectValue placeholder="Capacitat" />
+									</SelectTrigger>
+									<SelectContent>
+										{[1, 2, 3, 4].map((n) => (
+											<SelectItem key={n} value={String(n)}>
+												{n}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+							<div className="space-y-2">
+								<Label className="text-white/90">Permetre completar</Label>
+								<div className="h-10 flex items-center px-2 rounded-md border border-white/10">
+									<Switch
+										checked={adhoc.joinable}
+										onCheckedChange={(v) =>
+											setAdhoc({ ...adhoc, joinable: Boolean(v) })
+										}
+									/>
+								</div>
+							</div>
+						</div>
+						<div className="pt-2">
+							<Button onClick={createAdhoc}>Crear slot</Button>
+						</div>
+					</Card>
+				</TabsContent>
 			</Tabs>
 
-			{/* Conflict Resolution Dialog */}
-			<ConflictResolutionDialog
-				open={showConflictDialog}
-				onOpenChange={setShowConflictDialog}
-				conflicts={conflictData?.conflicts || []}
-				affectedBookings={conflictData?.affectedBookings || []}
-				onResolve={handleConflictResolution}
-				onModifyRule={(ruleId) => console.log('Modify rule:', ruleId)}
-				onCreateException={(dates) => console.log('Create exceptions for:', dates)}
-				newRuleData={pendingRule}
-			/>
-
-			{loading && <div className="text-white/70">Processant...</div>}
+			{loading && <div className="text-white/70">Carregant…</div>}
 			{error && <div className="text-red-400">{error}</div>}
 		</div>
 	);

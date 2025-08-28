@@ -15,9 +15,23 @@ export async function GET() {
 export async function POST(request: Request) {
 	const supabase = createClient();
 	const body = await request.json();
+	// Whitelist allowed fields to avoid inserting client-only properties
+	const allowed = [
+		"date",
+		"time_start",
+		"time_end",
+		"kind",
+		"reason",
+		"location",
+	];
+	const insertPayload: any = {};
+	for (const k of allowed) {
+		if (Object.prototype.hasOwnProperty.call(body, k))
+			insertPayload[k] = (body as any)[k];
+	}
 	const { data, error } = await supabase
 		.from("lesson_availability_overrides")
-		.insert(body)
+		.insert(insertPayload)
 		.select("*")
 		.single();
 	if (error)
