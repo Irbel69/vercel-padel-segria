@@ -6,10 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowUp, ArrowDown, Minus, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useUser } from "@/hooks/use-user";
 import { useRankings } from "@/hooks/use-rankings";
-import type { RankingsResponse } from "@/hooks/use-rankings";
+import type { RankingsResponseLocal as RankingsResponse } from "@/hooks/use-rankings";
 
 export function RankingsDashboard() {
   const { user } = useUser();
@@ -18,15 +18,20 @@ export function RankingsDashboard() {
   const rankings = data?.players ?? [];
   const pagination: RankingsResponse["pagination"] | null = data?.pagination ?? null;
 
-  const getTrendIcon = (trend: string) => {
-    switch (trend) {
-      case "up":
-        return <ArrowUp className="h-4 w-4 text-green-500" />;
-      case "down":
-        return <ArrowDown className="h-4 w-4 text-red-500" />;
-      default:
-        return <Minus className="h-4 w-4 text-gray-400" />;
-    }
+  const renderRecentForm = (form: ("W"|"L")[]) => {
+    const max = 5;
+    const items = form.slice(0, max);
+    const placeholders = Array.from({ length: Math.max(0, max - items.length) });
+    return (
+      <div className="flex items-center gap-1">
+        {items.map((r, i) => (
+          <span key={i} className={`w-2.5 h-2.5 rounded-sm ${r === 'W' ? 'bg-green-500' : 'bg-red-500'}`} />
+        ))}
+        {placeholders.map((_, i) => (
+          <span key={`p-${i}`} className="w-2.5 h-2.5 rounded-sm bg-white/20" />
+        ))}
+      </div>
+    );
   };
 
   const handlePageChange = (newPage: number) => {
@@ -65,11 +70,12 @@ export function RankingsDashboard() {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="grid grid-cols-12 gap-2 text-white/50 text-sm font-medium px-2 mb-2">
+              <div className="grid grid-cols-12 gap-2 text-white/50 text-sm font-medium px-2 mb-2">
               <div className="col-span-1">#</div>
-              <div className="col-span-5 sm:col-span-5">Jugador</div>
+              <div className="col-span-4 sm:col-span-4">Jugador</div>
+              <div className="col-span-2 text-center">Forma</div>
               <div className="col-span-2 text-center">Partits</div>
-              <div className="col-span-2 text-center">Guanyats</div>
+              <div className="col-span-1 text-center">Guanyats</div>
               <div className="col-span-2 text-center">Punts</div>
             </div>
             
@@ -87,7 +93,7 @@ export function RankingsDashboard() {
                   <div className="col-span-1 font-bold text-white">
                     {player.ranking_position}
                   </div>
-                  <div className="col-span-5 sm:col-span-5 flex items-center gap-2">
+                  <div className="col-span-4 sm:col-span-4 flex items-center gap-2">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={player.avatar_url || ""} />
                       <AvatarFallback>
@@ -99,14 +105,17 @@ export function RankingsDashboard() {
                         {player.name} {player.surname}
                       </div>
                       <div className="flex items-center text-xs text-white/50">
-                        {getTrendIcon(player.trend)}
+                        {renderRecentForm(player.recent_form)}
                       </div>
                     </div>
+                  </div>
+                  <div className="col-span-2 text-center">
+                    {renderRecentForm(player.recent_form)}
                   </div>
                   <div className="col-span-2 text-center text-white/70">
                     {player.matches_played}
                   </div>
-                  <div className="col-span-2 text-center text-white/70">
+                  <div className="col-span-1 text-center text-white/70">
                     {player.matches_won}
                   </div>
                   <div className="col-span-2 text-center font-bold text-padel-primary">
