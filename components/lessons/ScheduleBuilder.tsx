@@ -197,7 +197,7 @@ export default function ScheduleBuilder({ onCheckConflicts, onApply }: Props) {
 					<Label className="text-white/90">
 						Defectes (capacitat / joinable)
 					</Label>
-					<div className="grid grid-cols-2 gap-2">
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-2">
 						<Input
 							type="number"
 							min={1}
@@ -216,7 +216,7 @@ export default function ScheduleBuilder({ onCheckConflicts, onApply }: Props) {
 							onValueChange={(v) =>
 								setDefaults((d) => ({ ...d, joinable: v === "true" }))
 							}>
-							<SelectTrigger>
+							<SelectTrigger className="w-full md:w-auto">
 								<SelectValue placeholder="Joinable" />
 							</SelectTrigger>
 							<SelectContent>
@@ -232,7 +232,9 @@ export default function ScheduleBuilder({ onCheckConflicts, onApply }: Props) {
 				<Label className="text-white/90">Blocs</Label>
 				<div className="space-y-2">
 					{blocks.map((b, idx) => (
-						<Card key={idx} className="p-3 flex items-center gap-3">
+						<Card
+							key={idx}
+							className="p-3 flex flex-wrap items-center gap-3 min-w-0">
 							<Select
 								value={b.kind}
 								onValueChange={(v) =>
@@ -242,7 +244,7 @@ export default function ScheduleBuilder({ onCheckConflicts, onApply }: Props) {
 										)
 									)
 								}>
-								<SelectTrigger className="w-32">
+								<SelectTrigger className="w-full md:w-32">
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
@@ -252,7 +254,7 @@ export default function ScheduleBuilder({ onCheckConflicts, onApply }: Props) {
 							</Select>
 							<Input
 								type="number"
-								className="w-32"
+								className="w-full md:w-32"
 								value={b.duration_minutes}
 								onChange={(e) =>
 									setBlocks((prev) =>
@@ -271,7 +273,7 @@ export default function ScheduleBuilder({ onCheckConflicts, onApply }: Props) {
 								<>
 									<Input
 										placeholder="Etiqueta"
-										className="w-40"
+										className="w-full md:w-40"
 										value={b.label || ""}
 										onChange={(e) =>
 											setBlocks((prev) =>
@@ -283,7 +285,7 @@ export default function ScheduleBuilder({ onCheckConflicts, onApply }: Props) {
 									/>
 									<Input
 										type="number"
-										className="w-28"
+										className="w-full md:w-28"
 										placeholder="Cap"
 										value={b.max_capacity ?? ""}
 										onChange={(e) =>
@@ -318,7 +320,7 @@ export default function ScheduleBuilder({ onCheckConflicts, onApply }: Props) {
 												)
 											)
 										}>
-										<SelectTrigger className="w-32">
+										<SelectTrigger className="w-full md:w-32">
 											<SelectValue placeholder="Joinable?" />
 										</SelectTrigger>
 										<SelectContent>
