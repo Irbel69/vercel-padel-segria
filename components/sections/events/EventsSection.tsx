@@ -10,11 +10,9 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Calendar } from "lucide-react";
-import {
-	UpcomingTournamentsTimeline,
-	type UpcomingTournament,
-} from "./UpcomingTournamentsTimeline";
+import EventList from "@/components/tournaments/EventList";
 import type { Event as EventType } from "@/types";
+import Link from "next/link";
 
 // Legacy grid UI removed in favor of timeline.
 
@@ -59,27 +57,43 @@ export function EventsSection() {
 		return () => window.cancelAnimationFrame(animationFrame);
 	}, []);
 
-	// Map fetched events to timeline props
-	const timelineTournaments: UpcomingTournament[] = useMemo(() => {
-		const toStatus = (ev: EventType): "upcoming" | "finished" => {
-			// Consider 'open' and 'soon' as upcoming; 'closed' => finished
-			return ev.status === "closed" ? "finished" : "upcoming";
-		};
-		return events.map((ev) => ({
-			id: String(ev.id),
-			name: ev.title,
-			location: ev.location ?? "Ubicació per determinar",
-			// available slots estimate: remaining places; ensure non-negative
-			slots: Math.max(
-				0,
-				(ev.max_participants ?? 0) - (ev.current_participants ?? 0)
-			),
-			date: ev.date,
-			status: toStatus(ev),
-			latitude: ev.latitude,
-			longitude: ev.longitude,
-		}));
-	}, [events]);
+	// Minimal helpers to satisfy EventList / EventCard props
+	const formatDate = (s: string) => {
+		try {
+			return new Date(s).toLocaleDateString();
+		} catch {
+			return s;
+		}
+	};
+
+	const formatDateTime = (s: string) => {
+		try {
+			return new Date(s).toLocaleString();
+		} catch {
+			return s;
+		}
+	};
+
+	const getStatusBadge = (s: string) => {
+		return <span className="px-2 py-1 text-xs rounded bg-white/5">{s}</span>;
+	};
+
+	const getRegistrationStatusBadge = (s: string) => {
+		return <span className="px-2 py-1 text-xs rounded bg-white/5">{s}</span>;
+	};
+
+	const canRegister = (e: EventType) => e.status !== "closed";
+	const canUnregister = (e: EventType) => e.status !== "closed";
+
+	const isRegistrationUrgent = (deadline: string) => {
+		try {
+			const d = new Date(deadline);
+			const diff = d.getTime() - Date.now();
+			return diff < 1000 * 60 * 60 * 24 * 2; // less than 48h
+		} catch {
+			return false;
+		}
+	};
 
 	// Show a simple loading state if the component hasn't loaded yet
 	if (!isLoaded) {
@@ -124,26 +138,103 @@ export function EventsSection() {
 				{/* Timeline */}
 				<div className="relative mb-8 md:mb-16">
 					{isLoadingEvents ? (
-						<div className="flex justify-center">
-							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 max-w-7xl w-full">
-								{Array.from({ length: 4 }).map((_, index) => (
-									<div
-										key={index}
-										className="animate-pulse bg-white/10 rounded-2xl p-6 space-y-4">
-										<div className="h-4 bg-white/20 rounded w-3/4"></div>
-										<div className="h-3 bg-white/20 rounded w-1/2"></div>
-										<div className="h-3 bg-white/20 rounded w-full"></div>
-										<div className="h-8 bg-white/20 rounded"></div>
+						<div className="space-y-4">
+							{Array.from({ length: 4 }).map((_, i) => (
+								<div key={i} className="w-full">
+									{/* Card-like skeleton matching EventCard structure: hero + content + progress/actions */}
+									<div className="bg-white/3 border border-white/6 rounded-lg overflow-hidden">
+										<div className="grid grid-cols-1 md:grid-cols-[minmax(220px,33%)_1fr] gap-0">
+											<div className="p-4 md:p-0">
+												<div className="h-40 md:h-full w-full rounded-md bg-white/6 animate-pulse" />
+											</div>
+											<div className="p-4 md:p-5">
+												<div className="space-y-3">
+													<div className="h-6 w-3/4 rounded-md bg-white/6 animate-pulse" />
+													<div className="h-4 w-2/3 rounded-md bg-white/6 animate-pulse" />
+													<div className="flex items-center gap-3">
+														<div className="h-6 w-24 rounded-full bg-white/6 animate-pulse" />
+														<div className="h-6 w-20 rounded-full bg-white/6 animate-pulse" />
+													</div>
+													<div className="h-3 w-full rounded-md bg-white/6 animate-pulse" />
+													<div className="flex items-center justify-between pt-2">
+														<div className="w-2/3">
+															<div className="h-8 w-full rounded-md bg-white/6 animate-pulse" />
+														</div>
+														<div className="w-1/3 md:w-auto">
+															<div className="h-8 w-28 rounded-md ml-4 bg-white/6 animate-pulse" />
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
 									</div>
-								))}
-							</div>
+								</div>
+							))}
 						</div>
 					) : (
-						<UpcomingTournamentsTimeline tournaments={timelineTournaments} />
+						// Replace the timeline with the EventList (cards) on the landing
+						<div className="max-w-7xl w-full mx-auto">
+							{events.length === 0 ? (
+								<div className="text-center py-12">
+									<div className="w-16 h-16 bg-padel-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+										<Calendar className="w-8 h-8 text-padel-primary" />
+									</div>
+									<h3 className="text-xl font-semibold text-white mb-2">
+										No hi ha tornejos disponibles
+									</h3>
+									<p className="text-gray-400">
+										Estem preparant nous tornejos emocionants. Torna aviat!
+									</p>
+								</div>
+							) : (
+								// Show EventCards with a landing CTA that redirects to tournaments dashboard
+								<div>
+									{/* Sort events by start date (closest first) and show only the 2 first fully. */}
+									{(() => {
+										const sorted = [...events].sort((a, b) => {
+											const ta = a.date ? new Date(a.date).getTime() : 0;
+											const tb = b.date ? new Date(b.date).getTime() : 0;
+											return ta - tb;
+										});
+
+										const visible = sorted.slice(0, 3);
+										const next = sorted[3];
+
+										return (
+											<div className="space-y-6 md:space-y-4">
+												{visible.map((ev) => (
+													<div key={ev.id}>
+														<EventList
+															events={[ev]}
+															processingEvents={new Set<number>()}
+															onInvite={() => {}}
+															onUnregister={() => {}}
+															formatDate={formatDate}
+															formatDateTime={formatDateTime}
+															getStatusBadge={getStatusBadge}
+															getRegistrationStatusBadge={getRegistrationStatusBadge}
+															canRegister={canRegister}
+															canUnregister={canUnregister}
+															isRegistrationUrgent={isRegistrationUrgent}
+															onShowCode={() => {}}
+															hideActions={true}
+															hideProgress={true}
+															landingHref="/dashboard/tournaments"
+														/>
+													</div>
+												))}
+
+											
+											</div>
+										);
+									})()}
+								</div>
+							)}
+						</div>
 					)}
 
 					{/* Show message if no events */}
-					{!isLoadingEvents && timelineTournaments.length === 0 && (
+					{!isLoadingEvents && events.length === 0 && (
 						<div className="text-center py-12">
 							<div className="w-16 h-16 bg-padel-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
 								<Calendar className="w-8 h-8 text-padel-primary" />

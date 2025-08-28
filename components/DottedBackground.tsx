@@ -33,6 +33,7 @@ export function DottedBackground({
 			aria-hidden
 			className={clsx(
 				"pointer-events-none fixed inset-0 z-0 select-none",
+				"transform-gpu will-change-transform", // GPU acceleration for better mobile performance
 				withVerticalFade &&
 					"[mask-image:linear-gradient(to_bottom,black,black,transparent)]",
 				className
@@ -40,6 +41,7 @@ export function DottedBackground({
 			style={{
 				backgroundImage: pattern,
 				backgroundSize: `${gap}px ${gap}px`,
+				transform: "translate3d(0,0,0)", // Force GPU layer
 			}}
 		/>
 	);

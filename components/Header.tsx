@@ -66,18 +66,26 @@ const HeaderContent = ({ transparent = false }: HeaderProps) => {
 		setIsOpen(false);
 	}, [searchParams]);
 
-	// Detect scroll position to change header background
+	// Detect scroll position to change header background - throttled for better mobile performance
 	useEffect(() => {
+		let ticking = false;
+		
 		const handleScroll = () => {
-			const scrollPosition = window.scrollY;
-			if (scrollPosition > 20) {
-				setHasScrolled(true);
-			} else {
-				setHasScrolled(false);
+			if (!ticking) {
+				requestAnimationFrame(() => {
+					const scrollPosition = window.scrollY;
+					if (scrollPosition > 20) {
+						setHasScrolled(true);
+					} else {
+						setHasScrolled(false);
+					}
+					ticking = false;
+				});
+				ticking = true;
 			}
 		};
 
-		window.addEventListener("scroll", handleScroll);
+		window.addEventListener("scroll", handleScroll, { passive: true });
 		return () => window.removeEventListener("scroll", handleScroll);
 	}, []);
 

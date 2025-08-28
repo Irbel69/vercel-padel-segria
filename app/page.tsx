@@ -13,21 +13,21 @@ import Footer from "@/components/Footer";
 export default function Page() {
   return (
     <>
-      <Header transparent={true} />
 
+      <Header transparent={true} />
       <main>
-        <HeroSection />
         <div className="container px-4 mx-auto">
+        <HeroSection />
           <TopPlayersSection /> {/* This section causes an hydration error */}
           <RankingsSection /> {/* This section causes an hydration error */}
           <EventsSectionErrorBoundary>
             <EventsSection />
           </EventsSectionErrorBoundary>
           <ContactSection />
+      <Footer />
         </div>
       </main>
 
-      <Footer />
     </>
   );
 }

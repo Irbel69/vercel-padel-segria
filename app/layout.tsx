@@ -31,7 +31,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 		<html
 			lang="en"
 			data-theme="dark"
-			className={`${font.className} dark`}
+			className={`${font.className} dark h-full`}
 			suppressHydrationWarning>
 			<head>
 				{/* CSP nonce is handled by middleware, but if you need inline scripts, use the nonce */}
@@ -66,10 +66,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 				/>
 			</head>
 			<body
-				className="bg-black touch-pan-y"
+				className="bg-black touch-pan-y h-full"
 				style={{
 					overflowX: "hidden",
 					overscrollBehaviorX: "none",
+					// ensure body handles vertical scroll only
+					overscrollBehavior: "auto",
 				}}>
 				<ThemeProvider
 					attribute="class"
@@ -77,9 +79,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 					defaultTheme="dark"
 					enableSystem={false}
 					disableTransitionOnChange>
-					{/* Global background pattern (single instance) */}
 					<div
-						className="relative min-h-screen w-full bg-black"
+						className="relative min-h-full overflow-y-hidden w-full bg-black"
 						style={{
 							overflowX: "hidden",
 							paddingLeft: "env(safe-area-inset-left)",

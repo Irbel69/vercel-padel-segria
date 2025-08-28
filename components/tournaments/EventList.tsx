@@ -17,9 +17,12 @@ type Props = {
   canUnregister: (e: Event) => boolean;
   isRegistrationUrgent: (s: string) => boolean;
   onShowCode?: (id: number) => void;
+  hideActions?: boolean;
+  hideProgress?: boolean;
+  landingHref?: string | null;
 };
 
-export default function EventList({ events, processingEvents, onInvite, onUnregister, formatDate, formatDateTime, getStatusBadge, getRegistrationStatusBadge, canRegister, canUnregister, isRegistrationUrgent, onShowCode }: Props) {
+export default function EventList({ events, processingEvents, onInvite, onUnregister, formatDate, formatDateTime, getStatusBadge, getRegistrationStatusBadge, canRegister, canUnregister, isRegistrationUrgent, onShowCode, hideActions, hideProgress, landingHref }: Props) {
   return (
     <div className="space-y-6 md:space-y-4 max-w-full">
       {events.map((event) => (
@@ -38,6 +41,9 @@ export default function EventList({ events, processingEvents, onInvite, onUnregi
           isRegistrationUrgent={isRegistrationUrgent}
           imageUrl={event.image_url ?? null}
           onShowCode={onShowCode}
+          hideActions={hideActions}
+          hideProgress={hideProgress}
+            landingHref={landingHref}
         />
       ))}
     </div>

@@ -26,7 +26,11 @@ type Props = {
   onShowCode?: (id: number) => void;
   // Optional future: hero image/url if exists in backend
   imageUrl?: string | null;
+  hideActions?: boolean;
+  hideProgress?: boolean;
+  landingHref?: string | null;
 };
+import Link from "next/link";
 
 /**
  * EventCard — Mobile-first tournament card with hero, overlays, chips and CTAs
@@ -51,6 +55,9 @@ export default function EventCard({
   onViewDetails,
   onShowCode,
   imageUrl,
+  hideActions,
+  hideProgress,
+  landingHref,
 }: Props) {
   const occupied = Math.min(
     100,
@@ -132,28 +139,43 @@ export default function EventCard({
               <div className="px-4 md:px-5 pt-2">
                 {/* Constrain width on md+ to visually match the CTA button width while staying full width on mobile */}
                 <div className="w-full md:w-auto md:max-w-[360px] ml-0 md:ml-auto">
-                  <ProgressBar
-                    occupied={occupied}
-                    isFull={isFull}
-                    isAlmostFull={isAlmostFull}
-                    isInFocus={isInFocus}
-                  />
+                  {!hideProgress && (
+                    <ProgressBar
+                      occupied={occupied}
+                      isFull={isFull}
+                      isAlmostFull={isAlmostFull}
+                      isInFocus={isInFocus}
+                    />
+                  )}
                 </div>
               </div>
 
               <div className="px-4 md:px-5 pb-4 md:pb-5">
-                <Actions
-                  event={event}
-                  processingEvents={processingEvents}
-                  onInvite={onInvite}
-                  onUnregister={onUnregister}
-                  canRegister={canRegister}
-                  canUnregister={canUnregister}
-                  onViewDetails={onViewDetails}
-                  onShowCode={onShowCode}
-                  isFull={isFull}
-                  imageUrl={imageUrl}
-                />
+                {/* If landingHref is provided, show a single CTA that redirects to tournaments dashboard */}
+                {landingHref ? (
+                  <div className="mt-3">
+                    <Link href={landingHref} className="w-full block">
+                      <button className="w-full bg-padel-primary text-black font-bold px-6 py-3 md:px-4 md:py-2 shadow-lg rounded-lg">
+                        Inscriure'm
+                      </button>
+                    </Link>
+                  </div>
+                ) : (
+                  !hideActions && (
+                    <Actions
+                      event={event}
+                      processingEvents={processingEvents}
+                      onInvite={onInvite}
+                      onUnregister={onUnregister}
+                      canRegister={canRegister}
+                      canUnregister={canUnregister}
+                      onViewDetails={onViewDetails}
+                      onShowCode={onShowCode}
+                      isFull={isFull}
+                      imageUrl={imageUrl}
+                    />
+                  )
+                )}
               </div>
             </div>
           </CardContent>
