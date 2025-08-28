@@ -116,25 +116,32 @@ export async function PUT(
 		}
 
 		const eventId = parseInt(params.id);
-		const body: CreateEventData = await request.json();
+		const body: Partial<CreateEventData> = await request.json();
 
-		// Validar datos requeridos
+		console.debug("[PUT /api/admin/events/:id] incoming", {
+			eventId,
+			keys: Object.keys(body),
+			image_url_present: Object.prototype.hasOwnProperty.call(body, "image_url"),
+			image_url: (body as any).image_url ?? null,
+		});
+
+		// Validar datos requeridos solo si se actualizan (permite parches parciales)
 		if (
-			!body.title ||
-			!body.date ||
-			!body.registration_deadline ||
-			!body.max_participants
+			Object.prototype.hasOwnProperty.call(body, "title") && !body.title
 		) {
-			return NextResponse.json(
-				{ error: "Falten dades obligatòries" },
-				{ status: 400 }
-			);
+			return NextResponse.json({ error: "El títol és obligatori" }, { status: 400 });
+		}
+		if (
+			Object.prototype.hasOwnProperty.call(body, "max_participants") &&
+			(typeof body.max_participants !== "number" || body.max_participants <= 0)
+		) {
+			return NextResponse.json({ error: "Màxim de participants no vàlid" }, { status: 400 });
 		}
 
 		// Validar coordenadas si se proporcionan
 		if (
-			(body.latitude && !body.longitude) ||
-			(!body.latitude && body.longitude)
+			(Object.prototype.hasOwnProperty.call(body, "latitude") || Object.prototype.hasOwnProperty.call(body, "longitude")) &&
+			((body.latitude && !body.longitude) || (!body.latitude && body.longitude))
 		) {
 			return NextResponse.json(
 				{
@@ -145,18 +152,22 @@ export async function PUT(
 			);
 		}
 
-		// Validar que la fecha límite sea anterior a la fecha del evento
-		const eventDate = new Date(body.date);
-		const deadlineDate = new Date(body.registration_deadline);
-
-		if (deadlineDate >= eventDate) {
-			return NextResponse.json(
-				{
-					error:
-						"La data límit d'inscripció ha de ser anterior a la data de l'esdeveniment",
-				},
-				{ status: 400 }
-			);
+		// Validación de fechas solo si ambas se proporcionan en la actualización
+		let newStatus: "open" | "soon" | "closed" | undefined = undefined;
+		if (body.date && body.registration_deadline) {
+			const eventDate = new Date(body.date);
+			const deadlineDate = new Date(body.registration_deadline);
+			if (deadlineDate >= eventDate) {
+				return NextResponse.json(
+					{ error: "La data límit d'inscripció ha de ser anterior a la data de l'esdeveniment" },
+					{ status: 400 }
+				);
+			}
+			// Determinar el estado basado en la fecha límite
+			const now = new Date();
+			if (deadlineDate <= now) newStatus = "closed";
+			else if (eventDate <= new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)) newStatus = "soon";
+			else newStatus = "open";
 		}
 
 		// Verificar que el evento existe
@@ -173,43 +184,48 @@ export async function PUT(
 			);
 		}
 
-		// Determinar el estado basado en la fecha límite
-		const now = new Date();
-		let status: "open" | "soon" | "closed" = "open";
-
-		if (deadlineDate <= now) {
-			status = "closed";
-		} else if (eventDate <= new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)) {
-			// Una semana antes
-			status = "soon";
+		// Actualizar el evento con parches parciales
+		const updatePayload: Record<string, any> = { updated_at: new Date().toISOString() };
+		const maybeAssign = (key: keyof CreateEventData, value: any, nullIfEmpty = false) => {
+			if (Object.prototype.hasOwnProperty.call(body, key)) {
+				updatePayload[key] = nullIfEmpty ? (value ?? null) : value;
+			}
+		};
+		maybeAssign("title", body.title);
+		maybeAssign("date", body.date);
+		maybeAssign("location", body.location, true);
+		maybeAssign("latitude", body.latitude, true);
+		maybeAssign("longitude", body.longitude, true);
+		maybeAssign("prizes", body.prizes, true);
+		maybeAssign("max_participants", body.max_participants);
+		maybeAssign("registration_deadline", body.registration_deadline);
+		if (typeof newStatus !== "undefined") updatePayload["status"] = newStatus;
+		// image_url solo si viene (permite null explícito para borrar)
+		if (Object.prototype.hasOwnProperty.call(body, "image_url")) {
+			updatePayload["image_url"] = body.image_url ?? null;
 		}
 
-		// Actualizar el evento
+		console.debug("[PUT /api/admin/events/:id] update payload", updatePayload);
+
 		const { data: updatedEvent, error: updateError } = await supabase
 			.from("events")
-			.update({
-				title: body.title,
-				date: body.date,
-				location: body.location || null,
-				latitude: body.latitude || null,
-				longitude: body.longitude || null,
-				prizes: body.prizes || null,
-				max_participants: body.max_participants,
-				registration_deadline: body.registration_deadline,
-				status,
-				updated_at: new Date().toISOString(),
-			})
+			.update(updatePayload)
 			.eq("id", eventId)
 			.select()
 			.single();
 
 		if (updateError) {
-			console.error("Error updating event:", updateError);
+			console.error("[PUT /api/admin/events/:id] Error updating event:", updateError);
 			return NextResponse.json(
 				{ error: "Error actualitzant l'esdeveniment" },
 				{ status: 500 }
 			);
 		}
+
+		console.debug("[PUT /api/admin/events/:id] updated event", {
+			id: updatedEvent?.id,
+			image_url: (updatedEvent as any)?.image_url ?? null,
+		});
 
 		return NextResponse.json({
 			message: "Esdeveniment actualitzat amb èxit",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState,ReactNode } from "react";
 import {
 	Dialog,
 	DialogContent,
@@ -33,7 +33,7 @@ export function BookingDialog({
 	trigger,
 }: {
 	slotId: number;
-	trigger?: React.ReactNode;
+	trigger?: ReactNode;
 }) {
 	const [open, setOpen] = useState(false);
 	const isMobile = useIsMobile();

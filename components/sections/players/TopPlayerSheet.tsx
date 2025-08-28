@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef,RefObject } from "react";
 import { X, Trophy, Star, Crown } from "lucide-react";
 import Image from "next/image";
 import type { TopPlayer } from "@/hooks/use-top-players";
@@ -14,7 +14,7 @@ interface TopPlayerSheetProps {
 // Util simple para atrapar foco dentro del sheet
 function useFocusTrap(
 	enabled: boolean,
-	containerRef: React.RefObject<HTMLDivElement>,
+	containerRef: RefObject<HTMLDivElement>,
 	onClose: () => void
 ) {
 	useEffect(() => {

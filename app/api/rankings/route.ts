@@ -15,8 +15,8 @@ async function handler(req: NextRequest) {
 		const limit = Math.max(1, Math.min(100, Number(limitParam || 10)));
 		const from = (page - 1) * limit;
 		const to = from + limit - 1;
-
-	    const { data, error, count } = await supabase
+		
+		const { data, error, count } = await supabase
 			.from("users")
 				.select("id, name, surname, avatar_url, trend, score", { count: "exact" })
 			.order("score", { ascending: false })

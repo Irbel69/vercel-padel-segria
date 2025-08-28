@@ -24,13 +24,12 @@ export function EventsSection() {
 	const [events, setEvents] = useState<EventType[]>([]);
 	const [isLoadingEvents, setIsLoadingEvents] = useState(true);
 
-	// Fetch real events data
+	// Fetch real events data (no React Query here)
 	useEffect(() => {
 		const fetchEvents = async () => {
 			try {
 				const response = await fetch("/api/events/public?limit=4");
 				if (!response.ok) {
-					// If API call fails, use mock data as fallback
 					console.warn("API call failed, using mock data");
 					setEvents([]);
 					return;

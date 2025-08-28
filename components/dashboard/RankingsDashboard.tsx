@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowUp, ArrowDown, Minus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useUser } from "@/hooks/use-user";
 import { useRankings } from "@/hooks/use-rankings";
-import type { RankingsResponse } from "@/hooks/use-rankings";
+import type { RankingsResponse } from "@/types/rankings";
 
 export function RankingsDashboard() {
   const { user } = useUser();

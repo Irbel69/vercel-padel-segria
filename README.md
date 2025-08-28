@@ -60,6 +60,17 @@ RESEND_API_KEY=your_resend_api_key
  -   [✅ Project Testing (Jest)](./docs/testing.md)
  -   [🛡️ Rate Limiting Docs](./docs/rate-limiting.md)
 
+## Recent changes (pairs branch)
+
+This repository contains an active feature branch that enhances event management and adds a "pair invites" flow. See the linked docs below for implementation and migration details.
+
+- Pair invites (invite a partner by email or short code): `docs/pair-invites-implementation.md` and `docs/pair-invites-next-steps.md`
+- Dashboard events refactor: React Query hooks for events and mutations (`hooks/use-events.ts`) — see `docs/dashboard-architecture.md`
+- Event cover images: admin upload + storage guidance and migration (`docs/event-images.md`, `docs/migrations/2025-08-28_add_image_url_to_events.sql`)
+- UI refactor: `EventCard` split into modular components (`components/tournaments/ui/EventCard/README.md`)
+
+If you're reviewing the code for the "pairs" feature, start with those docs and the `app/dashboard/tournaments/page.tsx` and `hooks/use-events.ts` files.
+
 ## Support
 
 Reach out at hello@shipfa.st

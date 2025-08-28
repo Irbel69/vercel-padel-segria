@@ -8,13 +8,18 @@ const nextConfig = {
       "pbs.twimg.com",
       "images.unsplash.com",
       "logos-world.net",
-      // Supabase storage domains (add your project-specific domains)
-      "supabase.co",
-      "supabaseStorage.co",
       // Crisp chat images
       "client.crisp.chat",
       "image.crisp.chat",
       "storage.crisp.chat",
+    ],
+    // Allow Supabase Storage images from your project host
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
     ],
   },
   // PWA configuration

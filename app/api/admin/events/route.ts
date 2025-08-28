@@ -133,6 +133,17 @@ export async function POST(request: NextRequest) {
 
 		const body: CreateEventData = await request.json();
 
+		console.debug("[POST /api/admin/events] incoming body", {
+			// Only log non-sensitive fields
+			title: body.title,
+			date: body.date,
+			location: body.location,
+			max_participants: body.max_participants,
+			registration_deadline: body.registration_deadline,
+			image_url_present: Object.prototype.hasOwnProperty.call(body, "image_url"),
+			image_url: body.image_url ?? null,
+		});
+
 		// Validar datos requeridos
 		if (
 			!body.title ||
@@ -199,18 +210,24 @@ export async function POST(request: NextRequest) {
 					max_participants: body.max_participants,
 					registration_deadline: body.registration_deadline,
 					status,
+					image_url: body.image_url || null,
 				},
 			])
 			.select()
 			.single();
 
 		if (insertError) {
-			console.error("Error creating event:", insertError);
+			console.error("[POST /api/admin/events] Error creating event:", insertError);
 			return NextResponse.json(
 				{ error: "Error creant l'esdeveniment" },
 				{ status: 500 }
 			);
 		}
+
+		console.debug("[POST /api/admin/events] created event", {
+			id: newEvent?.id,
+			image_url: newEvent?.image_url ?? null,
+		});
 
 		return NextResponse.json({
 			message: "Esdeveniment creat amb èxit",

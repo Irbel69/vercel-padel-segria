@@ -1,6 +1,6 @@
 # Arquitectura y Flujo del Dashboard
 
-Última actualización: 2025-08-16
+Última actualización: 2025-08-20
 
 Este documento explica la estructura del dashboard, cómo se gestionan las peticiones de datos, las optimizaciones aplicadas en esta sesión y las recomendaciones para futuras mejoras.
 
@@ -12,6 +12,8 @@ Este documento explica la estructura del dashboard, cómo se gestionan las petic
     - Renderiza `SidebarProvider`, `AppSidebar` y cabecera.
   - `app/dashboard/page.tsx` (Client Component):
     - Página principal del dashboard con tarjetas de perfil, stats y cualidades.
+  - `app/dashboard/tournaments/page.tsx` (Client Component):
+    - Gestión de eventos/torneos con React Query: lista paginada, inscripciones, invitaciones en pareja.
   - Otras secciones:
     - `app/dashboard/rankings/page.tsx` reutiliza `components/sections/rankings/RankingsSection`.
 
@@ -25,7 +27,8 @@ Este documento explica la estructura del dashboard, cómo se gestionan las petic
 - Hooks/Utilidades:
   - `hooks/use-user.ts`: Estado de usuario y perfil.
   - `hooks/use-user-stats.ts`: Estadísticas del usuario (refactor a React Query).
-  - `hooks/use-rankings.ts`: Hook nuevo para rankings con React Query.
+  - `hooks/use-rankings.ts`: Hook para rankings con React Query.
+  - `hooks/use-events.ts`: **NUEVO** Hook para eventos con React Query (dashboard).
   - `libs/supabase/client.ts`: Cliente navegador de Supabase.
 
 - Layout global:
@@ -50,13 +53,25 @@ Este documento explica la estructura del dashboard, cómo se gestionan las petic
   - Estadísticas: `hooks/use-user-stats.ts` con React Query (`/api/user/stats`).
 
 ### 2.3 Rankings
-- `hooks/use-rankings.ts` (nuevo):
+- `hooks/use-rankings.ts`:
   - `useQuery` con `queryKey: ['rankings', page, limit]`.
   - `placeholderData: (prev) => prev` para paginación fluida.
   - `staleTime: 60s`, `gcTime: 5m`, `refetchOnWindowFocus: false`.
 - Consumidores:
   - `components/sections/rankings/RankingsSection.tsx`.
   - `components/dashboard/RankingsDashboard.tsx`.
+
+### 2.4 Eventos/Torneos (Dashboard)
+- `hooks/use-events.ts` (nuevo):
+  - `useEventsList({ page, limit, status, search })` → `queryKey: ['events', 'list', {...}]`.
+  - `useRegisterForEvent()` y `useUnregisterFromEvent()` mutations con invalidación automática.
+  - `useCreatePairInvite()` para invitaciones en pareja.
+  - `staleTime: 2m`, `gcTime: 10m`, `refetchOnWindowFocus: false`.
+- Consumidor principal:
+  - `app/dashboard/tournaments/page.tsx`: reemplazó fetch manual por React Query.
+- Landing page:
+  - `components/sections/events/EventsSection.tsx`: **mantiene fetch manual** (sin React Query).
+  - `usePublicEvents()` disponible en el hook pero no utilizado por decisión de implementación.
 
 ## 3. Optimizaciones aplicadas
 
@@ -65,11 +80,15 @@ Este documento explica la estructura del dashboard, cómo se gestionan las petic
   - Añadido `QueryClientProvider` con `QueryClient` memoizado.
 - `hooks/use-user-stats.ts`:
   - Refactor a `useQuery` con `queryKey: ['user','stats']` y `staleTime`.
-- `hooks/use-rankings.ts` (nuevo):
+- `hooks/use-rankings.ts`:
   - Centraliza fetch y caching de rankings.
+- `hooks/use-events.ts` (nuevo):
+  - Centraliza fetch y caching de eventos para el dashboard.
+  - Mutations con invalidación automática para mantener data fresca.
 
 2) Paginación y cambio de pestañas más suaves
 - `RankingsSection` y `RankingsDashboard` ahora usan React Query, evitando re-fetch al volver de una pestaña.
+- `app/dashboard/tournaments/page.tsx` usa React Query para lista de eventos y mutations.
 - `components/dashboard/RankingsComponent.tsx` establece `forceMount` en `TabsContent` para no desmontar contenido al alternar tabs.
 
 3) Paralelización de fetches
@@ -78,6 +97,10 @@ Este documento explica la estructura del dashboard, cómo se gestionan las petic
 4) Reducción de coste visual
 - `app/dashboard/layout.tsx`: eliminado `backdrop-filter: blur(10px)` constante en el header y reemplazado por clases Tailwind opacas (`bg-white/5` + `border-white/10`).
 - `app/dashboard/page.tsx`: se sustituyen estilos inline repetidos por clases utilitarias (`rounded-2xl`, `ring-white/20`, etc.).
+
+5) Gestión de estado optimizada
+- Mutations para registro/cancelación de eventos con invalidación automática de queries.
+- Cache inteligente: eventos del dashboard con `staleTime: 2m`, rankings con `staleTime: 60s`.
 
 ## 4. Almacenamiento local (localStorage)
 - La app no escribe claves propias. Lo único en el código es la limpieza `localStorage.removeItem('supabase.auth.token')` en `hooks/use-user.ts` al cerrar sesión.
@@ -103,6 +126,7 @@ Este documento explica la estructura del dashboard, cómo se gestionan las petic
 
 ## 6. Índice de archivos modificados en esta sesión
 
+### Sesión anterior (2025-08-16)
 - `components/LayoutClient.tsx` → Añadido `QueryClientProvider`.
 - `hooks/use-user-stats.ts` → Migrado a React Query.
 - `hooks/use-rankings.ts` → NUEVO hook para rankings.
@@ -111,6 +135,11 @@ Este documento explica la estructura del dashboard, cómo se gestionan las petic
 - `components/dashboard/RankingsComponent.tsx` → `forceMount` en `TabsContent`.
 - `app/dashboard/page.tsx` → Paralelización de fetches y clases utilitarias para estilos.
 - `app/dashboard/layout.tsx` → Header con menos blur (mejor rendimiento).
+
+### Sesión actual (2025-08-20)
+- `hooks/use-events.ts` → **NUEVO** hook para eventos con React Query (dashboard).
+- `app/dashboard/tournaments/page.tsx` → Refactor completo a React Query para eventos.
+- `components/sections/events/EventsSection.tsx` → **Sin cambios** (mantiene fetch manual por decisión de implementación).
 
 ## 7. Convenciones actuales
 

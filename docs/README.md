@@ -3,16 +3,34 @@
 Este directorio recoge documentación viva para orientar futuras sesiones de desarrollo. Sirve como contexto sobre cómo está estructurado el dashboard, cómo se gestionan las peticiones de datos y qué decisiones de rendimiento se han tomado.
 
 - Documento principal: [Arquitectura y flujo del Dashboard](./dashboard-architecture.md)
-- Última actualización: 2025-08-16
+- Última actualización: 2025-08-20
+- Cambios recientes: consulta el [CHANGELOG](./CHANGELOG.md)
 
-## Resumen de cambios de esta sesión
+## Quick links for the "pairs" feature
 
-En esta sesión hemos optimizado el dashboard para hacerlo más fluido al cambiar de pestaña:
+- Pair invites implementation: `pair-invites-implementation.md`
+- Pair invites next steps: `pair-invites-next-steps.md`
+- Event images & migration: `event-images.md` and `migrations/2025-08-28_add_image_url_to_events.sql`
+- EventCard component split: `components/tournaments/ui/EventCard/README.md`
 
-- Añadido React Query en la capa cliente para cachear datos y evitar re-fetchs innecesarios.
-- Refactor de hooks y secciones de rankings para usar caché con paginación suave.
-- Paralelización de llamadas a perfil y cualidades del usuario en la página del dashboard.
-- Reducción de efectos visuales costosos (blur de fondo) en el header del dashboard.
-- Ajustes de estilos inline a clases para mejorar memoización y estabilidad de renders.
+## Resumen de cambios recientes
+
+### React Query para Eventos del Dashboard (2025-08-20)
+
+Implementación de React Query para la gestión de eventos en el dashboard:
+
+- **Nuevo hook**: `hooks/use-events.ts` con funciones para listado paginado, inscripciones y invitaciones.
+- **Dashboard refactorizado**: `app/dashboard/tournaments/page.tsx` usa React Query con invalidación automática de caché.
+- **Landing page sin cambios**: `components/sections/events/EventsSection.tsx` mantiene fetch manual.
+- **Sin localStorage**: solo caché en memoria con `staleTime` y `gcTime` optimizados.
+
+### Arreglos en Invitaciones por Pareja (2025-08-20)
+
+Mejoras y arreglos en el flujo de invitaciones por pareja (pair invites):
+
+- Alineación del esquema de base de datos con la implementación (campos `invitee_*`, `token`, `short_code`, enum de estado, timestamps).
+- Solucionado error de caché de PostgREST (PGRST204) recargando el esquema después de las migraciones.
+- End-point de aceptación (`POST /api/invites/[token]/accept`) ahora es idempotente: solo hace upsert de la inscripción del invitado (invitee) con `pair_id` y ajusta el control de aforo a +1.
+- Documentación actualizada en `docs/pair-invites-implementation.md` y `docs/pair-invites-next-steps.md`.
 
 Consulta el documento de arquitectura para el detalle completo y rutas de archivo exactas.

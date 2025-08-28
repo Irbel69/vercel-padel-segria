@@ -182,23 +182,45 @@ export async function DELETE(
 			);
 		}
 
-		// Eliminar la inscripción completamente para permitir futuras inscripciones
-		const { error: deleteError } = await supabase
-			.from("registrations")
-			.delete()
-			.eq("id", existingRegistration.id);
+		// Si el usuario está registrado como pareja, cancelar también la inscripción del compañero
+		if (existingRegistration.pair_id) {
+			// Buscar y eliminar todas las inscripciones con el mismo pair_id
+			const { error: deletePairError } = await supabase
+				.from("registrations")
+				.delete()
+				.eq("pair_id", existingRegistration.pair_id)
+				.eq("event_id", eventId);
 
-		if (deleteError) {
-			console.error("Error deleting registration:", deleteError);
-			return NextResponse.json(
-				{ error: "Error cancel·lant la inscripció" },
-				{ status: 500 }
-			);
+			if (deletePairError) {
+				console.error("Error deleting pair registrations:", deletePairError);
+				return NextResponse.json(
+					{ error: "Error cancel·lant la inscripció de la parella" },
+					{ status: 500 }
+				);
+			}
+
+			return NextResponse.json({
+				message: "Inscripció cancel·lada amb èxit (parella inclosa)",
+			});
+		} else {
+			// Eliminar solo la inscripción del usuario actual
+			const { error: deleteError } = await supabase
+				.from("registrations")
+				.delete()
+				.eq("id", existingRegistration.id);
+
+			if (deleteError) {
+				console.error("Error deleting registration:", deleteError);
+				return NextResponse.json(
+					{ error: "Error cancel·lant la inscripció" },
+					{ status: 500 }
+				);
+			}
+
+			return NextResponse.json({
+				message: "Inscripció cancel·lada amb èxit",
+			});
 		}
-
-		return NextResponse.json({
-			message: "Inscripció cancel·lada amb èxit",
-		});
 	} catch (error) {
 		console.error("Error in DELETE /api/events/[id]/register:", error);
 		return NextResponse.json(

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/libs/supabase/server";
+import { randomUUID as nodeRandomUUID } from "crypto";
 
-// POST /api/admin/events/[id]/participants  { user_id }
+// POST /api/admin/events/[id]/participants  { user_id, pair_user_id? }
 export async function POST(
 	request: NextRequest,
 	{ params }: { params: { id: string } }
@@ -32,6 +33,7 @@ export async function POST(
 		const body = await request.json();
 		console.log("[ADMIN][POST] Request body:", body);
 		const userId: string | undefined = body.user_id;
+		const pairUserId: string | undefined = body.pair_user_id;
 		if (!userId)
 			return NextResponse.json({ error: "Falta user_id" }, { status: 400 });
 		console.log("[ADMIN][POST] Adding userId:", userId);
@@ -49,7 +51,106 @@ export async function POST(
 				{ status: 404 }
 			);
 
-		// Check existing registration
+		// If pair_user_id is provided, create or reactivate pair registrations
+		if (pairUserId) {
+			console.log(
+				"[ADMIN][POST] Pair registration requested with:",
+				userId,
+				pairUserId
+			);
+			if (pairUserId === userId) {
+				return NextResponse.json(
+					{ error: "Els dos usuaris han de ser diferents" },
+					{ status: 400 }
+				);
+			}
+			// Check both users existing registrations
+			const { data: regs } = await supabase
+				.from("registrations")
+				.select("id, user_id, status, pair_id")
+				.eq("event_id", eventId)
+				.in("user_id", [userId, pairUserId]);
+			const regA = regs?.find((r) => r.user_id === userId) || null;
+			const regB = regs?.find((r) => r.user_id === pairUserId) || null;
+
+			const newPairId =
+				(typeof nodeRandomUUID === "function" && nodeRandomUUID()) ||
+				`${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+			// A) Upsert A
+			if (regA) {
+				const { error: updAErr } = await supabase
+					.from("registrations")
+					.update({ status: "confirmed", pair_id: newPairId })
+					.eq("id", regA.id);
+				if (updAErr) {
+					console.error("[ADMIN][POST] Error updating A:", updAErr);
+					return NextResponse.json(
+						{ error: "Error creant la parella" },
+						{ status: 500 }
+					);
+				}
+			} else {
+				const { error: insAErr } = await supabase
+					.from("registrations")
+					.insert([
+						{
+							user_id: userId,
+							event_id: eventId,
+							status: "confirmed",
+							pair_id: newPairId,
+						},
+					]);
+				if (insAErr) {
+					console.error("[ADMIN][POST] Error inserting A:", insAErr);
+					return NextResponse.json(
+						{ error: "Error creant la parella" },
+						{ status: 500 }
+					);
+				}
+			}
+
+			// B) Upsert B
+			if (regB) {
+				const { error: updBErr } = await supabase
+					.from("registrations")
+					.update({ status: "confirmed", pair_id: newPairId })
+					.eq("id", regB.id);
+				if (updBErr) {
+					console.error("[ADMIN][POST] Error updating B:", updBErr);
+					return NextResponse.json(
+						{ error: "Error creant la parella" },
+						{ status: 500 }
+					);
+				}
+			} else {
+				const { error: insBErr } = await supabase
+					.from("registrations")
+					.insert([
+						{
+							user_id: pairUserId,
+							event_id: eventId,
+							status: "confirmed",
+							pair_id: newPairId,
+						},
+					]);
+				if (insBErr) {
+					console.error("[ADMIN][POST] Error inserting B:", insBErr);
+					return NextResponse.json(
+						{ error: "Error creant la parella" },
+						{ status: 500 }
+					);
+				}
+			}
+
+			return NextResponse.json({
+				message: "Parella afegida",
+				data: { pair_id: newPairId },
+			});
+		}
+
+		// Single user flow
+		// Check existing registration for single user
 		const { data: existing } = await supabase
 			.from("registrations")
 			.select("id, status")
@@ -59,7 +160,7 @@ export async function POST(
 		console.log("[ADMIN][POST] Existing registration:", existing);
 
 		if (existing) {
-			// If exists but cancelled -> set to confirmed
+			// If exists but not confirmed -> set to confirmed
 			if (existing.status !== "confirmed") {
 				console.log(
 					"[ADMIN][POST] Reactivating cancelled registration id:",
@@ -67,7 +168,7 @@ export async function POST(
 				);
 				const { error: updErr } = await supabase
 					.from("registrations")
-					.update({ status: "confirmed" })
+					.update({ status: "confirmed", pair_id: null })
 					.eq("id", existing.id);
 				console.log("[ADMIN][POST] Update error:", updErr);
 				if (updErr)
@@ -84,7 +185,14 @@ export async function POST(
 		console.log("[ADMIN][POST] Inserting new registration");
 		const { data: registration, error: regErr } = await supabase
 			.from("registrations")
-			.insert([{ user_id: userId, event_id: eventId, status: "confirmed" }])
+			.insert([
+				{
+					user_id: userId,
+					event_id: eventId,
+					status: "confirmed",
+					pair_id: null,
+				},
+			])
 			.select()
 			.single();
 		console.log("[ADMIN][POST] Insert result:", registration, "error:", regErr);
@@ -105,7 +213,7 @@ export async function POST(
 	}
 }
 
-// DELETE /api/admin/events/[id]/participants?user_id=...
+// DELETE /api/admin/events/[id]/participants?user_id=... or ?pair_id=...
 export async function DELETE(
 	request: NextRequest,
 	{ params }: { params: { id: string } }
@@ -137,11 +245,35 @@ export async function DELETE(
 
 		const url = new URL(request.url);
 		const userId = url.searchParams.get("user_id");
-		console.log("[ADMIN][DELETE] Removing userId:", userId);
-		if (!userId)
-			return NextResponse.json({ error: "Falta user_id" }, { status: 400 });
+		const pairId = url.searchParams.get("pair_id");
+		console.log("[ADMIN][DELETE] Removing userId:", userId, "pairId:", pairId);
+		if (!userId && !pairId)
+			return NextResponse.json(
+				{ error: "Falta user_id o pair_id" },
+				{ status: 400 }
+			);
 		const eventId = parseInt(params.id);
 
+		if (pairId) {
+			console.log(
+				"[ADMIN][DELETE] Deleting pair registrations for pair_id:",
+				pairId
+			);
+			const { error: delPairErr } = await supabase
+				.from("registrations")
+				.delete()
+				.eq("event_id", eventId)
+				.eq("pair_id", pairId);
+			console.log("[ADMIN][DELETE] Delete pair error:", delPairErr);
+			if (delPairErr)
+				return NextResponse.json(
+					{ error: "Error eliminant la parella" },
+					{ status: 500 }
+				);
+			return NextResponse.json({ message: "Parella eliminada" });
+		}
+
+		// Single user removal
 		const { data: registration } = await supabase
 			.from("registrations")
 			.select("id")
