@@ -8,6 +8,13 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+	Sheet,
+	SheetContent,
+	SheetTrigger,
+	SheetClose,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -29,6 +36,7 @@ export function BookingDialog({
 	trigger?: React.ReactNode;
 }) {
 	const [open, setOpen] = useState(false);
+	const isMobile = useIsMobile();
 	const [groupSize, setGroupSize] = useState<1 | 2 | 3 | 4>(1);
 	const [allowFill, setAllowFill] = useState(true);
 	const [paymentType, setPaymentType] = useState<PaymentType>("cash");
@@ -87,6 +95,152 @@ export function BookingDialog({
 		/>
 	));
 
+	// On mobile use a full-screen sheet with vertical scrolling enabled.
+	if (isMobile) {
+		return (
+			<Sheet>
+				<SheetTrigger asChild>{trigger ?? <Button variant="default">Apuntar-me</Button>}</SheetTrigger>
+				<SheetContent
+					side="bottom"
+					className="inset-0 h-[100dvh] max-h-[100dvh] overflow-y-auto p-6"
+					style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}
+				>
+					<div className="flex items-center justify-between">
+						<h3 className="text-lg font-semibold">Reserva de classe</h3>
+						<SheetClose asChild>
+							<Button variant="ghost">Tancar</Button>
+						</SheetClose>
+					</div>
+
+					<div className="mt-4 space-y-4">
+						<div className="space-y-2">
+							<label className="text-sm text-white/80">Quantes persones?</label>
+							<Select
+								value={String(groupSize)}
+								onValueChange={(v) => setGroupSize(Number(v) as 1 | 2 | 3 | 4)}>
+								<SelectTrigger>
+									<SelectValue placeholder="Mida del grup" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="1">1</SelectItem>
+									<SelectItem value="2">2</SelectItem>
+									<SelectItem value="3">3</SelectItem>
+									<SelectItem value="4">4</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+
+						<div className="flex items-center space-x-2">
+							<Checkbox
+								id="allowFill"
+								checked={allowFill}
+								onCheckedChange={(v) => setAllowFill(Boolean(v))}
+							/>
+							<label htmlFor="allowFill" className="text-sm text-white/80">
+								Permetre completar la classe amb altres persones
+							</label>
+						</div>
+
+						<div className="space-y-2">
+							<label className="text-sm text-white/80">Tipus de pagament</label>
+							<Select
+								value={paymentType}
+								onValueChange={(v) => setPaymentType(v as PaymentType)}>
+								<SelectTrigger>
+									<SelectValue placeholder="Pagament" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="direct_debit">Rebut bancari</SelectItem>
+									<SelectItem value="bizum">Bizum</SelectItem>
+									<SelectItem value="cash">Efectiu</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+
+						{paymentType === "direct_debit" && (
+							<div className="grid gap-2">
+								<Input
+									placeholder="IBAN"
+									value={dd.iban}
+									onChange={(e) => setDd({ ...dd, iban: e.target.value })}
+								/>
+								<Input
+									placeholder="Nom del titular"
+									value={dd.holder_name}
+									onChange={(e) => setDd({ ...dd, holder_name: e.target.value })}
+								/>
+								<Input
+									placeholder="Adreça"
+									value={dd.holder_address}
+									onChange={(e) =>
+										setDd({ ...dd, holder_address: e.target.value })
+									}
+								/>
+								<Input
+									placeholder="DNI"
+									value={dd.holder_dni}
+									onChange={(e) => setDd({ ...dd, holder_dni: e.target.value })}
+								/>
+								<div className="flex items-center space-x-2">
+									<Checkbox
+										id="authDD"
+										checked={dd.is_authorized}
+										onCheckedChange={(v) =>
+											setDd({ ...dd, is_authorized: Boolean(v) })
+										}
+									/>
+									<label htmlFor="authDD" className="text-sm text-white/80">
+										Autorització de domiciliació bancària
+									</label>
+								</div>
+							</div>
+						)}
+
+						<div className="space-y-2">
+							<label className="text-sm text-white/80">Nom del titular</label>
+							<Input
+								placeholder="El teu nom"
+								value={primaryName}
+								onChange={(e) => setPrimaryName(e.target.value)}
+							/>
+						</div>
+
+						{extraInputs.length > 0 && (
+							<div className="space-y-2">
+								<label className="text-sm text-white/80">Noms addicionals</label>
+								<div className="grid gap-2">{extraInputs}</div>
+							</div>
+						)}
+
+						<div className="space-y-2">
+							<label className="text-sm text-white/80">Observacions</label>
+							<Textarea
+								placeholder="Qualsevol detall..."
+								value={observations}
+								onChange={(e) => setObservations(e.target.value)}
+							/>
+						</div>
+
+						{error && <p className="text-red-400 text-sm">{error}</p>}
+
+						<div className="flex justify-end gap-2">
+							<Button
+								variant="ghost"
+								onClick={() => setOpen(false)}
+								disabled={submitting}>
+								Cancel·lar
+							</Button>
+							<Button onClick={handleSubmit} disabled={submitting}>
+								{submitting ? "Processant..." : "Confirmar reserva"}
+							</Button>
+						</div>
+					</div>
+				</SheetContent>
+			</Sheet>
+		);
+	}
+
+	// Desktop / fallback: keep the existing dialog popup
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
