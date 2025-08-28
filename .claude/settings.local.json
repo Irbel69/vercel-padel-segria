@@ -1,0 +1,9 @@
+{
+  "enabledMcpjsonServers": [
+    "supabase",
+    "context7",
+    "sequentialthinking",
+    "playwright"
+  ],
+  "enableAllProjectMcpServers": true
+}

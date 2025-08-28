@@ -6,7 +6,8 @@ import { useEffect, useState, ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { Crisp } from "crisp-sdk-web";
 import NextTopLoader from "nextjs-toploader";
-import { Toaster } from "react-hot-toast";
+import { Toaster as HotToaster } from "react-hot-toast";
+import { Toaster as CustomToaster } from "@/components/ui/toaster";
 import { Tooltip } from "react-tooltip";
 import config from "@/config";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -77,12 +78,15 @@ const ClientLayout = ({ children, nonce }: { children: ReactNode; nonce?: string
       {/* Content inside app/page.js files  */}
       {children}
 
-      {/* Show Success/Error messages anywhere from the app with toast() */}
-      <Toaster
+      {/* Show Success/Error messages anywhere from the app with toast() (react-hot-toast) */}
+      <HotToaster
         toastOptions={{
           duration: 3000,
         }}
       />
+
+      {/* Show custom in-app toasts produced via useToast() (Radix + custom provider) */}
+      <CustomToaster />
 
       {/* Show tooltips if any JSX elements has these 2 attributes: data-tooltip-id="tooltip" data-tooltip-content="" */}
       <Tooltip
