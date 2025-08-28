@@ -23,8 +23,25 @@ export async function GET(request: Request) {
 		)
 		.order("start_at");
 
-	if (from) query = query.gte("start_at", from);
-	if (to) query = query.lte("end_at", to);
+	const toIso = (() => {
+		if (!to) return undefined;
+		if (to.length <= 10) {
+			return new Date(to + "T23:59:59.999Z").toISOString();
+		}
+		const d = new Date(to);
+		return isNaN(d.getTime()) ? undefined : d.toISOString();
+	})();
+	const fromIso = (() => {
+		if (!from) return undefined;
+		if (from.length <= 10) {
+			return new Date(from + "T00:00:00Z").toISOString();
+		}
+		const d = new Date(from);
+		return isNaN(d.getTime()) ? undefined : d.toISOString();
+	})();
+
+	if (fromIso) query = query.gte("start_at", fromIso);
+	if (toIso) query = query.lte("end_at", toIso);
 
 	const { data, error } = await query;
 	if (error) {

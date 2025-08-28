@@ -44,6 +44,12 @@ export function AdminCalendarView({
 	const isMobile = useIsMobile();
 
 	useEffect(() => {
+		const fmt = (d: Date) => {
+			const y = d.getFullYear();
+			const m = String(d.getMonth() + 1).padStart(2, "0");
+			const day = String(d.getDate()).padStart(2, "0");
+			return `${y}-${m}-${day}`;
+		};
 		const startOfMonth = new Date(
 			viewDate.getFullYear(),
 			viewDate.getMonth(),
@@ -54,8 +60,8 @@ export function AdminCalendarView({
 			viewDate.getMonth() + 1,
 			0
 		);
-		const from = startOfMonth.toISOString().slice(0, 10);
-		const to = endOfMonth.toISOString().slice(0, 10);
+		const from = fmt(startOfMonth);
+		const to = fmt(endOfMonth);
 
 		setLoading(true);
 		fetch(`/api/lessons/admin/slots?from=${from}&to=${to}`)
@@ -66,6 +72,12 @@ export function AdminCalendarView({
 	}, [viewDate]);
 
 	const calendarDays = useMemo(() => {
+		const fmt = (d: Date) => {
+			const y = d.getFullYear();
+			const m = String(d.getMonth() + 1).padStart(2, "0");
+			const day = String(d.getDate()).padStart(2, "0");
+			return `${y}-${m}-${day}`;
+		};
 		const startOfMonth = new Date(
 			viewDate.getFullYear(),
 			viewDate.getMonth(),
@@ -86,9 +98,9 @@ export function AdminCalendarView({
 		const days: CalendarDay[] = [];
 		const current = new Date(startDate);
 		while (current <= endDate) {
-			const dateStr = current.toISOString().slice(0, 10);
+			const dateStr = fmt(current);
 			const daySlots = slots.filter((slot) => {
-				const slotDate = new Date(slot.start_at).toISOString().slice(0, 10);
+				const slotDate = fmt(new Date(slot.start_at));
 				return slotDate === dateStr;
 			});
 			days.push({

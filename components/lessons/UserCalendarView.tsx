@@ -26,6 +26,13 @@ export default function UserCalendarView() {
 	const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
 	useEffect(() => {
+		// Helper to format local date as YYYY-MM-DD (no UTC conversion)
+		const fmt = (d: Date) => {
+			const y = d.getFullYear();
+			const m = String(d.getMonth() + 1).padStart(2, "0");
+			const day = String(d.getDate()).padStart(2, "0");
+			return `${y}-${m}-${day}`;
+		};
 		const startOfMonth = new Date(
 			viewDate.getFullYear(),
 			viewDate.getMonth(),
@@ -36,8 +43,8 @@ export default function UserCalendarView() {
 			viewDate.getMonth() + 1,
 			0
 		);
-		const from = startOfMonth.toISOString().slice(0, 10);
-		const to = endOfMonth.toISOString().slice(0, 10);
+		const from = fmt(startOfMonth);
+		const to = fmt(endOfMonth);
 
 		setLoading(true);
 		setError(null);
@@ -49,6 +56,12 @@ export default function UserCalendarView() {
 	}, [viewDate]);
 
 	const calendarDays = useMemo(() => {
+		const fmt = (d: Date) => {
+			const y = d.getFullYear();
+			const m = String(d.getMonth() + 1).padStart(2, "0");
+			const day = String(d.getDate()).padStart(2, "0");
+			return `${y}-${m}-${day}`;
+		};
 		const startOfMonth = new Date(
 			viewDate.getFullYear(),
 			viewDate.getMonth(),
@@ -70,9 +83,10 @@ export default function UserCalendarView() {
 		const current = new Date(startDate);
 
 		while (current <= endDate) {
-			const dateStr = current.toISOString().slice(0, 10);
+			const dateStr = fmt(current);
 			const daySlots = slots.filter((slot) => {
-				const slotDate = new Date(slot.start_at).toISOString().slice(0, 10);
+				const s = new Date(slot.start_at);
+				const slotDate = fmt(s);
 				return slotDate === dateStr;
 			});
 
@@ -335,15 +349,19 @@ export default function UserCalendarView() {
 					open={sheetOpen}
 					onOpenChange={setSheetOpen}
 					date={selectedDate}
-					slots={
-						selectedDate
+					slots={(() => {
+						const fmt = (d: Date) => {
+							const y = d.getFullYear();
+							const m = String(d.getMonth() + 1).padStart(2, "0");
+							const day = String(d.getDate()).padStart(2, "0");
+							return `${y}-${m}-${day}`;
+						};
+						return selectedDate
 							? slots.filter(
-									(s) =>
-										new Date(s.start_at).toISOString().slice(0, 10) ===
-										selectedDate.toISOString().slice(0, 10)
+									(s) => fmt(new Date(s.start_at)) === fmt(selectedDate)
 							  )
-							: []
-					}
+							: [];
+					})()}
 				/>
 			)}
 		</div>

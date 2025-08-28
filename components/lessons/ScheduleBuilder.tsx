@@ -90,10 +90,17 @@ export default function ScheduleBuilder({ onCheckConflicts, onApply }: Props) {
 	const payloadBase = () => ({
 		title,
 		valid_from: validRange.from
-			? validRange.from.toISOString().slice(0, 10)
+			? `${validRange.from.getFullYear()}-${String(
+					validRange.from.getMonth() + 1
+			  ).padStart(2, "0")}-${String(validRange.from.getDate()).padStart(
+					2,
+					"0"
+			  )}`
 			: undefined,
 		valid_to: validRange.to
-			? validRange.to.toISOString().slice(0, 10)
+			? `${validRange.to.getFullYear()}-${String(
+					validRange.to.getMonth() + 1
+			  ).padStart(2, "0")}-${String(validRange.to.getDate()).padStart(2, "0")}`
 			: undefined,
 		days_of_week: daysOfWeek,
 		base_time_start: baseStart,
@@ -179,7 +186,9 @@ export default function ScheduleBuilder({ onCheckConflicts, onApply }: Props) {
 								className="justify-start w-full text-left">
 								<CalendarIcon className="mr-2 h-4 w-4" />
 								{validRange.from && validRange.to
-									? `${validRange.from.toLocaleDateString()} - ${validRange.to.toLocaleDateString()}`
+									? `${validRange.from.toLocaleDateString(
+											"es-ES"
+									  )} - ${validRange.to.toLocaleDateString("es-ES")}`
 									: "Selecciona dates"}
 							</Button>
 						</PopoverTrigger>
