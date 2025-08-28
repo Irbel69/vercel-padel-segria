@@ -9,6 +9,7 @@ import type { LessonSlot } from "@/types/lessons";
 import { BookingDialog } from "@/components/lessons/BookingDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import DaySlotsSheet from "@/components/lessons/DaySlotsSheet";
+import DaySlotsPanel from "@/components/lessons/DaySlotsPanel";
 
 interface CalendarDay {
 	date: Date;
@@ -24,6 +25,7 @@ export default function UserCalendarView() {
 	const isMobile = useIsMobile();
 	const [sheetOpen, setSheetOpen] = useState(false);
 	const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+	const [panelOpen, setPanelOpen] = useState(false);
 
 	useEffect(() => {
 		// Helper to format local date as YYYY-MM-DD (no UTC conversion)
@@ -199,16 +201,18 @@ export default function UserCalendarView() {
 					<Card
 						key={index}
 						className={cn(
-							"relative p-2 transition-colors hover:bg-white/5",
+							"relative p-2 transition-colors hover:bg-white/5 cursor-pointer",
 							isMobile ? "min-h-[56px]" : "min-h-24",
 							!day.isCurrentMonth && "opacity-50",
 							day.date.toDateString() === new Date().toDateString() &&
 								"ring-1 ring-blue-400"
 						)}
 						onClick={() => {
+							setSelectedDate(day.date);
 							if (isMobile) {
-								setSelectedDate(day.date);
 								setSheetOpen(true);
+							} else {
+								setPanelOpen(true);
 							}
 						}}>
 						<div className="text-sm font-medium text-white mb-1">
@@ -253,7 +257,8 @@ export default function UserCalendarView() {
 																"w-full text-left text-xs p-1 rounded cursor-pointer transition-opacity hover:opacity-80",
 																getSlotStatusColor(slot)
 															)}
-															aria-label={`Apuntar-me ${timeLabel}`}>
+															aria-label={`Apuntar-me ${timeLabel}`}
+															onClick={(e) => e.stopPropagation()}>
 															<div className="flex items-center gap-1 justify-between">
 																<div className="flex items-center gap-1">
 																	<Clock className="w-3 h-3" />
@@ -278,7 +283,8 @@ export default function UserCalendarView() {
 													className={cn(
 														"w-full text-left text-xs p-1 rounded",
 														getSlotStatusColor(slot)
-													)}>
+													)}
+													onClick={(e) => e.stopPropagation()}>
 													<div className="flex items-center gap-1 justify-between">
 														{slot.user_booked ? (
 															<>
@@ -348,6 +354,28 @@ export default function UserCalendarView() {
 				<DaySlotsSheet
 					open={sheetOpen}
 					onOpenChange={setSheetOpen}
+					date={selectedDate}
+					slots={(() => {
+						const fmt = (d: Date) => {
+							const y = d.getFullYear();
+							const m = String(d.getMonth() + 1).padStart(2, "0");
+							const day = String(d.getDate()).padStart(2, "0");
+							return `${y}-${m}-${day}`;
+						};
+						return selectedDate
+							? slots.filter(
+									(s) => fmt(new Date(s.start_at)) === fmt(selectedDate)
+							  )
+							: [];
+					})()}
+				/>
+			)}
+
+			{/* Desktop side panel */}
+			{!isMobile && (
+				<DaySlotsPanel
+					open={panelOpen}
+					onOpenChange={setPanelOpen}
 					date={selectedDate}
 					slots={(() => {
 						const fmt = (d: Date) => {
