@@ -19,9 +19,33 @@ export interface DaySlotsSheetProps {
 	slots: LessonSlot[];
 }
 
+function isSlotFull(slot: LessonSlot) {
+	return (
+		(typeof slot.participants_count === "number"
+			? slot.participants_count
+			: 0) >= (slot.max_capacity || 0)
+	);
+}
+
+function isSlotLocked(slot: LessonSlot) {
+	return slot.joinable === false;
+}
+
+function isSlotBookable(slot: LessonSlot) {
+	return (
+		slot.status === "open" &&
+		!slot.user_booked &&
+		!isSlotLocked(slot) &&
+		!isSlotFull(slot)
+	);
+}
+
 function statusColor(slot: LessonSlot) {
 	if (slot.user_booked)
 		return "bg-blue-500/30 text-blue-200 ring-1 ring-blue-400/40";
+	// Locked or capacity reached visually as full
+	if (isSlotLocked(slot) || isSlotFull(slot))
+		return "bg-yellow-500/20 text-yellow-300";
 	switch (slot.status) {
 		case "open":
 			return "bg-green-500/20 text-green-300";
@@ -71,7 +95,7 @@ export function DaySlotsSheet({
 							hour: "2-digit",
 							minute: "2-digit",
 						});
-						const isBookable = slot.status === "open" && !slot.user_booked;
+						const isBookable = isSlotBookable(slot);
 						return (
 							<div key={slot.id} className="flex items-center gap-2">
 								{isBookable ? (
@@ -118,7 +142,13 @@ export function DaySlotsSheet({
 											) : (
 												<>
 													<Clock className="w-4 h-4" />
-													<span className="flex-1">{timeLabel}</span>
+													<span className="flex-1">
+														{timeLabel}
+														{(isSlotLocked(slot) ||
+															isSlotFull(slot) ||
+															slot.status === "full") &&
+															" · Complet"}
+													</span>
 												</>
 											)}
 											{typeof slot.participants_count === "number" && (

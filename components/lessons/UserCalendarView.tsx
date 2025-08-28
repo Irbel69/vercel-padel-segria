@@ -33,6 +33,20 @@ export default function UserCalendarView() {
 		return start.getTime() >= Date.now();
 	};
 
+	// Derived helpers for UI logic
+	const isSlotFull = (slot: LessonSlot) =>
+		(typeof slot.participants_count === "number"
+			? slot.participants_count
+			: 0) >= (slot.max_capacity || 0);
+
+	const isSlotLocked = (slot: LessonSlot) => slot.joinable === false;
+
+	const isSlotBookable = (slot: LessonSlot) =>
+		slot.status === "open" &&
+		!slot.user_booked &&
+		!isSlotLocked(slot) &&
+		!isSlotFull(slot);
+
 	useEffect(() => {
 		// Helper to format local date as YYYY-MM-DD (no UTC conversion)
 		const fmt = (d: Date) => {
@@ -121,6 +135,10 @@ export default function UserCalendarView() {
 			// Primary color for user's own bookings
 			return "bg-blue-500/30 text-blue-200 ring-1 ring-blue-400/40";
 		}
+		// Treat locked or capacity-reached as FULL for visual purposes
+		if (isSlotLocked(slot) || isSlotFull(slot)) {
+			return "bg-yellow-500/20 text-yellow-300";
+		}
 		switch (slot.status) {
 			case "open":
 				return "bg-green-500/20 text-green-300";
@@ -136,10 +154,15 @@ export default function UserCalendarView() {
 	};
 
 	const getDayIndicator = (day: CalendarDay) => {
-		// Priority: booked > open > full > cancelled
+		// Priority: booked > open(bookable) > full/locked > cancelled
 		if (day.slots.some((s) => s.user_booked)) return "bg-blue-400";
-		if (day.slots.some((s) => s.status === "open")) return "bg-green-400";
-		if (day.slots.some((s) => s.status === "full")) return "bg-yellow-400";
+		if (day.slots.some((s) => isSlotBookable(s))) return "bg-green-400";
+		if (
+			day.slots.some(
+				(s) => isSlotLocked(s) || isSlotFull(s) || s.status === "full"
+			)
+		)
+			return "bg-yellow-400";
 		if (day.slots.some((s) => s.status === "cancelled")) return "bg-red-400";
 		return null;
 	};
@@ -250,8 +273,7 @@ export default function UserCalendarView() {
 											minute: "2-digit",
 										}
 									);
-									const isBookable =
-										slot.status === "open" && !slot.user_booked;
+									const isBookable = isSlotBookable(slot);
 									return (
 										<div key={slot.id} className="flex items-center gap-1">
 											{isBookable ? (
@@ -302,7 +324,9 @@ export default function UserCalendarView() {
 																<Clock className="w-3 h-3" />
 																<span>
 																	{timeLabel} ·{" "}
-																	{slot.status === "full"
+																	{isSlotLocked(slot) ||
+																	isSlotFull(slot) ||
+																	slot.status === "full"
 																		? "Complet"
 																		: slot.status === "cancelled"
 																		? "Cancel·lat"
