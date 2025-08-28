@@ -1,6 +1,8 @@
+/* eslint-disable no-mixed-spaces-and-tabs */
 "use client";
 
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -112,9 +114,34 @@ export default function ScheduleBuilder({ onCheckConflicts, onApply }: Props) {
 	const handleApply = async () => {
 		setLoading(true);
 		const payload = { ...payloadBase(), options: { policy } };
-		const res = await onApply(payload);
-		setResult(res);
-		setLoading(false);
+		try {
+			const res = await onApply(payload);
+			// Heurística de resultat: si torna error/ok, mostrem el missatge corresponent
+			const hasError = Boolean(
+				(res as any)?.error ||
+					(res as any)?.ok === false ||
+					(res as any)?.success === false
+			);
+			if (hasError) {
+				const msg = (res as any)?.error || "No s'ha pogut aplicar el patró";
+				toast.error(msg);
+			} else {
+				const created =
+					(res as any)?.created_count ?? (res as any)?.created ?? 0;
+				const replaced =
+					(res as any)?.replaced_count ?? (res as any)?.replaced ?? 0;
+				const skipped =
+					(res as any)?.skipped_count ?? (res as any)?.skipped ?? 0;
+				const summary = `Creats: ${created} · Reemplaçats: ${replaced} · Saltats: ${skipped}`;
+				toast.success(`Patró aplicat correctament. ${summary}`);
+			}
+			// Després d'aplicar, amaguem el JSON per no ensenyar dades tècniques
+			setResult(null);
+		} catch (e: any) {
+			toast.error(e?.message || "Error inesperat aplicant el patró");
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	return (

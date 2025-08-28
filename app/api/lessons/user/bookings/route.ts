@@ -28,8 +28,9 @@ export async function GET(request: Request) {
 		.order("created_at", { ascending: false });
 
 	if (from) {
-		// Filter by slot start time from the given date forward
-		query = query.gte("lesson_slots.start_at", from);
+		// Filter by related slot start time from the given date forward
+		// Must reference the embedded relation alias ('slot') not the base table name
+		query = query.gte("slot.start_at", from);
 	}
 
 	const { data, error } = await query;

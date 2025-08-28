@@ -48,7 +48,9 @@ export default function ImprovedAdminLessonsPage() {
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(payload),
 		});
-		return await res.json();
+		const json = await res.json();
+		// Return ok flag along with json to help client components show friendly toasts
+		return { ok: res.ok, ...json };
 	};
 
 	return (
