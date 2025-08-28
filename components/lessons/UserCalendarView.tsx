@@ -27,6 +27,12 @@ export default function UserCalendarView() {
 	const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 	const [panelOpen, setPanelOpen] = useState(false);
 
+	// Helper to decide if a slot should be shown to users: only upcoming
+	const isUpcomingSlot = (slot: LessonSlot) => {
+		const start = new Date(slot.start_at);
+		return start.getTime() >= Date.now();
+	};
+
 	useEffect(() => {
 		// Helper to format local date as YYYY-MM-DD (no UTC conversion)
 		const fmt = (d: Date) => {
@@ -89,7 +95,7 @@ export default function UserCalendarView() {
 			const daySlots = slots.filter((slot) => {
 				const s = new Date(slot.start_at);
 				const slotDate = fmt(s);
-				return slotDate === dateStr;
+				return slotDate === dateStr && isUpcomingSlot(slot);
 			});
 
 			days.push({
@@ -364,7 +370,9 @@ export default function UserCalendarView() {
 						};
 						return selectedDate
 							? slots.filter(
-									(s) => fmt(new Date(s.start_at)) === fmt(selectedDate)
+									(s) =>
+										fmt(new Date(s.start_at)) === fmt(selectedDate) &&
+										isUpcomingSlot(s)
 							  )
 							: [];
 					})()}
@@ -386,7 +394,9 @@ export default function UserCalendarView() {
 						};
 						return selectedDate
 							? slots.filter(
-									(s) => fmt(new Date(s.start_at)) === fmt(selectedDate)
+									(s) =>
+										fmt(new Date(s.start_at)) === fmt(selectedDate) &&
+										isUpcomingSlot(s)
 							  )
 							: [];
 					})()}

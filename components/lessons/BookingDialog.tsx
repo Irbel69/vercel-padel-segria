@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { X } from "lucide-react";
 import {
 	Dialog,
 	DialogContent,
@@ -99,12 +100,16 @@ export function BookingDialog({
 	if (isMobile) {
 		return (
 			<Sheet>
-				<SheetTrigger asChild>{trigger ?? <Button variant="default">Apuntar-me</Button>}</SheetTrigger>
+				<SheetTrigger asChild>
+					{trigger ?? <Button variant="default">Apuntar-me</Button>}
+				</SheetTrigger>
 				<SheetContent
 					side="bottom"
 					className="inset-0 h-[100dvh] max-h-[100dvh] overflow-y-auto p-6"
-					style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}
-				>
+					style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
+					// Prevent clicks inside the sheet from bubbling to calendar day cards
+					onPointerDown={(e) => e.stopPropagation()}
+					onClick={(e) => e.stopPropagation()}>
 					<div className="flex items-center justify-between">
 						<h3 className="text-lg font-semibold">Reserva de classe</h3>
 						<SheetClose asChild>
@@ -167,7 +172,9 @@ export function BookingDialog({
 								<Input
 									placeholder="Nom del titular"
 									value={dd.holder_name}
-									onChange={(e) => setDd({ ...dd, holder_name: e.target.value })}
+									onChange={(e) =>
+										setDd({ ...dd, holder_name: e.target.value })
+									}
 								/>
 								<Input
 									placeholder="Adreça"
@@ -207,7 +214,9 @@ export function BookingDialog({
 
 						{extraInputs.length > 0 && (
 							<div className="space-y-2">
-								<label className="text-sm text-white/80">Noms addicionals</label>
+								<label className="text-sm text-white/80">
+									Noms addicionals
+								</label>
 								<div className="grid gap-2">{extraInputs}</div>
 							</div>
 						)}
@@ -246,7 +255,20 @@ export function BookingDialog({
 			<DialogTrigger asChild>
 				{trigger ?? <Button variant="default">Apuntar-me</Button>}
 			</DialogTrigger>
-			<DialogContent className="max-w-lg">
+			<DialogContent
+				className="max-w-lg"
+				// Prevent clicks inside the dialog from bubbling to parent calendar cards
+				onPointerDown={(e) => e.stopPropagation()}
+				onClick={(e) => e.stopPropagation()}>
+				{/* Explicit close button that guarantees the dialog state is updated */}
+				<button
+					type="button"
+					aria-label="Tancar"
+					onClick={() => setOpen(false)}
+					className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+					<X className="h-4 w-4" />
+					<span className="sr-only">Tancar</span>
+				</button>
 				<DialogHeader>
 					<DialogTitle>Reserva de classe</DialogTitle>
 				</DialogHeader>

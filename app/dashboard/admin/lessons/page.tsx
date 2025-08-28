@@ -12,12 +12,14 @@ import {
 import ScheduleBuilder from "@/components/lessons/ScheduleBuilder";
 import DayEditorDialog from "@/components/lessons/DayEditorDialog";
 import AdminSlotDetailDialog from "@/components/lessons/AdminSlotDetailDialog";
+import AdminDayPanel from "@/components/lessons/AdminDayPanel";
 
 export default function ImprovedAdminLessonsPage() {
 	const [currentDate, setCurrentDate] = useState(new Date());
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [dayEditorOpen, setDayEditorOpen] = useState(false);
+	const [dayPanelOpen, setDayPanelOpen] = useState(false);
 	const [selectedDay, setSelectedDay] = useState<CalendarDay | null>(null);
 	const [refreshKey, setRefreshKey] = useState(0);
 	const [slotDetailOpen, setSlotDetailOpen] = useState(false);
@@ -31,7 +33,8 @@ export default function ImprovedAdminLessonsPage() {
 
 	const handleDayClick = (day: CalendarDay) => {
 		setSelectedDay(day);
-		setDayEditorOpen(true);
+		// Open the slide-over panel (same UX as user calendar)
+		setDayPanelOpen(true);
 	};
 
 	const handleScheduleCheck = async (payload: any) => {
@@ -48,9 +51,7 @@ export default function ImprovedAdminLessonsPage() {
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(payload),
 		});
-		const json = await res.json();
-		// Return ok flag along with json to help client components show friendly toasts
-		return { ok: res.ok, ...json };
+		return await res.json();
 	};
 
 	return (
@@ -75,6 +76,19 @@ export default function ImprovedAdminLessonsPage() {
 						onDateChange={setCurrentDate}
 						onSlotClick={handleSlotClick}
 						onDayClick={handleDayClick}
+					/>
+
+					{/* Admin day slide-over panel with pauses and Edit button */}
+					<AdminDayPanel
+						open={dayPanelOpen}
+						onOpenChange={(o) => setDayPanelOpen(o)}
+						day={selectedDay}
+						onEdit={(d) => {
+							setDayPanelOpen(false);
+							setSelectedDay(d);
+							setDayEditorOpen(true);
+						}}
+						onSlotClick={handleSlotClick}
 					/>
 
 					<AdminSlotDetailDialog

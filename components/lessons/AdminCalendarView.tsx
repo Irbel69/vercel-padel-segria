@@ -121,6 +121,11 @@ export function AdminCalendarView({
 	};
 
 	const getSlotStatusColor = (slot: LessonSlotWithBookings) => {
+		const isPast = new Date(slot.start_at).getTime() < Date.now();
+		if (isPast) {
+			// Grey out any past slot regardless of status
+			return "bg-gray-500/20 text-gray-300 opacity-70";
+		}
 		switch (slot.status) {
 			case "open":
 				return "bg-green-500/20 text-green-300";
