@@ -1,6 +1,14 @@
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
+-- NOTE: Legacy scheduling artifacts (lesson_availability_rules and
+-- lesson_availability_overrides) have been removed from the production
+-- schema. The changes were applied via an idempotent migration:
+--   scripts/migrations/2025_08_29_drop_legacy_rules.sql
+-- The column lesson_slots.created_from_rule_id was dropped; the
+-- system now uses lesson_slot_batches + lesson_slots.created_from_batch_id
+-- as the canonical scheduling model.
+
 CREATE TABLE public.direct_debit_details (
   id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   booking_id bigint NOT NULL UNIQUE,
@@ -29,33 +37,7 @@ CREATE TABLE public.events (
   longitude double precision,
   CONSTRAINT events_pkey PRIMARY KEY (id)
 );
-CREATE TABLE public.lesson_availability_overrides (
-  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
-  date date NOT NULL,
-  time_start time without time zone,
-  time_end time without time zone,
-  kind USER-DEFINED NOT NULL DEFAULT 'closed'::override_kind,
-  reason text,
-  location text NOT NULL DEFAULT 'Soses'::text,
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
-  CONSTRAINT lesson_availability_overrides_pkey PRIMARY KEY (id)
-);
-CREATE TABLE public.lesson_availability_rules (
-  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
-  title text,
-  valid_from date,
-  valid_to date,
-  days_of_week ARRAY NOT NULL,
-  time_start time without time zone NOT NULL,
-  time_end time without time zone NOT NULL,
-  duration_minutes integer NOT NULL CHECK (duration_minutes > 0),
-  location text NOT NULL DEFAULT 'Soses'::text,
-  active boolean NOT NULL DEFAULT true,
-  notes text,
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
-  updated_at timestamp with time zone NOT NULL DEFAULT now(),
-  CONSTRAINT lesson_availability_rules_pkey PRIMARY KEY (id)
-);
+-- legacy table lesson_availability_overrides has been dropped
 CREATE TABLE public.lesson_booking_participants (
   id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   booking_id bigint NOT NULL,
@@ -95,12 +77,11 @@ CREATE TABLE public.lesson_slots (
   status USER-DEFINED NOT NULL DEFAULT 'open'::lesson_slot_status,
   joinable boolean NOT NULL DEFAULT true,
   locked_by_booking_id bigint,
-  created_from_rule_id bigint,
   created_from_batch_id bigint,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT lesson_slots_pkey PRIMARY KEY (id),
-  CONSTRAINT lesson_slots_created_from_rule_id_fkey FOREIGN KEY (created_from_rule_id) REFERENCES public.lesson_availability_rules(id)
+  -- created_from_rule_id removed with deprecation of legacy rules
 );
 
 -- New modular schedules (batches)

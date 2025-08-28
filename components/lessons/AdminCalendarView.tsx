@@ -3,7 +3,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Clock, MapPin, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -15,18 +14,13 @@ export interface LessonSlotWithBookings {
 	location: string;
 	status: "open" | "full" | "cancelled" | "closed";
 	joinable: boolean;
-	created_from_rule_id?: number;
 	booking_count?: number;
-	rule_title?: string;
 }
 
 export interface CalendarDay {
 	date: Date;
 	isCurrentMonth: boolean;
 	slots: LessonSlotWithBookings[];
-	hasOverride?: boolean;
-	overrideType?: "closed" | "open";
-	overrideReason?: string;
 }
 
 interface Props {
@@ -44,40 +38,49 @@ export function AdminCalendarView({
 }: Props) {
 	const [viewDate, setViewDate] = useState(currentDate);
 	const [slots, setSlots] = useState<LessonSlotWithBookings[]>([]);
-	const [overrides, setOverrides] = useState<any[]>([]);
-	const [rules, setRules] = useState<any[]>([]);
 	const [loading, setLoading] = useState(false);
 
 	// Fetch data for the current month
 	useEffect(() => {
-		const startOfMonth = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
-		const endOfMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0);
+		const startOfMonth = new Date(
+			viewDate.getFullYear(),
+			viewDate.getMonth(),
+			1
+		);
+		const endOfMonth = new Date(
+			viewDate.getFullYear(),
+			viewDate.getMonth() + 1,
+			0
+		);
 		const from = startOfMonth.toISOString().slice(0, 10);
 		const to = endOfMonth.toISOString().slice(0, 10);
 
 		setLoading(true);
-		Promise.all([
-			fetch(`/api/lessons/admin/slots?from=${from}&to=${to}`).then(r => r.json()),
-			fetch("/api/lessons/admin/overrides").then(r => r.json()),
-			fetch("/api/lessons/admin/rules").then(r => r.json()),
-		])
-			.then(([slotsData, overridesData, rulesData]) => {
+		fetch(`/api/lessons/admin/slots?from=${from}&to=${to}`)
+			.then((r) => r.json())
+			.then((slotsData) => {
 				setSlots(slotsData.slots || []);
-				setOverrides(overridesData.overrides || []);
-				setRules(rulesData.rules || []);
 			})
 			.catch(console.error)
 			.finally(() => setLoading(false));
 	}, [viewDate]);
 
 	const calendarDays = useMemo(() => {
-		const startOfMonth = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
-		const endOfMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0);
-		
+		const startOfMonth = new Date(
+			viewDate.getFullYear(),
+			viewDate.getMonth(),
+			1
+		);
+		const endOfMonth = new Date(
+			viewDate.getFullYear(),
+			viewDate.getMonth() + 1,
+			0
+		);
+
 		// Start from Monday of the week containing the first day
 		const startDate = new Date(startOfMonth);
 		startDate.setDate(startDate.getDate() - ((startDate.getDay() + 6) % 7));
-		
+
 		// End on Sunday of the week containing the last day
 		const endDate = new Date(endOfMonth);
 		endDate.setDate(endDate.getDate() + (6 - ((endDate.getDay() + 6) % 7)));
@@ -87,69 +90,49 @@ export function AdminCalendarView({
 
 		while (current <= endDate) {
 			const dateStr = current.toISOString().slice(0, 10);
-			const daySlots = slots.filter(slot => {
+			const daySlots = slots.filter((slot) => {
 				const slotDate = new Date(slot.start_at).toISOString().slice(0, 10);
 				return slotDate === dateStr;
 			});
 
-			// Add rule info to slots
-			const enrichedSlots = daySlots.map(slot => ({
-				...slot,
-				rule_title: slot.created_from_rule_id 
-					? rules.find(r => r.id === slot.created_from_rule_id)?.title 
-					: undefined
-			}));
-
-			// Check for overrides
-			const override = overrides.find(o => o.date === dateStr);
+			// Just use day slots; legacy rules removed
+			const enrichedSlots = daySlots;
 
 			days.push({
 				date: new Date(current),
 				isCurrentMonth: current.getMonth() === viewDate.getMonth(),
 				slots: enrichedSlots,
-				hasOverride: !!override,
-				overrideType: override?.kind,
-				overrideReason: override?.reason,
 			});
 
 			current.setDate(current.getDate() + 1);
 		}
 
 		return days;
-	}, [viewDate, slots, overrides, rules]);
+	}, [viewDate, slots]);
 
-	const navigateMonth = (direction: 'prev' | 'next') => {
+	const navigateMonth = (direction: "prev" | "next") => {
 		const newDate = new Date(viewDate);
-		newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
+		newDate.setMonth(newDate.getMonth() + (direction === "next" ? 1 : -1));
 		setViewDate(newDate);
 		onDateChange?.(newDate);
 	};
 
 	const getSlotStatusColor = (slot: LessonSlotWithBookings) => {
 		switch (slot.status) {
-			case 'open':
-				return 'bg-green-500/20 text-green-300';
-			case 'full':
-				return 'bg-yellow-500/20 text-yellow-300';
-			case 'cancelled':
-				return 'bg-red-500/20 text-red-300';
-			case 'closed':
-				return 'bg-gray-500/20 text-gray-300';
+			case "open":
+				return "bg-green-500/20 text-green-300";
+			case "full":
+				return "bg-yellow-500/20 text-yellow-300";
+			case "cancelled":
+				return "bg-red-500/20 text-red-300";
+			case "closed":
+				return "bg-gray-500/20 text-gray-300";
 			default:
-				return 'bg-blue-500/20 text-blue-300';
+				return "bg-blue-500/20 text-blue-300";
 		}
 	};
 
-	const getOverrideIndicator = (day: CalendarDay) => {
-		if (!day.hasOverride) return null;
-		
-		return (
-			<div className={cn(
-				"absolute top-1 right-1 w-2 h-2 rounded-full",
-				day.overrideType === 'closed' ? 'bg-red-400' : 'bg-green-400'
-			)} />
-		);
-	};
+	// Overrides removed
 
 	if (loading) {
 		return (
@@ -164,31 +147,28 @@ export function AdminCalendarView({
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<h2 className="text-xl font-semibold text-white">
-					{viewDate.toLocaleDateString('ca-ES', { 
-						month: 'long', 
-						year: 'numeric' 
+					{viewDate.toLocaleDateString("es-ES", {
+						month: "long",
+						year: "numeric",
 					})}
 				</h2>
 				<div className="flex gap-2">
-					<Button 
-						variant="outline" 
+					<Button
+						variant="outline"
 						size="sm"
-						onClick={() => navigateMonth('prev')}
-					>
+						onClick={() => navigateMonth("prev")}>
 						<ChevronLeft className="w-4 h-4" />
 					</Button>
-					<Button 
-						variant="outline" 
+					<Button
+						variant="outline"
 						size="sm"
-						onClick={() => setViewDate(new Date())}
-					>
+						onClick={() => setViewDate(new Date())}>
 						Avui
 					</Button>
-					<Button 
-						variant="outline" 
+					<Button
+						variant="outline"
 						size="sm"
-						onClick={() => navigateMonth('next')}
-					>
+						onClick={() => navigateMonth("next")}>
 						<ChevronRight className="w-4 h-4" />
 					</Button>
 				</div>
@@ -197,30 +177,31 @@ export function AdminCalendarView({
 			{/* Calendar Grid */}
 			<div className="grid grid-cols-7 gap-1">
 				{/* Day Headers */}
-				{['Dl', 'Dt', 'Dc', 'Dj', 'Dv', 'Ds', 'Dg'].map((day) => (
-					<div key={day} className="p-2 text-center text-sm font-medium text-white/60">
+				{["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"].map((day) => (
+					<div
+						key={day}
+						className="p-2 text-center text-sm font-medium text-white/60">
 						{day}
 					</div>
 				))}
 
 				{/* Calendar Days */}
 				{calendarDays.map((day, index) => (
-					<Card 
+					<Card
 						key={index}
 						className={cn(
 							"relative min-h-24 p-2 cursor-pointer transition-colors hover:bg-white/5",
 							!day.isCurrentMonth && "opacity-50",
-							day.date.toDateString() === new Date().toDateString() && "ring-1 ring-blue-400"
+							day.date.toDateString() === new Date().toDateString() &&
+								"ring-1 ring-blue-400"
 						)}
-						onClick={() => onDayClick?.(day)}
-					>
+						onClick={() => onDayClick?.(day)}>
 						{/* Date number */}
 						<div className="text-sm font-medium text-white mb-1">
 							{day.date.getDate()}
 						</div>
 
-						{/* Override indicator */}
-						{getOverrideIndicator(day)}
+						{/* override indicator removed */}
 
 						{/* Slots */}
 						<div className="space-y-1">
@@ -234,25 +215,20 @@ export function AdminCalendarView({
 									onClick={(e) => {
 										e.stopPropagation();
 										onSlotClick?.(slot, day.date);
-									}}
-								>
+									}}>
 									<div className="flex items-center gap-1">
 										<Clock className="w-3 h-3" />
 										<span>
 											{new Date(slot.start_at).toLocaleTimeString([], {
-												hour: '2-digit',
-												minute: '2-digit'
+												hour: "2-digit",
+												minute: "2-digit",
 											})}
 										</span>
 									</div>
-									{slot.rule_title && (
-										<div className="truncate text-xs opacity-75">
-											{slot.rule_title}
-										</div>
-									)}
+									{/* rule title removed with rules system */}
 								</div>
 							))}
-							
+
 							{day.slots.length > 3 && (
 								<div className="text-xs text-white/50 px-1">
 									+{day.slots.length - 3} més
@@ -260,24 +236,13 @@ export function AdminCalendarView({
 							)}
 						</div>
 
-						{/* Override info */}
-						{day.hasOverride && (
-							<Badge 
-								variant="secondary" 
-								className={cn(
-									"absolute bottom-1 left-1 text-xs",
-									day.overrideType === 'closed' ? 'bg-red-500/20 text-red-300' : 'bg-green-500/20 text-green-300'
-								)}
-							>
-								{day.overrideType === 'closed' ? 'Tancat' : 'Excepció'}
-							</Badge>
-						)}
+						{/* override info removed */}
 					</Card>
 				))}
 			</div>
 
 			{/* Legend */}
-			<div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+			<div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
 				<div className="flex items-center gap-2">
 					<div className="w-3 h-3 rounded bg-green-500/20"></div>
 					<span className="text-white/70">Disponible</span>
@@ -290,10 +255,7 @@ export function AdminCalendarView({
 					<div className="w-3 h-3 rounded bg-red-500/20"></div>
 					<span className="text-white/70">Cancel·lat</span>
 				</div>
-				<div className="flex items-center gap-2">
-					<div className="w-2 h-2 rounded-full bg-red-400"></div>
-					<span className="text-white/70">Excepció tancat</span>
-				</div>
+				{/* override legend removed */}
 			</div>
 		</div>
 	);

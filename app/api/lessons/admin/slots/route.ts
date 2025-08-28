@@ -8,7 +8,7 @@ export async function GET(request: Request) {
 
 	const supabase = createClient();
 
-	// Get slots with booking count and rule information
+	// Get slots with booking count
 	let query = supabase
 		.from("lesson_slots")
 		.select(
@@ -18,10 +18,6 @@ export async function GET(request: Request) {
 				id,
 				status,
 				group_size
-			),
-			lesson_availability_rules!left (
-				id,
-				title
 			)
 		`
 		)
@@ -35,7 +31,7 @@ export async function GET(request: Request) {
 		return NextResponse.json({ error: error.message }, { status: 500 });
 	}
 
-	// Process the data to include booking counts and rule info
+	// Process the data to include booking counts
 	const processedSlots = (data || []).map((slot: any) => {
 		const activeBookings =
 			slot.lesson_bookings?.filter(
@@ -51,9 +47,7 @@ export async function GET(request: Request) {
 			...slot,
 			booking_count: activeBookings.length,
 			participants_count: totalBooked,
-			rule_title: slot.lesson_availability_rules?.title || null,
 			lesson_bookings: undefined, // Remove the raw bookings data
-			lesson_availability_rules: undefined, // Remove the raw rule data
 		};
 	});
 
@@ -72,7 +66,6 @@ export async function POST(request: Request) {
 		"status",
 		"joinable",
 		"locked_by_booking_id",
-		"created_from_rule_id",
 	];
 	const insertPayload: any = {};
 	for (const k of allowed) {

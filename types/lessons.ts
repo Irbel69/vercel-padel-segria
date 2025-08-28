@@ -64,7 +64,7 @@ export interface LessonAvailabilityOverride {
 	date: string;
 	time_start?: string;
 	time_end?: string;
-	kind: 'closed' | 'open';
+	kind: "closed" | "open";
 	reason?: string;
 	location: string;
 	created_at: string;
@@ -98,7 +98,7 @@ export interface BookingProtection {
 }
 
 // New modular schedule (batch) system
-export type ScheduleBlockKind = 'lesson' | 'break';
+export type ScheduleBlockKind = "lesson" | "break";
 
 export interface ScheduleBlock {
 	kind: ScheduleBlockKind;
@@ -119,14 +119,14 @@ export interface ScheduleTemplate {
 }
 
 export interface LessonSlotBatchOptions {
-	policy?: 'skip' | 'protect' | 'replace';
+	policy?: "skip" | "protect" | "replace";
 }
 
 export interface LessonSlotBatch {
 	id: number;
 	title?: string;
 	valid_from: string; // YYYY-MM-DD
-	valid_to: string;   // YYYY-MM-DD
+	valid_to: string; // YYYY-MM-DD
 	days_of_week: number[]; // 0..6
 	base_time_start: string; // HH:mm
 	location: string; // default Soses
@@ -147,7 +147,7 @@ export interface ScheduleCheckPreview {
 export interface SlotConflict {
 	date: string; // YYYY-MM-DD
 	proposed_start_at: string; // ISO
-	proposed_end_at: string;   // ISO
+	proposed_end_at: string; // ISO
 	existing_slot?: {
 		id: number;
 		start_at: string;

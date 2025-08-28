@@ -1,206 +1,49 @@
 "use client";
 export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RefreshCw } from "lucide-react";
 import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Calendar as CalendarIcon, RefreshCw, Plus, Settings } from "lucide-react";
-import { AdminCalendarView, CalendarDay, LessonSlotWithBookings } from "@/components/lessons/AdminCalendarView";
-import { ConflictResolutionDialog } from "@/components/lessons/ConflictResolutionDialog";
+	AdminCalendarView,
+	CalendarDay,
+	LessonSlotWithBookings,
+} from "@/components/lessons/AdminCalendarView";
 import ScheduleBuilder from "@/components/lessons/ScheduleBuilder";
+import DayEditorDialog from "@/components/lessons/DayEditorDialog";
 
 export default function ImprovedAdminLessonsPage() {
 	const [currentDate, setCurrentDate] = useState(new Date());
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const [rules, setRules] = useState<any[]>([]);
-	
-	// Conflict resolution state
-	const [showConflictDialog, setShowConflictDialog] = useState(false);
-	const [conflictData, setConflictData] = useState<any>(null);
-	const [pendingRule, setPendingRule] = useState<any>(null);
-
-	// Rule form state
-	const [rule, setRule] = useState<any>({
-		title: "Horari d'estiu",
-		valid_from: undefined as Date | undefined,
-		valid_to: undefined as Date | undefined,
-		days_of_week: [1, 2, 3, 4, 5] as number[],
-		time_start: "16:00",
-		time_end: "21:00",
-		duration_minutes: 60,
-		location: "Soses",
-		active: true,
-	});
-	const [ruleDateOpen, setRuleDateOpen] = useState(false);
-
-	// Override form for exceptions
-	const [overrideItem, setOverrideItem] = useState<any>({
-		date: undefined as Date | undefined,
-		time_start: "",
-		time_end: "",
-		kind: "closed",
-		reason: "",
-		location: "Soses",
-	});
-	const [overrideDateOpen, setOverrideDateOpen] = useState(false);
-
-	// Fetch rules on component mount
-	useEffect(() => {
-		fetchRules();
-	}, []);
-
-	const fetchRules = async () => {
-		try {
-			const response = await fetch("/api/lessons/admin/rules");
-			const data = await response.json();
-			setRules(data.rules || []);
-		} catch (error) {
-			console.error("Error fetching rules:", error);
-		}
-	};
-
-	const createRule = async (forceCreate = false) => {
-		setError(null);
-		setLoading(true);
-
-		const payload = {
-			title: rule.title,
-			valid_from: rule.valid_from
-				? rule.valid_from.toISOString().slice(0, 10)
-				: null,
-			valid_to: rule.valid_to ? rule.valid_to.toISOString().slice(0, 10) : null,
-			days_of_week: rule.days_of_week,
-			time_start: rule.time_start,
-			time_end: rule.time_end,
-			duration_minutes: Number(rule.duration_minutes) || 60,
-			location: rule.location,
-			active: !!rule.active,
-			force_create: forceCreate,
-		};
-
-		try {
-			const res = await fetch("/api/lessons/admin/rules", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(payload),
-			});
-
-			const json = await res.json();
-
-			if (res.status === 409) {
-				// Conflict detected
-				setConflictData(json);
-				setPendingRule(payload);
-				setShowConflictDialog(true);
-			} else if (!res.ok) {
-				setError(json?.error || "Error creant regla");
-			} else {
-				// Success
-				await fetchRules();
-				setRule({
-					title: "Horari d'estiu",
-					valid_from: undefined,
-					valid_to: undefined,
-					days_of_week: [1, 2, 3, 4, 5],
-					time_start: "16:00",
-					time_end: "21:00",
-					duration_minutes: 60,
-					location: "Soses",
-					active: true,
-				});
-			}
-		} catch (error: any) {
-			setError(error.message || "Error de xarxa");
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	const createOverride = async () => {
-		setError(null);
-		const body = {
-			date: overrideItem.date
-				? overrideItem.date.toISOString().slice(0, 10)
-				: null,
-			time_start: overrideItem.time_start || null,
-			time_end: overrideItem.time_end || null,
-			kind: overrideItem.kind,
-			reason: overrideItem.reason,
-			location: overrideItem.location,
-		};
-		
-		try {
-			const res = await fetch("/api/lessons/admin/overrides", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(body),
-			});
-			const json = await res.json();
-			if (!res.ok) setError(json?.error || "Error creant excepció");
-			else {
-				setOverrideItem({
-					date: undefined,
-					time_start: "",
-					time_end: "",
-					kind: "closed",
-					reason: "",
-					location: "Soses",
-				});
-			}
-		} catch (error: any) {
-			setError(error.message || "Error de xarxa");
-		}
-	};
-
-	const handleConflictResolution = (resolution: 'force' | 'modify' | 'exception') => {
-		if (resolution === 'force' && pendingRule) {
-			createRule(true);
-		} else if (resolution === 'exception') {
-			// This would typically create specific exceptions for the conflict dates
-			// For now, we'll just close the dialog
-			console.log('Would create exceptions for conflict dates');
-		}
-		setShowConflictDialog(false);
-		setConflictData(null);
-		setPendingRule(null);
-	};
+	const [dayEditorOpen, setDayEditorOpen] = useState(false);
+	const [selectedDay, setSelectedDay] = useState<CalendarDay | null>(null);
+	const [refreshKey, setRefreshKey] = useState(0);
+	// Legacy rules and overrides removed
 
 	const handleSlotClick = (slot: LessonSlotWithBookings, date: Date) => {
-		console.log('Slot clicked:', slot, date);
+		console.log("Slot clicked:", slot, date);
 		// Here you could open a slot detail dialog
 	};
 
 	const handleDayClick = (day: CalendarDay) => {
-		console.log('Day clicked:', day);
-		// Here you could open a day detail dialog or quick add form
+		setSelectedDay(day);
+		setDayEditorOpen(true);
 	};
 
 	const handleScheduleCheck = async (payload: any) => {
-		const res = await fetch('/api/lessons/admin/schedules/check-conflicts', {
-			method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+		const res = await fetch("/api/lessons/admin/schedules/check-conflicts", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(payload),
 		});
 		return await res.json();
 	};
 	const handleScheduleApply = async (payload: any) => {
-		const res = await fetch('/api/lessons/admin/schedules/apply', {
-			method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+		const res = await fetch("/api/lessons/admin/schedules/apply", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(payload),
 		});
 		return await res.json();
 	};
@@ -215,318 +58,42 @@ export default function ImprovedAdminLessonsPage() {
 			</div>
 
 			<Tabs defaultValue="calendar" className="w-full">
-				<TabsList className="grid grid-cols-3 w-full">
+				<TabsList className="grid grid-cols-2 w-full">
 					<TabsTrigger value="calendar">Calendari</TabsTrigger>
-					<TabsTrigger value="rules">Regles</TabsTrigger>
-					<TabsTrigger value="exceptions">Excepcions</TabsTrigger>
+					<TabsTrigger value="rules">Patró</TabsTrigger>
 				</TabsList>
 
 				<TabsContent value="calendar" className="mt-4">
 					<AdminCalendarView
+						key={refreshKey}
 						currentDate={currentDate}
 						onDateChange={setCurrentDate}
 						onSlotClick={handleSlotClick}
 						onDayClick={handleDayClick}
 					/>
+
+					<DayEditorDialog
+						open={dayEditorOpen}
+						onOpenChange={(o) => {
+							setDayEditorOpen(o);
+							if (!o) setSelectedDay(null);
+						}}
+						day={selectedDay}
+						onSaved={() => {
+							setDayEditorOpen(false);
+							setSelectedDay(null);
+							setRefreshKey((k) => k + 1);
+						}}
+					/>
 				</TabsContent>
 
 				<TabsContent value="rules" className="mt-4 space-y-4">
-					<ScheduleBuilder onCheckConflicts={handleScheduleCheck} onApply={handleScheduleApply} />
-
-					{/* Legacy rules UI retained temporarily below */}
-					<Card className="p-4 space-y-4">
-						<div className="flex items-center justify-between mb-4">
-							<h3 className="text-lg font-semibold text-white">Crear nova regla</h3>
-							<Plus className="w-5 h-5 text-white/60" />
-						</div>
-						
-						<div className="grid md:grid-cols-2 gap-4">
-							<div className="space-y-2">
-								<Label className="text-white/90">Títol</Label>
-								<Input
-									placeholder="Títol"
-									value={rule.title}
-									onChange={(e) => setRule({ ...rule, title: e.target.value })}
-								/>
-							</div>
-
-							<div className="space-y-2">
-								<Label className="text-white/90">Activa</Label>
-								<div className="h-10 flex items-center px-2 rounded-md border border-white/10">
-									<Switch
-										checked={rule.active}
-										onCheckedChange={(v) =>
-											setRule({ ...rule, active: Boolean(v) })
-										}
-									/>
-								</div>
-							</div>
-
-							<div className="space-y-2">
-								<Label className="text-white/90">Vàlida des de/fins</Label>
-								<Popover open={ruleDateOpen} onOpenChange={setRuleDateOpen}>
-									<PopoverTrigger asChild>
-										<Button
-											variant="outline"
-											className="justify-start w-full text-left">
-											<CalendarIcon className="mr-2 h-4 w-4" />
-											{rule.valid_from && rule.valid_to
-												? `${rule.valid_from.toLocaleDateString()} - ${rule.valid_to.toLocaleDateString()}`
-												: "Selecciona dates"}
-										</Button>
-									</PopoverTrigger>
-									<PopoverContent className="p-0" align="start">
-										<Calendar
-											mode="range"
-											selected={
-												{ from: rule.valid_from, to: rule.valid_to } as any
-											}
-											onSelect={(r: any) =>
-												setRule({
-													...rule,
-													valid_from: r?.from,
-													valid_to: r?.to,
-												})
-											}
-											numberOfMonths={2}
-										/>
-									</PopoverContent>
-								</Popover>
-							</div>
-
-							<div className="space-y-2">
-								<Label className="text-white/90">Dies de la setmana</Label>
-								<div className="flex flex-wrap gap-2">
-									{[0, 1, 2, 3, 4, 5, 6].map((d) => (
-										<Button
-											key={d}
-											type="button"
-											variant={
-												rule.days_of_week.includes(d) ? "default" : "outline"
-											}
-											className="h-9"
-											onClick={() => {
-												setRule((prev: any) => {
-													const set = new Set<number>(prev.days_of_week);
-													if (set.has(d)) set.delete(d);
-													else set.add(d);
-													return {
-														...prev,
-														days_of_week: Array.from(set).sort((a, b) => a - b),
-													};
-												});
-											}}>
-											{["Dg", "Dl", "Dt", "Dc", "Dj", "Dv", "Ds"][d]}
-										</Button>
-									))}
-								</div>
-							</div>
-
-							<div className="space-y-2">
-								<Label className="text-white/90">Hora inici</Label>
-								<Input
-									type="time"
-									value={rule.time_start}
-									onChange={(e) =>
-										setRule({ ...rule, time_start: e.target.value })
-									}
-								/>
-							</div>
-							<div className="space-y-2">
-								<Label className="text-white/90">Hora fi</Label>
-								<Input
-									type="time"
-									value={rule.time_end}
-									onChange={(e) =>
-										setRule({ ...rule, time_end: e.target.value })
-									}
-								/>
-							</div>
-
-							<div className="space-y-2">
-								<Label className="text-white/90">Duració (min)</Label>
-								<Select
-									value={String(rule.duration_minutes)}
-									onValueChange={(v) =>
-										setRule({ ...rule, duration_minutes: Number(v) })
-									}>
-									<SelectTrigger>
-										<SelectValue placeholder="Duració" />
-									</SelectTrigger>
-									<SelectContent>
-										{[30, 45, 60, 75, 90].map((m) => (
-											<SelectItem key={m} value={String(m)}>
-												{m}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
-							</div>
-
-							<div className="space-y-2">
-								<Label className="text-white/90">Ubicació</Label>
-								<Input
-									value={rule.location}
-									onChange={(e) =>
-										setRule({ ...rule, location: e.target.value })
-									}
-								/>
-							</div>
-						</div>
-						<div className="pt-2">
-							<Button onClick={() => createRule()} disabled={loading}>
-								{loading ? "Creant..." : "Crear regla"}
-							</Button>
-						</div>
-					</Card>
-
-					{/* Existing Rules */}
-					<Card className="p-4">
-						<h3 className="text-white font-semibold mb-3">Regles existents</h3>
-						<div className="grid gap-3">
-							{rules.map((r) => (
-								<Card key={r.id} className="p-3">
-									<div className="flex justify-between items-center">
-										<div>
-											<div className="text-white font-medium">
-												{r.title || `Regla #${r.id}`}
-											</div>
-											<div className="text-white/70 text-sm">
-												Dies:{" "}
-												{Array.isArray(r.days_of_week)
-													? r.days_of_week.join(",")
-													: r.days_of_week}{" "}
-												• {r.time_start} - {r.time_end} • Dur:{" "}
-												{r.duration_minutes}min
-											</div>
-											<div className="text-white/60 text-xs">
-												Vàlid: {r.valid_from || "∞"} → {r.valid_to || "∞"}
-											</div>
-										</div>
-										<div className="flex items-center gap-2">
-											<div className="text-sm text-white/80">
-												{r.active ? "Activa" : "Inactiva"}
-											</div>
-											<Button variant="ghost" size="sm">
-												<Settings className="w-4 h-4" />
-											</Button>
-										</div>
-									</div>
-								</Card>
-							))}
-							{rules.length === 0 && (
-								<div className="text-white/70">Encara no hi ha regles.</div>
-							)}
-						</div>
-					</Card>
-				</TabsContent>
-
-				<TabsContent value="exceptions" className="mt-4">
-					<Card className="p-4 space-y-4">
-						<div className="flex items-center justify-between mb-4">
-							<h3 className="text-lg font-semibold text-white">Crear excepció</h3>
-							<Plus className="w-5 h-5 text-white/60" />
-						</div>
-						
-						<div className="grid md:grid-cols-2 gap-4">
-							<div className="space-y-2">
-								<Label className="text-white/90">Data</Label>
-								<Popover
-									open={overrideDateOpen}
-									onOpenChange={setOverrideDateOpen}>
-									<PopoverTrigger asChild>
-										<Button
-											variant="outline"
-											className="justify-start w-full text-left">
-											<CalendarIcon className="mr-2 h-4 w-4" />
-											{overrideItem.date
-												? overrideItem.date.toLocaleDateString()
-												: "Selecciona data"}
-										</Button>
-									</PopoverTrigger>
-									<PopoverContent className="p-0" align="start">
-										<Calendar
-											mode="single"
-											selected={overrideItem.date}
-											onSelect={(d: any) =>
-												setOverrideItem({ ...overrideItem, date: d })
-											}
-										/>
-									</PopoverContent>
-								</Popover>
-							</div>
-							<div className="space-y-2">
-								<Label className="text-white/90">Franja (opcional)</Label>
-								<div className="grid grid-cols-2 gap-2">
-									<Input
-										type="time"
-										placeholder="Inici"
-										value={overrideItem.time_start}
-										onChange={(e) =>
-											setOverrideItem({
-												...overrideItem,
-												time_start: e.target.value,
-											})
-										}
-									/>
-									<Input
-										type="time"
-										placeholder="Fi"
-										value={overrideItem.time_end}
-										onChange={(e) =>
-											setOverrideItem({
-												...overrideItem,
-												time_end: e.target.value,
-											})
-										}
-									/>
-								</div>
-							</div>
-							<div className="space-y-2">
-								<Label className="text-white/90">Tipus</Label>
-								<Select
-									value={overrideItem.kind}
-									onValueChange={(v) =>
-										setOverrideItem({ ...overrideItem, kind: v })
-									}>
-									<SelectTrigger>
-										<SelectValue placeholder="Tipus" />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="closed">Tancat</SelectItem>
-										<SelectItem value="open">Obert</SelectItem>
-									</SelectContent>
-								</Select>
-							</div>
-							<div className="space-y-2">
-								<Label className="text-white/90">Motiu</Label>
-								<Input
-									placeholder="Motiu"
-									value={overrideItem.reason}
-									onChange={(e) =>
-										setOverrideItem({ ...overrideItem, reason: e.target.value })
-									}
-								/>
-							</div>
-						</div>
-						<div className="pt-2">
-							<Button onClick={createOverride}>Crear excepció</Button>
-						</div>
-					</Card>
+					<ScheduleBuilder
+						onCheckConflicts={handleScheduleCheck}
+						onApply={handleScheduleApply}
+					/>
 				</TabsContent>
 			</Tabs>
-
-			{/* Conflict Resolution Dialog */}
-			<ConflictResolutionDialog
-				open={showConflictDialog}
-				onOpenChange={setShowConflictDialog}
-				conflicts={conflictData?.conflicts || []}
-				affectedBookings={conflictData?.affectedBookings || []}
-				onResolve={handleConflictResolution}
-				onModifyRule={(ruleId) => console.log('Modify rule:', ruleId)}
-				onCreateException={(dates) => console.log('Create exceptions for:', dates)}
-				newRuleData={pendingRule}
-			/>
 
 			{loading && <div className="text-white/70">Processant...</div>}
 			{error && <div className="text-red-400">{error}</div>}
