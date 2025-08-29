@@ -8,6 +8,7 @@ export interface LessonSlot {
 	max_capacity: number; // 1-4
 	location: string; // default Soses
 	status: LessonSlotStatus;
+	// Derived on the fly from bookings: true when no non-cancelled booking has allow_fill = false
 	joinable: boolean;
 	// Present when fetched as an authenticated user
 	user_booked?: boolean;
@@ -53,10 +54,7 @@ export interface UserLessonBookingItem {
 	status: string; // booking status
 	group_size: number;
 	created_at: string; // ISO
-	slot: Pick<
-		LessonSlot,
-		"id" | "start_at" | "end_at" | "location" | "status" | "joinable"
-	>;
+	slot: Pick<LessonSlot, "id" | "start_at" | "end_at" | "location" | "status">;
 }
 
 export interface LessonAvailabilityRule {

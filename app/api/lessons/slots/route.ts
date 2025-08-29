@@ -13,8 +13,8 @@ export async function GET(request: Request) {
 		.from("lesson_slots")
 		.select(
 			`
-			id,start_at,end_at,max_capacity,location,status,joinable,
-			lesson_bookings!left ( status, group_size )
+			id,start_at,end_at,max_capacity,location,status,
+			lesson_bookings!left ( status, group_size, allow_fill )
 		`
 		)
 		.order("start_at", { ascending: true });
@@ -46,7 +46,7 @@ export async function GET(request: Request) {
 		return NextResponse.json({ error: error.message }, { status: 500 });
 	}
 
-	// Compute participants_count and strip raw bookings
+	// Compute participants_count and derived joinable, then strip raw bookings
 	const slots = (rawSlots || []).map((slot: any) => {
 		const active = (slot.lesson_bookings || []).filter(
 			(b: any) => b.status !== "cancelled"
@@ -55,8 +55,14 @@ export async function GET(request: Request) {
 			(sum: number, b: any) => sum + (b.group_size || 0),
 			0
 		);
+		const anyLocker = active.some((b: any) => b.allow_fill === false);
 		const { lesson_bookings, ...rest } = slot;
-		return { ...rest, participants_count: participants };
+		return {
+			...rest,
+			participants_count: participants,
+			// joinable is true when no active booking disallows fill
+			joinable: !anyLocker,
+		};
 	});
 
 	// Try to annotate with user_booked flag if authenticated

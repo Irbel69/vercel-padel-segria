@@ -57,7 +57,7 @@ export async function DELETE(
 		return NextResponse.json({ error: cancelErr.message }, { status: 500 });
 	}
 
-	// 2) Recompute slot joinable/locked_by_booking_id (best-effort)
+	// 2) Recompute slot lock (best-effort). Joinable is now derived from bookings.
 	// Find any remaining active booking on same slot that disallows fill
 	const { data: locker, error: lockErr } = await supabase
 		.from("lesson_bookings")
@@ -74,13 +74,12 @@ export async function DELETE(
 		console.warn("Could not recompute slot lock after cancellation", lockErr);
 	} else {
 		const newLockedId = locker?.id ?? null;
-		const newJoinable = newLockedId === null;
 		const { error: updErr } = await supabase
 			.from("lesson_slots")
-			.update({ joinable: newJoinable, locked_by_booking_id: newLockedId })
+			.update({ locked_by_booking_id: newLockedId })
 			.eq("id", booking.slot_id);
 		if (updErr) {
-			console.warn("Could not update slot joinable after cancellation", updErr);
+			console.warn("Could not update slot lock after cancellation", updErr);
 		}
 	}
 

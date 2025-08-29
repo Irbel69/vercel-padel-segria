@@ -17,7 +17,8 @@ export async function GET(request: Request) {
 			lesson_bookings!left (
 				id,
 				status,
-				group_size
+				group_size,
+				allow_fill
 			)
 		`
 		)
@@ -60,10 +61,13 @@ export async function GET(request: Request) {
 			0
 		);
 
+		const anyLocker = activeBookings.some((b: any) => b.allow_fill === false);
+
 		return {
 			...slot,
 			booking_count: activeBookings.length,
 			participants_count: totalBooked,
+			joinable: !anyLocker,
 			lesson_bookings: undefined, // Remove the raw bookings data
 		};
 	});
@@ -81,7 +85,6 @@ export async function POST(request: Request) {
 		"max_capacity",
 		"location",
 		"status",
-		"joinable",
 		"locked_by_booking_id",
 	];
 	const insertPayload: any = {};
