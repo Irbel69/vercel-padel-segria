@@ -79,7 +79,13 @@ export function BookingDialog({
 			return;
 		}
 		setSubmitting(false);
+		// Close the dialog/sheet and notify other parts of the app to refresh
 		setOpen(false);
+		try {
+			window.dispatchEvent(new CustomEvent("lesson:booked"));
+		} catch (e) {
+			// noop (server-side rendering safety if ever invoked there)
+		}
 	};
 
 	const extraCount = groupSize - 1;

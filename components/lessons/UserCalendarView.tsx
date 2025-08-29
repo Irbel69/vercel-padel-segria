@@ -48,33 +48,60 @@ export default function UserCalendarView() {
 		!isSlotFull(slot);
 
 	useEffect(() => {
-		// Helper to format local date as YYYY-MM-DD (no UTC conversion)
-		const fmt = (d: Date) => {
-			const y = d.getFullYear();
-			const m = String(d.getMonth() + 1).padStart(2, "0");
-			const day = String(d.getDate()).padStart(2, "0");
-			return `${y}-${m}-${day}`;
-		};
-		const startOfMonth = new Date(
-			viewDate.getFullYear(),
-			viewDate.getMonth(),
-			1
-		);
-		const endOfMonth = new Date(
-			viewDate.getFullYear(),
-			viewDate.getMonth() + 1,
-			0
-		);
-		const from = fmt(startOfMonth);
-		const to = fmt(endOfMonth);
+		let mounted = true;
+		const fetchSlots = async () => {
+			// Helper to format local date as YYYY-MM-DD (no UTC conversion)
+			const fmt = (d: Date) => {
+				const y = d.getFullYear();
+				const m = String(d.getMonth() + 1).padStart(2, "0");
+				const day = String(d.getDate()).padStart(2, "0");
+				return `${y}-${m}-${day}`;
+			};
+			const startOfMonth = new Date(
+				viewDate.getFullYear(),
+				viewDate.getMonth(),
+				1
+			);
+			const endOfMonth = new Date(
+				viewDate.getFullYear(),
+				viewDate.getMonth() + 1,
+				0
+			);
+			const from = fmt(startOfMonth);
+			const to = fmt(endOfMonth);
 
-		setLoading(true);
-		setError(null);
-		fetch(`/api/lessons/slots?from=${from}&to=${to}`)
-			.then((r) => r.json())
-			.then((json) => setSlots(json.slots ?? []))
-			.catch((e) => setError(e?.message ?? "Error carregant slots"))
-			.finally(() => setLoading(false));
+			setLoading(true);
+			setError(null);
+			try {
+				const r = await fetch(`/api/lessons/slots?from=${from}&to=${to}`);
+				const json = await r.json();
+				if (!mounted) return;
+				setSlots(json.slots ?? []);
+			} catch (e: any) {
+				if (!mounted) return;
+				setError(e?.message ?? "Error carregant slots");
+			} finally {
+				if (!mounted) return;
+				setLoading(false);
+			}
+		};
+
+		fetchSlots();
+
+		// Re-fetch when a lesson is booked elsewhere in the app; also close any open panels/sheets
+		const onBooked = () => {
+			// close UI panels (sheet or side panel) so the user sees the updated calendar
+			setSheetOpen(false);
+			setPanelOpen(false);
+			setSelectedDate(null);
+			fetchSlots();
+		};
+		window.addEventListener("lesson:booked", onBooked);
+
+		return () => {
+			mounted = false;
+			window.removeEventListener("lesson:booked", onBooked);
+		};
 	}, [viewDate]);
 
 	const calendarDays = useMemo(() => {
