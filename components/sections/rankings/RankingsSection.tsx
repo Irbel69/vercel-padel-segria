@@ -12,13 +12,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import {
-	Trophy,
-	Medal,
-	TrendingUp,
-	ChevronLeft,
-	ChevronRight,
-} from "lucide-react";
+import { Trophy, Medal, ChevronLeft, ChevronRight } from "lucide-react";
 import { useRankings } from "@/hooks/use-rankings";
 import type { RankingPlayer } from "@/hooks/use-rankings";
 import { useUser } from "@/hooks/use-user";
@@ -60,19 +54,24 @@ export function RankingsSection() {
 		}
 	};
 
-	const getTrendIcon = (trend: RankingPlayer["trend"]) => {
-		switch (trend) {
-			case "up":
-				return <TrendingUp className="w-3 sm:w-4 h-3 sm:h-4 text-green-400" />;
-			case "down":
-				return (
-					<TrendingUp className="w-3 sm:w-4 h-3 sm:h-4 text-red-400 rotate-180" />
-				);
-			default:
-				return (
-					<div className="w-3 sm:w-4 h-3 sm:h-4 bg-gray-400 rounded-full opacity-50" />
-				);
-		}
+	const renderRecentForm = (form: ("W"|"L")[]) => {
+		const max = 5;
+		const items = form.slice(0, max);
+		const placeholders = Array.from({ length: Math.max(0, max - items.length) });
+		return (
+			<div className="flex items-center gap-1 justify-center">
+				{items.map((r, idx) => (
+					<span
+						key={idx}
+						aria-label={r === 'W' ? 'Victòria' : 'Derrota'}
+						className={`w-2.5 h-2.5 rounded-sm ${r === 'W' ? 'bg-green-500' : 'bg-red-500'}`}
+					/>
+				))}
+				{placeholders.map((_, idx) => (
+					<span key={`p-${idx}`} className="w-2.5 h-2.5 rounded-sm bg-white/20" />
+				))}
+			</div>
+		);
 	};
 
 	const handlePrev = () => {
@@ -150,8 +149,8 @@ export function RankingsSection() {
 															{player.name} {player.surname}
 														</p>
 														<div className="text-xs text-white/60 flex items-center gap-1">
-															{getTrendIcon(player.trend)}
-															<span>Tendència</span>
+															<span className="sr-only">Darrers 5</span>
+															{renderRecentForm(player.recent_form)}
 														</div>
 													</div>
 												</div>
@@ -180,7 +179,7 @@ export function RankingsSection() {
 														Punts
 													</TableHead>
 													<TableHead className="text-gray-300 font-semibold py-3 sm:py-4 text-center text-xs sm:text-sm hidden xs:table-cell">
-														Tendència
+														Últims 5
 													</TableHead>
 												</TableRow>
 											</TableHeader>
@@ -216,7 +215,7 @@ export function RankingsSection() {
 															</span>
 														</TableCell>
 														<TableCell className="py-3 sm:py-4 text-center hidden xs:table-cell">
-															{getTrendIcon(player.trend)}
+															{renderRecentForm(player.recent_form)}
 														</TableCell>
 													</TableRow>
 												))}
@@ -255,7 +254,7 @@ export function RankingsSection() {
 																	<span className="text-padel-primary font-bold text-xs sm:text-sm">{player.total_points}</span>
 																</TableCell>
 																<TableCell className="py-3 sm:py-4 text-center hidden xs:table-cell">
-																	{getTrendIcon(player.trend)}
+																	{renderRecentForm(player.recent_form)}
 																</TableCell>
 															</TableRow>
 														))}

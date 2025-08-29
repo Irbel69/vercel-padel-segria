@@ -8,7 +8,7 @@ export interface RankingPlayer {
   name: string | null;
   surname: string | null;
   avatar_url: string | null;
-  trend: "up" | "down" | "same";
+  recent_form: ("W" | "L")[];
   total_points: number;
   ranking_position: number;
   // optional fields for dashboard view
