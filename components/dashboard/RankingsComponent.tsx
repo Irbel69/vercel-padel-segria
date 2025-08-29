@@ -25,7 +25,7 @@ interface RankingPlayer {
 	points: number;
 	matches_played: number;
 	matches_won: number;
-	trend: "up" | "down" | "same";
+	recent_form?: ("W"|"L")[];
 }
 
 export function RankingsComponent() {
@@ -58,15 +58,19 @@ export function RankingsComponent() {
 		fetchRankings();
 	}, []);
 
-	const getTrendIcon = (trend: string) => {
-		switch (trend) {
-			case "up":
-				return <ArrowUp className="text-green-500 w-4 h-4" />;
-			case "down":
-				return <ArrowDown className="text-red-500 w-4 h-4" />;
-			default:
-				return <Minus className="text-gray-400 w-4 h-4" />;
-		}
+	const renderRecentForm = (form: ("W"|"L")[] | undefined) => {
+		const items = (form ?? []).slice(0,5);
+		const placeholders = Array.from({ length: Math.max(0, 5 - items.length) });
+		return (
+			<div className="flex items-center justify-center gap-1">
+				{items.map((r, i) => (
+					<span key={i} className={`w-2.5 h-2.5 rounded-sm ${r === 'W' ? 'bg-green-500' : 'bg-red-500'}`} />
+				))}
+				{placeholders.map((_, i) => (
+					<span key={`p-${i}`} className="w-2.5 h-2.5 rounded-sm bg-white/20" />
+				))}
+			</div>
+		);
 	};
 
 	const getTopPlayers = () => {
@@ -217,7 +221,7 @@ export function RankingsComponent() {
 												Punts
 											</TableHead>
 											<TableHead className="text-white/70 text-center">
-												Tendència
+												Forma
 											</TableHead>
 										</TableRow>
 									</TableHeader>
@@ -271,7 +275,7 @@ export function RankingsComponent() {
 													</span>
 												</TableCell>
 												<TableCell className="text-center">
-													{getTrendIcon(player.trend)}
+													{renderRecentForm(player.recent_form)}
 												</TableCell>
 											</TableRow>
 										))}
