@@ -1,9 +1,23 @@
 {
-  "enabledMcpjsonServers": [
+  "permissions": {
+    "allow": [
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_wait_for",
+      "mcp__playwright__browser_resize",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_snapshot",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "mcp__sequentialthinking__sequentialthinking",
+      "mcp__playwright__browser_evaluate"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "disabledMcpjsonServers": [
     "supabase",
     "context7",
     "sequentialthinking",
     "playwright"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }

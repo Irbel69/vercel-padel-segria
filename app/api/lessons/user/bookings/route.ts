@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/libs/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/lessons/user/bookings?from=YYYY-MM-DD
 export async function GET(request: Request) {
 	const supabase = createClient();

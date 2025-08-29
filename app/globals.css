@@ -42,6 +42,37 @@ progress::-webkit-progress-value {
 	--padel-secondary: #000000; /* Dark Navy Blue */
 }
 
+/* Custom animations for progress bar sparkles */
+@keyframes shine {
+	0% {
+		transform: translateX(-100%) skewX(-20deg);
+		opacity: 0;
+	}
+	20% {
+		opacity: 1;
+	}
+	80% {
+		opacity: 1;
+	}
+	100% {
+		transform: translateX(200%) skewX(-20deg);
+		opacity: 0;
+	}
+}
+
+@keyframes sparkle-glow {
+	0%, 100% {
+		transform: scale(0.8);
+		opacity: 0.6;
+		box-shadow: 0 0 2px currentColor;
+	}
+	50% {
+		transform: scale(1.2);
+		opacity: 1;
+		box-shadow: 0 0 8px currentColor, 0 0 16px currentColor;
+	}
+}
+
 /* Dotted background pattern for hero section */
 .bg-dotted-pattern {
 	background-color: black;
@@ -178,6 +209,36 @@ progress::-webkit-progress-value {
 	.animate-sidebar-enter,
 	.animate-item-enter,
 	.logo-glow {
+		animation: none !important;
+	}
+}
+
+/* Button micro-interactions */
+@keyframes btnFloat {
+	0% { transform: translateY(0); }
+	50% { transform: translateY(-4px); }
+	100% { transform: translateY(0); }
+}
+
+@keyframes btnShimmer {
+	0% { background-position: 0% 50%; }
+	100% { background-position: 100% 50%; }
+}
+
+.animate-btn-float {
+	animation: btnFloat 3.5s ease-in-out infinite;
+}
+
+.animate-btn-shimmer {
+	background-image: linear-gradient(90deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 100%);
+	background-size: 200% 100%;
+	animation: btnShimmer 2.8s linear infinite;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+	.animate-btn-float,
+	.animate-btn-shimmer {
 		animation: none !important;
 	}
 }

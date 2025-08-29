@@ -55,8 +55,12 @@ export interface Event {
 	registration_deadline: string;
 	created_at: string;
 	updated_at: string;
+	// Optional cover image URL stored in Supabase Storage
+	image_url?: string | null;
 	current_participants?: number;
 	user_registration_status?: "pending" | "confirmed" | "cancelled" | null;
+	// Partner information when user is registered as a pair
+	partner?: UserProfile | null;
 }
 
 export interface EventsListResponse {
@@ -76,8 +80,12 @@ export interface Registration {
 	event_id: number;
 	status: "pending" | "confirmed" | "cancelled";
 	registered_at: string;
+	// Optional group identifier when registered as a pair
+	pair_id?: string | null;
 	event?: Event;
 	user?: UserProfile;
+	// Partner information when registered as a pair
+	partner?: UserProfile | null;
 }
 
 export interface CreateEventData {
@@ -89,6 +97,8 @@ export interface CreateEventData {
 	prizes?: string;
 	max_participants: number;
 	registration_deadline: string;
+	// Optional cover image url sent by client after upload. Set to null to remove.
+	image_url?: string | null;
 }
 
 // API Response types
@@ -138,4 +148,22 @@ export interface MatchesListResponse {
 		title: string;
 	};
 	matches: Match[];
+}
+
+// Pair Invites related types
+export type PairInviteStatus = "sent" | "accepted" | "declined" | "revoked" | "expired";
+
+export interface PairInvite {
+	id: number;
+	event_id: number;
+	inviter_id: string;
+	invitee_id: string | null;
+	invitee_email: string | null;
+	status: PairInviteStatus;
+	token: string; // secure random token for email links
+	short_code: string | null; // optional 6-8 char human code for join by code
+	created_at: string;
+	expires_at: string | null;
+	accepted_at?: string | null;
+	declined_at?: string | null;
 }

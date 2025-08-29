@@ -119,8 +119,10 @@ module.exports = {
 				sm: "calc(var(--radius) - 4px)",
 			},
 			colors: {
-				// Padel Segria Colors
+				// Padel Segria Colors - Enhanced Yellow Palette
 				"padel-primary": "#e5f000",
+				"padel-primary-light": "#f0ff40",
+				"padel-primary-dark": "#ccdd00",
 				"padel-secondary": "#051c2c",
 				background: "hsl(var(--background))",
 				foreground: "hsl(var(--foreground))",

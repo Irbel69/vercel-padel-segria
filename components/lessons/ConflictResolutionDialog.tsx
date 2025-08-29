@@ -84,10 +84,11 @@ export function ConflictResolutionDialog({
 				// For now, just resolve as modify - could enhance to show specific rule selection
 				onResolve("modify");
 				break;
-			case "exception":
+			case "exception": {
 				const allConflictDates = conflicts.flatMap((c) => c.conflictDates);
 				onCreateException(allConflictDates);
 				break;
+			}
 		}
 
 		onOpenChange(false);
@@ -235,7 +236,7 @@ export function ConflictResolutionDialog({
 						<Alert className="border-red-500/50 bg-red-500/10">
 							<AlertTriangle className="h-4 w-4 text-red-400" />
 							<AlertDescription className="text-red-300">
-								Hi ha {affectedBookings.length} reserves que podrien veure's
+								Hi ha {affectedBookings.length} reserves que podrien veure&apos;s
 								afectades. Es recomana revisar aquestes reserves abans de
 								procedir.
 							</AlertDescription>
@@ -270,7 +271,7 @@ export function ConflictResolutionDialog({
 										</h4>
 										<p className="text-white/60 text-sm">
 											Es crearan excepcions per als dies conflictius. La nova
-											regla s'aplicarà normalment excepte en les dates on ja hi
+											regla s&apos;aplicarà normalment excepte en les dates on ja hi
 											ha regles actives.
 										</p>
 									</div>
@@ -299,7 +300,7 @@ export function ConflictResolutionDialog({
 										</h4>
 										<p className="text-white/60 text-sm">
 											Modifica les regles en conflicte per fer espai a la nova
-											regla. Usa els botons "Modificar aquesta regla" de cada
+											regla. Usa els botons &quot;Modificar aquesta regla&quot; de cada
 											conflicte.
 										</p>
 									</div>

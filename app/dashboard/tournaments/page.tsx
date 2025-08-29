@@ -1,315 +1,50 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useUser } from "@/hooks/use-user";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  AlertCircle,
-  Calendar,
-  MapPin,
-  Users,
-  Trophy,
-  Clock,
-  CheckCircle,
-  XCircle,
-  Target,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { LocationMapButton } from "@/components/LocationMapButton";
-import type { Event, EventsListResponse, Registration } from "@/types";
+import { AlertCircle } from "lucide-react";
+import TournamentsHeader from "@/components/tournaments/TournamentsHeader";
+import AvailableEventsSection from "@/components/tournaments/ui/AvailableEventsSection";
+import MyRegistrationsSection from "@/components/tournaments/ui/MyRegistrationsSection";
+import InviteDialogContainer from "@/components/tournaments/ui/InviteDialogContainer";
+import JoinByCodeDialogContainer from "@/components/tournaments/ui/JoinByCodeDialogContainer";
+import { useEventsPagination } from "@/components/tournaments/hooks/useEventsPagination";
+import { useUserRegistrations } from "@/components/tournaments/hooks/useUserRegistrations";
+import { useDateFormatting } from "@/components/tournaments/hooks/useDateFormatting";
+import { useEventLogic } from "@/components/tournaments/hooks/useEventLogic";
+import { useBadges } from "@/components/tournaments/hooks/useBadges";
 
 export default function TournamentsPage() {
-  const { user, profile } = useUser();
-  const [events, setEvents] = useState<Event[]>([]);
-  const [userRegistrations, setUserRegistrations] = useState<Registration[]>(
-    []
-  );
-  const [pagination, setPagination] = useState<
-    EventsListResponse["pagination"] | null
-  >(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRegistrationsLoading, setIsRegistrationsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [processingEvents, setProcessingEvents] = useState<Set<number>>(
-    new Set()
-  );
+  const { user } = useUser();
 
-  const fetchEvents = async (page: number = 1, status: string = "") => {
-    try {
-      setIsLoading(true);
-      setError(null);
+  // Data hooks
+  const { events, pagination, isEventsLoading, setPage } = useEventsPagination(10);
+  const {
+    userRegistrations,
+    isRegistrationsLoading,
+    processingEvents,
+    handleUnregister,
+    error,
+  } = useUserRegistrations(user);
+  const { formatDate, formatDateTime } = useDateFormatting();
+  const { canRegister, canUnregister, isRegistrationUrgent } = useEventLogic();
+  const { getStatusBadge, getRegistrationStatusBadge } = useBadges();
 
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: "10",
-      });
+  // UI state controlled at page level
+  const [inviteForEventId, setInviteForEventId] = useState<number | null>(null);
+  const [joinCodeOpen, setJoinCodeOpen] = useState(false);
 
-      if (status) {
-        params.append("status", status);
-      }
-
-      const response = await fetch(`/api/events?${params}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Error carregant els esdeveniments");
-      }
-
-      const typedData = data as EventsListResponse;
-      setEvents(typedData.events);
-      setPagination(typedData.pagination);
-    } catch (err) {
-      console.error("Error fetching events:", err);
-      setError(err instanceof Error ? err.message : "Error desconegut");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchUserRegistrations = async () => {
-    try {
-      setIsRegistrationsLoading(true);
-
-      const response = await fetch("/api/user/registrations");
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Error carregant les inscripcions");
-      }
-
-      setUserRegistrations(data.registrations || []);
-    } catch (err) {
-      console.error("Error fetching user registrations:", err);
-    } finally {
-      setIsRegistrationsLoading(false);
-    }
-  };
-
-  // Initial load
-  useEffect(() => {
-    if (user) {
-      fetchEvents(currentPage);
-      fetchUserRegistrations();
-    }
-  }, [user, currentPage]);
-
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-    fetchEvents(newPage);
-  };
-
-  const handleRegister = async (eventId: number) => {
-    if (processingEvents.has(eventId)) return;
-
-    setProcessingEvents((prev) => new Set(prev).add(eventId));
-    setError(null);
-
-    try {
-      const response = await fetch(`/api/events/${eventId}/register`, {
-        method: "POST",
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Error processant la inscripció");
-      }
-
-      // Actualizar la lista de eventos y registraciones
-      fetchEvents(currentPage);
-      fetchUserRegistrations();
-    } catch (err) {
-      console.error("Error registering:", err);
-      setError(err instanceof Error ? err.message : "Error desconegut");
-    } finally {
-      setProcessingEvents((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(eventId);
-        return newSet;
-      });
-    }
-  };
-
-  const handleUnregister = async (eventId: number) => {
-    if (processingEvents.has(eventId)) return;
-    if (!confirm("Estàs segur que vols cancel·lar la inscripció?")) return;
-
-    setProcessingEvents((prev) => new Set(prev).add(eventId));
-    setError(null);
-
-    try {
-      const response = await fetch(`/api/events/${eventId}/register`, {
-        method: "DELETE",
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Error cancel·lant la inscripció");
-      }
-
-      // Actualizar la lista de eventos y registraciones
-      fetchEvents(currentPage);
-      fetchUserRegistrations();
-    } catch (err) {
-      console.error("Error unregistering:", err);
-      setError(err instanceof Error ? err.message : "Error desconegut");
-    } finally {
-      setProcessingEvents((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(eventId);
-        return newSet;
-      });
-    }
-  };
-
-  const getShortLocation = (location: string) => {
-    if (!location) return "";
-
-    // Extract city/area from full address
-    const parts = location.split(",");
-    // Try to get city name (usually 2nd or 3rd part)
-    if (parts.length >= 3) {
-      return parts[1]?.trim() || parts[0]?.trim();
-    }
-    return parts[0]?.trim();
-  };
-
-  const isRegistrationUrgent = (deadline: string) => {
-    const deadlineDate = new Date(deadline);
-    const now = new Date();
-    const hoursUntilDeadline =
-      (deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-    return hoursUntilDeadline <= 24 && hoursUntilDeadline > 0;
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("ca-ES", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-  };
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("ca-ES", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "open":
-        return (
-          <Badge variant="secondary" className="bg-green-500/20 text-green-400">
-            Obert
-          </Badge>
-        );
-      case "soon":
-        return (
-          <Badge
-            variant="secondary"
-            className="bg-yellow-500/20 text-yellow-400"
-          >
-            Aviat
-          </Badge>
-        );
-      case "closed":
-        return (
-          <Badge variant="secondary" className="bg-red-500/20 text-red-400">
-            Tancat
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="secondary" className="bg-white/10 text-white/70">
-            {status}
-          </Badge>
-        );
-    }
-  };
-
-  const getRegistrationStatusBadge = (status: string) => {
-    switch (status) {
-      case "confirmed":
-        return (
-          <Badge variant="secondary" className="bg-green-500/20 text-green-400">
-            <CheckCircle className="h-3 w-3 mr-1" />
-            Confirmat
-          </Badge>
-        );
-      case "pending":
-        return (
-          <Badge
-            variant="secondary"
-            className="bg-yellow-500/20 text-yellow-400"
-          >
-            <Clock className="h-3 w-3 mr-1" />
-            Pendent
-          </Badge>
-        );
-      case "cancelled":
-        return (
-          <Badge variant="secondary" className="bg-red-500/20 text-red-400">
-            <XCircle className="h-3 w-3 mr-1" />
-            Cancel·lat
-          </Badge>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const canRegister = (event: Event) => {
-    const registrationDeadline = new Date(event.registration_deadline);
-    const now = new Date();
-
-    return (
-      event.status === "open" &&
-      registrationDeadline > now &&
-      (event.current_participants || 0) < event.max_participants &&
-      !event.user_registration_status
-    );
-  };
-
-  const canUnregister = (event: Event) => {
-    const eventDate = new Date(event.date);
-    const now = new Date();
-    const hoursUntilEvent =
-      (eventDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-
-    return (
-      event.user_registration_status === "confirmed" && hoursUntilEvent >= 24
-    );
-  };
+  const isUserRegistered = !!(inviteForEventId && userRegistrations?.some((r) => r.event_id === inviteForEventId));
 
   return (
     <div className="space-y-3 md:space-y-6 px-2 md:px-0 max-w-full overflow-hidden">
-      {/* Header */}
-      <div className="flex flex-row items-center gap-2 md:gap-3">
-        <div className="p-1.5 md:p-2 bg-padel-primary/20 rounded-lg">
-          <Target className="h-5 w-5 md:h-6 md:w-6 text-padel-primary" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h1 className="text-xl md:text-3xl font-bold text-white">Tornejos</h1>
-          <p className="text-white/60 text-xs md:text-base">
-            Participa en competicions i esdeveniments
-          </p>
-        </div>
-      </div>
+      <TournamentsHeader
+        totalEvents={pagination?.totalEvents ?? null}
+        onOpenJoinCode={() => setJoinCodeOpen(true)}
+      />
 
-      {/* Error Message */}
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -317,491 +52,72 @@ export default function TournamentsPage() {
         </Alert>
       )}
 
-      <Tabs defaultValue="available" className="space-y-3 md:space-y-6">
-        <TabsList className="bg-white/5 border-white/10 w-full sm:w-auto">
+      <Tabs defaultValue="available" className="space-y-3 md:space-y-6 w-full">
+        <TabsList className=" bg-gray-800/80 border-gray-600/50 backdrop-blur-sm shadow-lg w-full mx-auto sm:w-auto p-1 rounded-xl">
           <TabsTrigger
             value="available"
-            className="data-[state=active]:bg-padel-primary data-[state=active]:text-black text-xs sm:text-sm flex-1 sm:flex-initial"
+            className="data-[state=active]:bg-padel-primary data-[state=active]:text-black data-[state=active]:shadow-lg data-[state=active]:shadow-padel-primary/20 text-xs sm:text-sm flex-1 sm:flex-initial text-gray-300 hover:text-white transition-all duration-200 rounded-lg font-medium"
           >
             <span className="sm:hidden">Disponibles</span>
             <span className="hidden sm:inline">Esdeveniments Disponibles</span>
           </TabsTrigger>
           <TabsTrigger
             value="my-registrations"
-            className="data-[state=active]:bg-padel-primary data-[state=active]:text-black text-xs sm:text-sm flex-1 sm:flex-initial"
+            className="data-[state=active]:bg-padel-primary data-[state=active]:text-black data-[state=active]:shadow-lg data-[state=active]:shadow-padel-primary/20 text-xs sm:text-sm flex-1 sm:flex-initial text-gray-300 hover:text-white transition-all duration-200 rounded-lg font-medium"
           >
-            <span className="sm:hidden">Meves</span>
+            <span className="sm:hidden">Inscrit</span>
             <span className="hidden sm:inline">Les Meves Inscripcions</span>
           </TabsTrigger>
         </TabsList>
 
-        {/* Available Events */}
         <TabsContent value="available">
-          <Card className="bg-white/5 border-white/10 w-full max-w-full overflow-hidden">
-            <CardHeader className="px-3 md:px-6">
-              <CardTitle className="text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <span className="text-lg md:text-xl">
-                  Esdeveniments Disponibles
-                </span>
-                {pagination && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-padel-primary/20 text-padel-primary self-start sm:self-auto"
-                  >
-                    {pagination.totalEvents} esdeveniments
-                  </Badge>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-3 md:px-6 max-w-full overflow-hidden">
-              {isLoading ? (
-                <div className="space-y-4">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="flex items-center space-x-4">
-                      <Skeleton className="h-24 w-full" />
-                    </div>
-                  ))}
-                </div>
-              ) : events.length === 0 ? (
-                <div className="text-center py-8">
-                  <Calendar className="h-12 w-12 text-white/40 mx-auto mb-4" />
-                  <p className="text-white/60">
-                    No hi ha esdeveniments disponibles
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2 md:space-y-4 max-w-full">
-                  {events.map((event) => (
-                    <div
-                      key={event.id}
-                      className="p-2 md:p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors max-w-full overflow-hidden"
-                    >
-                      {/* Mobile Layout */}
-                      <div className="md:hidden max-w-full">
-                        {/* Title and Status */}
-                        <div className="flex items-start justify-between gap-2 mb-2 max-w-full">
-                          <h3 className="text-white font-semibold text-base leading-tight flex-1 min-w-0 truncate">
-                            {event.title}
-                          </h3>
-                          <div className="flex-shrink-0">
-                            {getStatusBadge(event.status)}
-                          </div>
-                        </div>
-
-                        {/* Date and Participants */}
-                        <div className="flex items-center justify-between mb-2 text-sm text-white/70 max-w-full">
-                          <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                            <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
-                            <span className="truncate">
-                              {formatDate(event.date)}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1.5 flex-shrink-0">
-                            <Users className="h-3.5 w-3.5 flex-shrink-0" />
-                            <span className="text-xs whitespace-nowrap">
-                              {event.current_participants || 0}/
-                              {event.max_participants}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Location */}
-                        {event.location && (
-                          <div className="mb-3 text-sm text-white/60 max-w-full">
-                            <div className="flex items-center gap-1.5 p-1">
-                              <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-padel-primary" />
-                              <span className="truncate flex-1">
-                                {getShortLocation(event.location)}
-                              </span>
-                              {event.latitude && event.longitude && (
-                                <button
-                                  onClick={() => {
-                                    const isMac = /Mac|iPhone|iPad|iPod/.test(
-                                      navigator.platform
-                                    );
-                                    const mapsUrl = isMac
-                                      ? `maps://maps.apple.com/?q=${encodeURIComponent(
-                                          event.location
-                                        )}&ll=${event.latitude},${
-                                          event.longitude
-                                        }&z=15`
-                                      : `https://www.google.com/maps/search/?api=1&query=${event.latitude},${event.longitude}`;
-                                    window.open(mapsUrl, "_blank");
-                                  }}
-                                  className="text-xs text-padel-primary opacity-70 whitespace-nowrap flex-shrink-0"
-                                >
-                                  toca aquí
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Registration Status */}
-                        {event.user_registration_status && (
-                          <div className="mb-2">
-                            {getRegistrationStatusBadge(
-                              event.user_registration_status
-                            )}
-                          </div>
-                        )}
-
-                        {/* Urgent Registration Deadline */}
-                        {isRegistrationUrgent(event.registration_deadline) && (
-                          <div className="mb-2 text-xs text-orange-400 flex items-center gap-1.5 max-w-full">
-                            <Clock className="h-3 w-3 flex-shrink-0" />
-                            <span className="truncate">
-                              Límit:{" "}
-                              {formatDateTime(event.registration_deadline)}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Action Button */}
-                        <div className="pt-2 max-w-full">
-                          {canRegister(event) && (
-                            <Button
-                              onClick={() => handleRegister(event.id)}
-                              disabled={processingEvents.has(event.id)}
-                              className="bg-padel-primary text-black hover:bg-padel-primary/90 text-sm w-full"
-                            >
-                              {processingEvents.has(event.id)
-                                ? "Inscrivint..."
-                                : "Inscriure's"}
-                            </Button>
-                          )}
-                          {canUnregister(event) && (
-                            <Button
-                              variant="outline"
-                              onClick={() => handleUnregister(event.id)}
-                              disabled={processingEvents.has(event.id)}
-                              className="bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30 text-sm w-full"
-                            >
-                              {processingEvents.has(event.id)
-                                ? "Cancel·lant..."
-                                : "Cancel·lar"}
-                            </Button>
-                          )}
-                          {event.user_registration_status &&
-                            !canUnregister(event) && (
-                              <Button
-                                variant="outline"
-                                disabled
-                                className="bg-white/10 border-white/20 text-white/50 text-sm w-full"
-                              >
-                                Inscrit
-                              </Button>
-                            )}
-                        </div>
-                      </div>
-
-                      {/* Desktop Layout */}
-                      <div className="hidden md:block">
-                        <div className="space-y-3">
-                          {/* Header with title and badges */}
-                          <div className="flex items-center justify-between gap-3">
-                            <h3 className="text-white font-semibold text-lg">
-                              {event.title}
-                            </h3>
-                            <div className="flex gap-2">
-                              {getStatusBadge(event.status)}
-                              {event.user_registration_status &&
-                                getRegistrationStatusBadge(
-                                  event.user_registration_status
-                                )}
-                            </div>
-                          </div>
-
-                          {/* Main info grid */}
-                          <div className="grid grid-cols-2 gap-4 text-sm text-white/70">
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4 flex-shrink-0" />
-                              <span>{formatDate(event.date)}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 flex-shrink-0" />
-                              <span>
-                                {event.current_participants || 0}/
-                                {event.max_participants} participants
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Location */}
-                          {event.location && (
-                            <div className="text-sm text-white/60">
-                              <div className="flex items-center gap-2 p-2">
-                                <MapPin className="h-4 w-4 flex-shrink-0 text-padel-primary" />
-                                <span className="truncate">
-                                  {getShortLocation(event.location)}
-                                </span>
-                                {event.latitude && event.longitude && (
-                                  <button
-                                    onClick={() => {
-                                      const isMac = /Mac|iPhone|iPad|iPod/.test(
-                                        navigator.platform
-                                      );
-                                      const mapsUrl = isMac
-                                        ? `maps://maps.apple.com/?q=${encodeURIComponent(
-                                            event.location
-                                          )}&ll=${event.latitude},${
-                                            event.longitude
-                                          }&z=15`
-                                        : `https://www.google.com/maps/search/?api=1&query=${event.latitude},${event.longitude}`;
-                                      window.open(mapsUrl, "_blank");
-                                    }}
-                                    className="ml-1 text-xs text-padel-primary hover:text-padel-primary/80 hover:underline transition-colors flex-shrink-0"
-                                  >
-                                    toca aquí
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Prizes */}
-                          {event.prizes && (
-                            <div className="flex items-center gap-2 text-sm text-white/60">
-                              <Trophy className="h-4 w-4 flex-shrink-0" />
-                              <span>{event.prizes}</span>
-                            </div>
-                          )}
-
-                          {/* Registration deadline and action buttons */}
-                          <div className="flex items-center justify-between gap-4">
-                            <div className="text-xs text-white/50">
-                              <div className="flex items-center gap-2">
-                                <Clock className="h-3 w-3 flex-shrink-0" />
-                                <span>
-                                  Límit inscripció:{" "}
-                                  {formatDateTime(event.registration_deadline)}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex-shrink-0">
-                              {canRegister(event) && (
-                                <Button
-                                  onClick={() => handleRegister(event.id)}
-                                  disabled={processingEvents.has(event.id)}
-                                  className="bg-padel-primary text-black hover:bg-padel-primary/90"
-                                >
-                                  {processingEvents.has(event.id)
-                                    ? "Inscrivint..."
-                                    : "Inscriure's"}
-                                </Button>
-                              )}
-                              {canUnregister(event) && (
-                                <Button
-                                  variant="outline"
-                                  onClick={() => handleUnregister(event.id)}
-                                  disabled={processingEvents.has(event.id)}
-                                  className="bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30"
-                                >
-                                  {processingEvents.has(event.id)
-                                    ? "Cancel·lant..."
-                                    : "Cancel·lar"}
-                                </Button>
-                              )}
-                              {event.user_registration_status &&
-                                !canUnregister(event) && (
-                                  <Button
-                                    variant="outline"
-                                    disabled
-                                    className="bg-white/10 border-white/20 text-white/50"
-                                  >
-                                    Inscrit
-                                  </Button>
-                                )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Pagination */}
-              {pagination && pagination.totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between mt-6 pt-6 border-t border-white/10 gap-4">
-                  <p className="text-white/60 text-sm text-center sm:text-left">
-                    Pàgina {pagination.currentPage} de {pagination.totalPages}
-                  </p>
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        handlePageChange(pagination.currentPage - 1)
-                      }
-                      disabled={pagination.currentPage === 1}
-                      className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex-1 sm:flex-initial"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      <span className="hidden sm:inline">Anterior</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        handlePageChange(pagination.currentPage + 1)
-                      }
-                      disabled={!pagination.hasMore}
-                      className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex-1 sm:flex-initial"
-                    >
-                      <span className="hidden sm:inline">Següent</span>
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <AvailableEventsSection
+            events={events}
+            pagination={pagination}
+            isEventsLoading={isEventsLoading}
+            processingEvents={processingEvents}
+            onInvite={(id) => setInviteForEventId(id)}
+            onUnregister={handleUnregister}
+            onPageChange={setPage}
+            formatDate={formatDate}
+            formatDateTime={formatDateTime}
+            getStatusBadge={getStatusBadge}
+            getRegistrationStatusBadge={getRegistrationStatusBadge}
+            canRegister={canRegister}
+            canUnregister={canUnregister}
+            isRegistrationUrgent={isRegistrationUrgent}
+            onShowCode={(id) => setInviteForEventId(id)}
+          />
         </TabsContent>
 
-        {/* User Registrations */}
         <TabsContent value="my-registrations">
-          <Card className="bg-white/5 border-white/10">
-            <CardHeader>
-              <CardTitle className="text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <span className="text-lg md:text-xl">
-                  Les Meves Inscripcions
-                </span>
-                <Badge
-                  variant="secondary"
-                  className="bg-padel-primary/20 text-padel-primary self-start sm:self-auto"
-                >
-                  {userRegistrations.length} inscripcions
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isRegistrationsLoading ? (
-                <div className="space-y-4">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="flex items-center space-x-4">
-                      <Skeleton className="h-20 w-full" />
-                    </div>
-                  ))}
-                </div>
-              ) : userRegistrations.length === 0 ? (
-                <div className="text-center py-8">
-                  <Target className="h-12 w-12 text-white/40 mx-auto mb-4" />
-                  <p className="text-white/60">No tens cap inscripció activa</p>
-                  <p className="text-white/40 text-sm mt-2">
-                    Explora els esdeveniments disponibles per participar en
-                    tornejos
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3 md:space-y-4">
-                  {userRegistrations.map((registration) => (
-                    <div
-                      key={registration.id}
-                      className="p-3 md:p-4 rounded-lg bg-white/5 border border-white/10"
-                    >
-                      <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
-                        <div className="flex-1">
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                            <h3 className="text-white font-semibold text-base md:text-lg">
-                              {registration.event?.title}
-                            </h3>
-                            {getRegistrationStatusBadge(registration.status)}
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4 text-sm text-white/70">
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4 flex-shrink-0" />
-                              <span className="truncate">
-                                {formatDate(registration.event?.date || "")}
-                              </span>
-                            </div>
-                            {registration.event?.location && (
-                              <div className="flex items-center gap-2 col-span-1 sm:col-span-2 lg:col-span-1">
-                                <div className="flex items-center gap-2 min-w-0 flex-1">
-                                  <MapPin className="h-4 w-4 flex-shrink-0" />
-                                  <span className="truncate">
-                                    {registration.event.location}
-                                  </span>
-                                </div>
-                                {registration.event.latitude &&
-                                  registration.event.longitude && (
-                                    <LocationMapButton
-                                      latitude={registration.event.latitude}
-                                      longitude={registration.event.longitude}
-                                      location={registration.event.location}
-                                    />
-                                  )}
-                              </div>
-                            )}
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 flex-shrink-0" />
-                              <span className="truncate">
-                                {registration.event?.current_participants || 0}/
-                                {registration.event?.max_participants}{" "}
-                                participants
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="mt-2 text-xs text-white/50">
-                            <span>
-                              Inscrit el:{" "}
-                              {formatDateTime(registration.registered_at)}
-                            </span>
-                          </div>
-
-                          {registration.event?.prizes && (
-                            <div className="mt-2">
-                              <div className="flex items-center gap-2 text-sm text-white/60">
-                                <Trophy className="h-4 w-4 flex-shrink-0" />
-                                <span className="break-words">
-                                  {registration.event.prizes}
-                                </span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {registration.status === "confirmed" &&
-                          registration.event &&
-                          canUnregister({
-                            ...registration.event,
-                            user_registration_status: registration.status,
-                          }) && (
-                            <div className="flex justify-end lg:ml-4">
-                              <Button
-                                variant="outline"
-                                onClick={() =>
-                                  handleUnregister(registration.event_id)
-                                }
-                                disabled={processingEvents.has(
-                                  registration.event_id
-                                )}
-                                className="bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30 text-sm w-full sm:w-auto"
-                              >
-                                <span className="sm:hidden">
-                                  {processingEvents.has(registration.event_id)
-                                    ? "..."
-                                    : "Cancel·lar"}
-                                </span>
-                                <span className="hidden sm:inline">
-                                  {processingEvents.has(registration.event_id)
-                                    ? "Cancel·lant..."
-                                    : "Cancel·lar"}
-                                </span>
-                              </Button>
-                            </div>
-                          )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <MyRegistrationsSection
+            registrations={userRegistrations}
+            isLoading={isRegistrationsLoading}
+            processingEvents={processingEvents}
+            onUnregister={handleUnregister}
+            formatDate={formatDate}
+            formatDateTime={formatDateTime}
+            canUnregister={canUnregister}
+            getStatusBadge={getStatusBadge}
+            getRegistrationStatusBadge={getRegistrationStatusBadge}
+            canRegister={canRegister}
+            isRegistrationUrgent={isRegistrationUrgent}
+            onShowCode={(id) => setInviteForEventId(id)}
+          />
         </TabsContent>
       </Tabs>
+
+      <InviteDialogContainer
+        openForEventId={inviteForEventId}
+        onClose={() => setInviteForEventId(null)}
+        isUserRegistered={isUserRegistered}
+      />
+
+      <JoinByCodeDialogContainer
+        open={joinCodeOpen}
+        onOpenChange={setJoinCodeOpen}
+      />
     </div>
   );
 }

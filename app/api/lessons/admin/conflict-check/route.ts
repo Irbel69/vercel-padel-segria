@@ -107,11 +107,14 @@ export async function POST(request: Request) {
 		// Check if there are existing bookings that would be affected
 		const affectedBookings = await checkAffectedBookings(supabase, body);
 
+		// Use protection summary totals instead of assuming affectedBookings is an array
+		const totalAffected = affectedBookings?.protection_summary?.total_affected_bookings ?? 0;
+
 		return NextResponse.json({
 			hasConflicts: conflicts.length > 0,
 			conflicts,
 			affectedBookings,
-			canProceed: conflicts.length === 0 && affectedBookings.length === 0
+			canProceed: conflicts.length === 0 && totalAffected === 0
 		});
 
 	} catch (error: any) {

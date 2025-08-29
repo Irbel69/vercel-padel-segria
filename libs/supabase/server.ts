@@ -37,3 +37,16 @@ export function createPublicClient() {
 		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 	);
 }
+
+// Service Role client for specific admin operations (bypasses RLS)
+// ONLY use for controlled operations like invite code validation
+export function createServiceClient() {
+	if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+		throw new Error("SUPABASE_SERVICE_ROLE_KEY is required for service operations");
+	}
+	
+	return createSupabaseClient(
+		process.env.NEXT_PUBLIC_SUPABASE_URL!,
+		process.env.SUPABASE_SERVICE_ROLE_KEY!
+	);
+}

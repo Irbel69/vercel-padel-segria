@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, ReactNode } from "react";
 import { X } from "lucide-react";
 import {
 	Dialog,
@@ -34,7 +34,7 @@ export function BookingDialog({
 	trigger,
 }: {
 	slotId: number;
-	trigger?: React.ReactNode;
+	trigger?: ReactNode;
 }) {
 	const [open, setOpen] = useState(false);
 	const isMobile = useIsMobile();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, CSSProperties } from "react";
 import { TopPlayersTicker } from "./TopPlayersTicker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -337,7 +337,7 @@ function HeaderBlock() {
 }
 
 // Shared styles objects
-const glassCardStyle: React.CSSProperties = {
+const glassCardStyle: CSSProperties = {
 	background: "rgba(255, 255, 255, 0.1)",
 	borderRadius: "20px",
 	boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
@@ -346,7 +346,7 @@ const glassCardStyle: React.CSSProperties = {
 	border: "1px solid rgba(255, 255, 255, 0.2)",
 };
 
-const bottomCtaStyle: React.CSSProperties = {
+const bottomCtaStyle: CSSProperties = {
 	background: "rgba(255, 255, 255, 0.1)",
 	borderRadius: "16px",
 	boxShadow: "0 4px 30px rgba(0, 0, 0, 0.2)",

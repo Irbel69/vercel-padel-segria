@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/libs/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/user/registrations - Obtener inscripciones del usuario actual
 export async function GET(request: NextRequest) {
 	try {
@@ -57,7 +59,7 @@ export async function GET(request: NextRequest) {
 			);
 		}
 
-		// Añadir información de participantes actuales para cada evento
+		// Añadir información de participantes actuales para cada evento y compañero
 		const registrationsWithDetails = await Promise.all(
 			(registrations || []).map(async (registration) => {
 				const { count: currentParticipants } = await supabase
@@ -66,12 +68,36 @@ export async function GET(request: NextRequest) {
 					.eq("event_id", registration.event_id)
 					.eq("status", "confirmed");
 
+				// Si hay pair_id, buscar información del compañero
+				let partner = null;
+				if (registration.pair_id) {
+					const { data: partnerReg } = await supabase
+						.from("registrations")
+						.select(`
+							user_id,
+							users!inner(
+								id,
+								name,
+								surname,
+								avatar_url
+							)
+						`)
+						.eq("pair_id", registration.pair_id)
+						.neq("user_id", user.id)
+						.single();
+
+					if (partnerReg && partnerReg.users) {
+						partner = partnerReg.users;
+					}
+				}
+
 				return {
 					...registration,
 					event: {
 						...registration.events,
 						current_participants: currentParticipants || 0,
 					},
+					partner,
 				};
 			})
 		);

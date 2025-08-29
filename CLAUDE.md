@@ -1,17 +1,8 @@
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Development Commands
-
-Essential commands for development:
-
-- `npm run dev` - Start Next.js development server
-- `npm run build` - Build the application
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm test` - Run Jest tests
-- `npm run test:security` - Run security tests
 
 ## Tech Stack & Architecture
 
@@ -27,7 +18,7 @@ This is a Next.js 14 App Router application with the following stack:
 
 ## Project Structure
 
-```
+
 app/                    # Next.js App Router pages
 ├── api/               # API routes
 ├── dashboard/         # Protected dashboard pages
@@ -40,6 +31,42 @@ components/            # React components
 ├── dashboard/        # Dashboard-specific components
 └── lessons/          # Lesson booking components
 
+## Important Development Notes
+
+- Development server is expected to be always running for frontend work. Do not attempt to start or restart the development server from automated agents or scripts; assume it is already running at http://localhost:3000 for visual validation and Playwright checks.
+
+## Components Folder Structure Rules (project-wide)
+
+Follow these mandatory rules when creating or modifying UI components:
+
+1. The `app/` folder contains only pages. Pages must remain short and minimal. All business/UI logic must be extracted into components.
+
+2. The `components/` folder (never inside `app/`) contains one folder per page or feature. Example layout:
+
+```
+components/
+	tournaments/
+		hooks/
+		ui/
+		README.md
+	hooks/
+	ui/
+	README.md
+```
+
+3. Inside each page’s components folder:
+	 - `hooks/`: custom hooks only (one hook per file).
+	 - `ui/`: visual components only (one component per file).
+	 - `README.md`: must exist and be updated with information about the folder's purpose and components.
+
+4. No mixing concerns: hooks and components must live in their respective subfolders. Keep files small and focused.
+
+5. README.md is mandatory for each page’s component folder and should be updated whenever changes are made.
+
+6. Use TypeScript and follow the project's styling and organization patterns (Tailwind CSS, shadcn/ui where applicable).
+
+These rules are adapted from the repository's internal development instructions and should be followed by contributors and automated agents working on the frontend.
+
 libs/                 # Core services and utilities
 ├── supabase/         # Supabase client configurations
 ├── api.ts           # API client
@@ -50,7 +77,7 @@ types/               # TypeScript type definitions
 hooks/               # Custom React hooks
 middleware.ts        # Security headers and CSP
 config.ts           # App configuration
-```
+
 
 ## Security Implementation
 
@@ -63,11 +90,11 @@ This app implements comprehensive security measures:
 
 Security headers are centralized in `middleware.ts`. For inline scripts, use the nonce from headers:
 
-```tsx
+tsx
 import { headers } from "next/headers";
 
 const nonce = headers().get("x-nonce") ?? undefined;
-```
+
 
 ## Database & API
 
