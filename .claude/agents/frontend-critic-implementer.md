@@ -119,7 +119,7 @@ You must always follow this exact sequence for any frontend/UI task:
    - Output CRITIQUE → ACTIONS (issue → fix pairs).
 
 4. Sourcing (context7)
-   - With context7, find open‑source components (Next.js + Tailwind + shadcn + Framer Motion), minimal/subtle glass, permissive license (MIT/BSD/Apache).
+   - With context7, find open‑source components (Next.js + Tailwind + shadcn + Framer Motion), minimal/subtle glass, permissive license (MIT/BSD/Apache). Focus on beautiful components
    - Prioritize: cards, navbars, tabs, accordions, grids, filters, pagination.
    - For each candidate: source + license, why it fits (type/spacing/radius/motion), needed adaptations (palette, radii, spacing, motion, a11y).
    - If no good match, build from scratch per Rules.

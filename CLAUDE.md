@@ -134,3 +134,200 @@ Required environment variables:
 - Security tests in `__tests__/security.test.ts`
 - Rate limiter tests in `__tests__/rate-limiter.test.ts`
 - Run `npm run test:security` for security validation
+
+## Comprehensive Analysis & Implementation Workflow
+
+This section defines a complete workflow for analyzing requirements, making implementation decisions, and automatically orchestrating specialized agents to execute the work.
+
+### Phase 1: Codebase Discovery & Analysis
+
+When receiving a new feature request or bug report, follow this systematic approach:
+
+1. **Codebase Scanning**
+   - Scan all files in `app/`, `components/`, `libs/`, `docs/`, and root-level files
+   - Index all README.md files for feature documentation
+   - Catalog existing API endpoints in `app/api/`
+   - Review database schema in `docs/db_schema.sql` and migration files
+   - Examine existing component patterns and hooks
+
+2. **Documentation Analysis**
+   - Search `docs/` for relevant design documents, migration plans, and API specifications
+   - Review feature-specific README.md files in component folders
+   - Check for existing similar implementations or patterns
+   - Identify security considerations and rate limiting requirements
+
+### Phase 2: Sequential Reasoning & Decision Making
+
+Use the sequential reasoning tool to systematically analyze the request:
+
+1. **Requirement Classification**
+   - Categorize as: feature enhancement, bug fix, refactor, or new feature
+   - Identify scope: frontend-only, backend-only, or fullstack
+   - Determine complexity: simple, moderate, or complex
+
+2. **Impact Analysis**
+   - **Frontend Impact**: Changes to components, pages, styling, or user interactions
+   - **Backend Impact**: API routes, database queries, authentication, or business logic
+   - **Database Impact**: Schema changes, migrations, new tables, or RLS policies
+   - **Security Impact**: Authentication flow, authorization, data validation, or CSP
+
+3. **Agent Requirements Decision Tree**
+   ```
+   IF frontend-impact OR UI/UX changes OR responsive design OR accessibility
+   THEN require frontend-critic-implementer agent
+   
+   IF database-impact OR schema changes OR RLS policies OR migrations
+   THEN require supabase-db-modifier agent
+   
+   IF complex fullstack feature OR architectural decisions OR multiple domains
+   THEN require app-architect agent as orchestrator
+   
+   IF general development OR single-domain tasks
+   THEN require general-purpose agent
+   ```
+
+4. **File Modification Planning**
+   - List specific files to be created, modified, or deleted
+   - Identify dependencies between changes
+   - Plan the sequence of modifications to avoid conflicts
+
+### Phase 3: Implementation Plan Generation
+
+Create a detailed implementation plan using this template structure:
+
+```markdown
+# Implementation Plan: [FEATURE_NAME]
+
+## Summary
+- **Type**: [feature/bug/refactor]
+- **Complexity**: [simple/moderate/complex]
+- **Estimated Time**: [hours/days]
+- **Agents Required**: [list of specialized agents]
+
+## Requirements Analysis
+- **Frontend Changes**: [yes/no with details]
+- **Backend Changes**: [yes/no with details]
+- **Database Changes**: [yes/no with details]
+- **Security Considerations**: [list any security implications]
+
+## Sequential Implementation Steps
+[Ordered list of implementation steps with agent assignments]
+
+## File Modification Plan
+- **Files to Create**: [list with reasons]
+- **Files to Modify**: [list with specific changes]
+- **Files to Delete**: [list with reasons]
+
+## Agent Task Breakdown
+[Detailed tasks for each specialized agent]
+
+## Acceptance Criteria
+[Specific criteria for completion verification]
+
+## Testing Strategy
+[Testing approach for the changes]
+
+## Risk Assessment
+[Potential risks and mitigation strategies]
+```
+
+### Phase 4: Implementation Plan Presentation
+
+1. **Plan Review**
+   - Present the complete implementation plan to the user
+   - Highlight key decisions, risks, and dependencies
+   - Request explicit approval before proceeding
+
+2. **User Approval Gate**
+   - Wait for explicit user confirmation: "APPROVED" or similar
+   - Address any questions or requested modifications
+   - Do not proceed without clear approval
+
+### Phase 5: Automated Agent Orchestration
+
+Once approved, automatically launch the required specialized agents:
+
+1. **Agent Coordination**
+   - Launch agents in the correct sequence based on dependencies
+   - Pass detailed task specifications to each agent
+   - Monitor progress and handle inter-agent communication
+
+2. **Quality Assurance**
+   - Run TypeScript compilation checks
+   - Execute relevant test suites
+   - Perform security validation
+   - Conduct Playwright tests for frontend changes
+
+3. **Documentation Updates**
+   - Update relevant README.md files
+   - Create or update migration documentation
+   - Update API documentation if applicable
+
+### Phase 6: Verification & Reporting
+
+1. **Change Validation**
+   - Verify all acceptance criteria are met
+   - Confirm no regressions were introduced
+   - Validate security measures remain intact
+
+2. **Implementation Summary**
+   - Generate a summary of all changes made
+   - List any remaining manual tasks
+   - Provide recommendations for follow-up work
+
+### Agent Task Templates
+
+#### Frontend-Critic-Implementer Tasks
+```markdown
+## Frontend Tasks for [AGENT_NAME]
+- [ ] Component analysis and improvement recommendations
+- [ ] UI/UX implementation with accessibility compliance
+- [ ] Responsive design verification across devices
+- [ ] Performance optimization for client-side code
+- [ ] Integration with existing design system
+- [ ] Playwright test creation and execution
+```
+
+#### Supabase-DB-Modifier Tasks
+```markdown
+## Database Tasks for [AGENT_NAME]
+- [ ] Schema design and migration creation
+- [ ] RLS policy implementation and testing
+- [ ] Database function and trigger setup
+- [ ] Data migration and validation scripts
+- [ ] Performance optimization for queries
+- [ ] Security audit of database changes
+```
+
+#### App-Architect Tasks
+```markdown
+## Architecture Tasks for [AGENT_NAME]
+- [ ] System design and component interaction planning
+- [ ] Cross-domain integration coordination
+- [ ] Performance and scalability analysis
+- [ ] Security architecture review
+- [ ] API design and endpoint planning
+- [ ] Testing strategy coordination across domains
+```
+
+### Implementation File Storage
+
+All implementation plans are stored in `claude/[FEATURE_NAME].md` with:
+- Timestamped creation and approval dates
+- Complete task breakdown for each agent
+- Progress tracking and completion status
+- Links to related documentation and resources
+
+### Emergency Procedures
+
+1. **Implementation Rollback**
+   - If critical issues arise, immediately halt agent execution
+   - Provide rollback instructions for any completed changes
+   - Create incident report with lessons learned
+
+2. **Agent Failure Handling**
+   - If an agent fails, assess impact on other agents
+   - Provide manual completion instructions
+   - Update implementation plan with alternative approaches
+
+This workflow ensures systematic, safe, and comprehensive implementation of features while maintaining code quality and security standards.
