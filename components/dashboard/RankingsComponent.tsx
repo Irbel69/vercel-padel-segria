@@ -25,7 +25,7 @@ interface RankingPlayer {
 	points: number;
 	matches_played: number;
 	matches_won: number;
-	recent_form?: ("W"|"L")[];
+	recent_form?: ("W" | "L" | "N")[];
 }
 
 export function RankingsComponent() {
@@ -58,16 +58,26 @@ export function RankingsComponent() {
 		fetchRankings();
 	}, []);
 
-	const renderRecentForm = (form: ("W"|"L")[] | undefined) => {
-		const items = (form ?? []).slice(0,5);
-		const placeholders = Array.from({ length: Math.max(0, 5 - items.length) });
+	const renderRecentForm = (form: ("W" | "L" | "N")[] | undefined) => {
+		const items = (form ?? []).slice(0, 5);
+		const placeholdersCount = Math.max(0, 5 - items.length);
+		const reversed = [...items].reverse();
 		return (
 			<div className="flex items-center justify-center gap-1">
-				{items.map((r, i) => (
-					<span key={i} className={`w-2.5 h-2.5 rounded-sm ${r === 'W' ? 'bg-green-500' : 'bg-red-500'}`} />
-				))}
-				{placeholders.map((_, i) => (
+				{Array.from({ length: placeholdersCount }).map((_, i) => (
 					<span key={`p-${i}`} className="w-2.5 h-2.5 rounded-sm bg-white/20" />
+				))}
+				{reversed.map((r, i) => (
+					<span
+						key={i}
+						className={`w-2.5 h-2.5 rounded-sm ${
+							r === "W"
+								? "bg-green-500"
+								: r === "L"
+								? "bg-red-500"
+								: "bg-gray-400"
+						}`}
+					/>
 				))}
 			</div>
 		);
@@ -127,7 +137,10 @@ export function RankingsComponent() {
 						</TabsList>
 
 						{/* Top Players Tab */}
-						<TabsContent value="top" className="space-y-6 animate-in fade-in duration-300" forceMount>
+						<TabsContent
+							value="top"
+							className="space-y-6 animate-in fade-in duration-300"
+							forceMount>
 							<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 								{getTopPlayers().map((player, index) => (
 									<Card
@@ -202,7 +215,10 @@ export function RankingsComponent() {
 						</TabsContent>
 
 						{/* All Players Tab */}
-						<TabsContent value="all" className="animate-in fade-in duration-300" forceMount>
+						<TabsContent
+							value="all"
+							className="animate-in fade-in duration-300"
+							forceMount>
 							<div className="rounded-md border border-white/10 overflow-hidden">
 								<Table>
 									<TableHeader className="bg-white/5">
