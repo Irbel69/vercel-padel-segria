@@ -246,12 +246,32 @@ export function AdminCalendarView({
 										<div className="flex items-center gap-1 justify-between">
 											<div className="flex items-center gap-1">
 												<Clock className="w-3 h-3" />
-												<span>
-													{new Date(slot.start_at).toLocaleTimeString([], {
+												{(() => {
+													const start = new Date(slot.start_at);
+													const end = new Date(slot.end_at);
+													const startTime = start.toLocaleTimeString([], {
 														hour: "2-digit",
 														minute: "2-digit",
-													})}
-												</span>
+													});
+													const durationMinutes = Math.round(
+														(end.getTime() - start.getTime()) / 60000
+													);
+													const durationLabel =
+														durationMinutes >= 60
+															? `${Math.floor(durationMinutes / 60)}h${
+																	durationMinutes % 60
+																		? ` ${durationMinutes % 60}m`
+																		: ""
+															  }`
+															: `${durationMinutes}m`;
+													return (
+														<div>
+															<span>
+																{startTime} · {durationLabel}
+															</span>
+														</div>
+													);
+												})()}
 											</div>
 											{typeof slot.participants_count === "number" && (
 												<div className="flex items-center gap-1 text-[11px]">

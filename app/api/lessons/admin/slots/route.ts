@@ -69,6 +69,15 @@ export async function GET(request: Request) {
 			participants_count: totalBooked,
 			joinable: !anyLocker,
 			lesson_bookings: undefined, // Remove the raw bookings data
+			// convenience: duration in minutes
+			duration_minutes:
+				slot.start_at && slot.end_at
+					? Math.round(
+							(new Date(slot.end_at).getTime() -
+								new Date(slot.start_at).getTime()) /
+								60000
+					  )
+					: undefined,
 		};
 	});
 

@@ -293,13 +293,23 @@ export default function UserCalendarView() {
 							// Desktop: show slot chips as before
 							<div className="space-y-1">
 								{day.slots.slice(0, 4).map((slot) => {
-									const timeLabel = new Date(slot.start_at).toLocaleTimeString(
-										[],
-										{
-											hour: "2-digit",
-											minute: "2-digit",
-										}
+									const start = new Date(slot.start_at);
+									const end = new Date(slot.end_at);
+									const startTime = start.toLocaleTimeString([], {
+										hour: "2-digit",
+										minute: "2-digit",
+									});
+									const durationMinutes = Math.round(
+										(end.getTime() - start.getTime()) / 60000
 									);
+									const durationLabel =
+										durationMinutes >= 60
+											? `${Math.floor(durationMinutes / 60)}h${
+													durationMinutes % 60
+														? ` ${durationMinutes % 60}m`
+														: ""
+											  }`
+											: `${durationMinutes}m`;
 									const isBookable = isSlotBookable(slot);
 									return (
 										<div key={slot.id} className="flex items-center gap-1">
@@ -312,12 +322,16 @@ export default function UserCalendarView() {
 																"w-full text-left text-xs p-1 rounded cursor-pointer transition-opacity hover:opacity-80",
 																getSlotStatusColor(slot)
 															)}
-															aria-label={`Apuntar-me ${timeLabel}`}
+															aria-label={`Apuntar-me ${startTime} · ${durationLabel}`}
 															onClick={(e) => e.stopPropagation()}>
 															<div className="flex items-center gap-1 justify-between">
 																<div className="flex items-center gap-1">
 																	<Clock className="w-3 h-3" />
-																	<span>{timeLabel}</span>
+																	<div>
+																		<span>
+																			{startTime} · {durationLabel}
+																		</span>
+																	</div>
 																</div>
 																{typeof slot.participants_count ===
 																	"number" && (
@@ -344,21 +358,28 @@ export default function UserCalendarView() {
 														{slot.user_booked ? (
 															<>
 																<Check className="w-3 h-3" />
-																<span>{timeLabel} · Reservada per tu</span>
+																<div>
+																	<div>
+																		{startTime} · {durationLabel} · Reservada
+																		per tu
+																	</div>
+																</div>
 															</>
 														) : (
 															<>
 																<Clock className="w-3 h-3" />
-																<span>
-																	{timeLabel} ·{" "}
-																	{isSlotLocked(slot) ||
-																	isSlotFull(slot) ||
-																	slot.status === "full"
-																		? "Complet"
-																		: slot.status === "cancelled"
-																		? "Cancel·lat"
-																		: "Tancat"}
-																</span>
+																<div>
+																	<div>
+																		{startTime} · {durationLabel} ·{" "}
+																		{isSlotLocked(slot) ||
+																		isSlotFull(slot) ||
+																		slot.status === "full"
+																			? "Complet"
+																			: slot.status === "cancelled"
+																			? "Cancel·lat"
+																			: "Tancat"}
+																	</div>
+																</div>
 															</>
 														)}
 														{typeof slot.participants_count === "number" && (

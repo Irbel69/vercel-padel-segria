@@ -140,10 +140,21 @@ export default function AdminDayPanel({
 									</div>
 								);
 							}
-							const timeLabel = `${item.start.toLocaleTimeString([], {
+							const start = item.start;
+							const end = item.end;
+							const startTime = start.toLocaleTimeString([], {
 								hour: "2-digit",
 								minute: "2-digit",
-							})}`;
+							});
+							const durationMinutes = Math.round(
+								(end.getTime() - start.getTime()) / 60000
+							);
+							const durationLabel =
+								durationMinutes >= 60
+									? `${Math.floor(durationMinutes / 60)}h${
+											durationMinutes % 60 ? ` ${durationMinutes % 60}m` : ""
+									  }`
+									: `${durationMinutes}m`;
 							const slot = item.slot;
 							return (
 								<button
@@ -159,7 +170,11 @@ export default function AdminDayPanel({
 									<div className="flex items-center gap-2 justify-between">
 										<div className="flex items-center gap-2">
 											<Clock className="w-4 h-4" />
-											<span>{timeLabel}</span>
+											<div>
+												<span>
+													{startTime} · {durationLabel}
+												</span>
+											</div>
 										</div>
 										{typeof slot.participants_count === "number" && (
 											<div className="flex items-center gap-1 text-xs">

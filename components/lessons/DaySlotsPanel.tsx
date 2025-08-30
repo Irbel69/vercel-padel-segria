@@ -93,10 +93,21 @@ export function DaySlotsPanel({
 						</div>
 					)}
 					{slots.map((slot) => {
-						const timeLabel = new Date(slot.start_at).toLocaleTimeString([], {
+						const start = new Date(slot.start_at);
+						const end = new Date(slot.end_at);
+						const startTime = start.toLocaleTimeString([], {
 							hour: "2-digit",
 							minute: "2-digit",
 						});
+						const durationMinutes = Math.round(
+							(end.getTime() - start.getTime()) / 60000
+						);
+						const durationLabel =
+							durationMinutes >= 60
+								? `${Math.floor(durationMinutes / 60)}h${
+										durationMinutes % 60 ? ` ${durationMinutes % 60}m` : ""
+								  }`
+								: `${durationMinutes}m`;
 						const isBookable = isSlotBookable(slot);
 						return (
 							<div key={slot.id} className="flex items-center gap-2">
@@ -109,12 +120,16 @@ export function DaySlotsPanel({
 													"w-full text-left text-sm p-2 rounded cursor-pointer transition-opacity hover:opacity-80",
 													statusColor(slot)
 												)}
-												aria-label={`Apuntar-me ${timeLabel}`}
+												aria-label={`Apuntar-me ${startTime} · ${durationLabel}`}
 												onClick={(e) => e.stopPropagation()}>
 												<div className="flex items-center gap-2 justify-between">
 													<div className="flex items-center gap-2">
 														<Clock className="w-4 h-4" />
-														<span>{timeLabel}</span>
+														<div>
+															<span>
+																{startTime} · {durationLabel}
+															</span>
+														</div>
 													</div>
 													{typeof slot.participants_count === "number" && (
 														<div className="flex items-center gap-1 text-xs">
@@ -140,19 +155,24 @@ export function DaySlotsPanel({
 												<>
 													<Check className="w-4 h-4" />
 													<span className="flex-1">
-														{timeLabel} · Reservada per tu
+														{startTime} · {durationLabel} · Reservada per tu
 													</span>
 												</>
 											) : (
 												<>
 													<Clock className="w-4 h-4" />
-													<span className="flex-1">
-														{timeLabel}
-														{(isSlotLocked(slot) ||
-															isSlotFull(slot) ||
-															slot.status === "full") &&
-															" · Complet"}
-													</span>
+													<div className="flex-1">
+														<div className="flex items-center justify-between">
+															<span>
+																{startTime} · {durationLabel}
+															</span>
+															{(isSlotLocked(slot) ||
+																isSlotFull(slot) ||
+																slot.status === "full") && (
+																<span className="ml-2">· Complet</span>
+															)}
+														</div>
+													</div>
 												</>
 											)}
 											{typeof slot.participants_count === "number" && (

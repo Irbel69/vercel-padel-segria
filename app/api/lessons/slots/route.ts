@@ -57,11 +57,18 @@ export async function GET(request: Request) {
 		);
 		const anyLocker = active.some((b: any) => b.allow_fill === false);
 		const { lesson_bookings, ...rest } = slot;
+		const start = new Date(rest.start_at);
+		const end = new Date(rest.end_at);
+		const duration_minutes =
+			Number.isFinite(start.getTime()) && Number.isFinite(end.getTime())
+				? Math.round((end.getTime() - start.getTime()) / 60000)
+				: undefined;
 		return {
 			...rest,
 			participants_count: participants,
 			// joinable is true when no active booking disallows fill
 			joinable: !anyLocker,
+			duration_minutes,
 		};
 	});
 
