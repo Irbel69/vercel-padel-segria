@@ -87,7 +87,6 @@ export async function POST(request: Request) {
 							max_capacity: 4,
 							location: r.location || "Soses",
 							status: "open",
-							joinable: true,
 							created_from_rule_id: r.id,
 						})
 						.select("*")

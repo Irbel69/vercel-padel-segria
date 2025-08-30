@@ -19,9 +19,33 @@ export interface DaySlotsSheetProps {
 	slots: LessonSlot[];
 }
 
+function isSlotFull(slot: LessonSlot) {
+	return (
+		(typeof slot.participants_count === "number"
+			? slot.participants_count
+			: 0) >= (slot.max_capacity || 0)
+	);
+}
+
+function isSlotLocked(slot: LessonSlot) {
+	return slot.joinable === false;
+}
+
+function isSlotBookable(slot: LessonSlot) {
+	return (
+		slot.status === "open" &&
+		!slot.user_booked &&
+		!isSlotLocked(slot) &&
+		!isSlotFull(slot)
+	);
+}
+
 function statusColor(slot: LessonSlot) {
 	if (slot.user_booked)
 		return "bg-blue-500/30 text-blue-200 ring-1 ring-blue-400/40";
+	// Locked or capacity reached visually as full
+	if (isSlotLocked(slot) || isSlotFull(slot))
+		return "bg-yellow-500/20 text-yellow-300";
 	switch (slot.status) {
 		case "open":
 			return "bg-green-500/20 text-green-300";
@@ -67,11 +91,22 @@ export function DaySlotsSheet({
 						</div>
 					)}
 					{slots.map((slot) => {
-						const timeLabel = new Date(slot.start_at).toLocaleTimeString([], {
+						const start = new Date(slot.start_at);
+						const end = new Date(slot.end_at);
+						const startTime = start.toLocaleTimeString([], {
 							hour: "2-digit",
 							minute: "2-digit",
 						});
-						const isBookable = slot.status === "open" && !slot.user_booked;
+						const durationMinutes = Math.round(
+							(end.getTime() - start.getTime()) / 60000
+						);
+						const durationLabel =
+							durationMinutes >= 60
+								? `${Math.floor(durationMinutes / 60)}h${
+										durationMinutes % 60 ? ` ${durationMinutes % 60}m` : ""
+								  }`
+								: `${durationMinutes}m`;
+						const isBookable = isSlotBookable(slot);
 						return (
 							<div key={slot.id} className="flex items-center gap-2">
 								{isBookable ? (
@@ -83,11 +118,15 @@ export function DaySlotsSheet({
 													"w-full text-left text-sm p-2 rounded cursor-pointer transition-opacity hover:opacity-80",
 													statusColor(slot)
 												)}
-												aria-label={`Apuntar-me ${timeLabel}`}>
+												aria-label={`Apuntar-me ${startTime} · ${durationLabel}`}>
 												<div className="flex items-center gap-2 justify-between">
 													<div className="flex items-center gap-2">
 														<Clock className="w-4 h-4" />
-														<span>{timeLabel}</span>
+														<div>
+															<span>
+																{startTime} · {durationLabel}
+															</span>
+														</div>
 													</div>
 													{typeof slot.participants_count === "number" && (
 														<div className="flex items-center gap-1 text-xs">
@@ -112,13 +151,24 @@ export function DaySlotsSheet({
 												<>
 													<Check className="w-4 h-4" />
 													<span className="flex-1">
-														{timeLabel} · Reservada per tu
+														{startTime} · {durationLabel} · Reservada per tu
 													</span>
 												</>
 											) : (
 												<>
 													<Clock className="w-4 h-4" />
-													<span className="flex-1">{timeLabel}</span>
+													<div className="flex-1">
+														<div className="flex items-center justify-between">
+															<span>
+																{startTime} · {durationLabel}
+															</span>
+															{(isSlotLocked(slot) ||
+																isSlotFull(slot) ||
+																slot.status === "full") && (
+																<span className="ml-2">· Complet</span>
+															)}
+														</div>
+													</div>
 												</>
 											)}
 											{typeof slot.participants_count === "number" && (

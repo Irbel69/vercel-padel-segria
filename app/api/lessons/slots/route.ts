@@ -13,8 +13,8 @@ export async function GET(request: Request) {
 		.from("lesson_slots")
 		.select(
 			`
-			id,start_at,end_at,max_capacity,location,status,joinable,
-			lesson_bookings!left ( status, group_size )
+			id,start_at,end_at,max_capacity,location,status,
+			lesson_bookings!left ( status, group_size, allow_fill )
 		`
 		)
 		.order("start_at", { ascending: true });
@@ -46,7 +46,7 @@ export async function GET(request: Request) {
 		return NextResponse.json({ error: error.message }, { status: 500 });
 	}
 
-	// Compute participants_count and strip raw bookings
+	// Compute participants_count and derived joinable, then strip raw bookings
 	const slots = (rawSlots || []).map((slot: any) => {
 		const active = (slot.lesson_bookings || []).filter(
 			(b: any) => b.status !== "cancelled"
@@ -55,8 +55,29 @@ export async function GET(request: Request) {
 			(sum: number, b: any) => sum + (b.group_size || 0),
 			0
 		);
+		const anyLocker = active.some((b: any) => b.allow_fill === false);
+		// Derive allow_fill_policy: if there are active bookings and all share same allow_fill, expose it; else null
+		let allow_fill_policy: boolean | null = null;
+		if (active.length > 0) {
+			const first = Boolean(active[0].allow_fill);
+			const uniform = active.every((b: any) => Boolean(b.allow_fill) === first);
+			allow_fill_policy = uniform ? first : null;
+		}
 		const { lesson_bookings, ...rest } = slot;
-		return { ...rest, participants_count: participants };
+		const start = new Date(rest.start_at);
+		const end = new Date(rest.end_at);
+		const duration_minutes =
+			Number.isFinite(start.getTime()) && Number.isFinite(end.getTime())
+				? Math.round((end.getTime() - start.getTime()) / 60000)
+				: undefined;
+		return {
+			...rest,
+			participants_count: participants,
+			// joinable is true when no active booking disallows fill
+			joinable: !anyLocker,
+			allow_fill_policy,
+			duration_minutes,
+		};
 	});
 
 	// Try to annotate with user_booked flag if authenticated

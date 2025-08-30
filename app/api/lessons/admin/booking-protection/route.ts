@@ -125,25 +125,24 @@ export async function POST(request: Request) {
 		);
 
 		// Categorize bookings by protection level
+		// Only 'confirmed' and 'cancelled' statuses exist now; treat confirmed as protected
 		const protectedBookings = filteredBookings.filter(
-			(booking) => booking.status === "confirmed" || booking.status === "paid"
+			(booking) => booking.status === "confirmed"
 		);
 
-		const modifiableBookings = filteredBookings.filter(
-			(booking) => booking.status === "pending"
-		);
+		const modifiableBookings: typeof filteredBookings = [];
 
 		// Calculate protection summary
 		const protectionSummary = {
 			total_affected_bookings: filteredBookings.length,
 			protected_bookings: protectedBookings.length,
-			modifiable_bookings: modifiableBookings.length,
+			modifiable_bookings: 0,
 			total_affected_participants: filteredBookings.reduce(
 				(sum, booking) => sum + (booking.group_size || 0),
 				0
 			),
 			can_proceed_safely: protectedBookings.length === 0,
-			requires_notification: modifiableBookings.length > 0,
+			requires_notification: false,
 		};
 
 		// Group bookings by date for easier understanding

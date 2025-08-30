@@ -23,7 +23,7 @@ export async function GET(request: Request) {
 		.select(
 			`
 			id, status, group_size, created_at,
-			slot:slot_id!inner(id,start_at,end_at,location,status,joinable)
+			slot:slot_id!inner(id,start_at,end_at,location,status)
 		`
 		)
 		.eq("user_id", user.id)

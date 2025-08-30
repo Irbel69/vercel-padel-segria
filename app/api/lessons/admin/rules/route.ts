@@ -181,7 +181,6 @@ async function generateSlotsForRule(supabase: any, rule: any) {
 						max_capacity: 4,
 						location: rule.location || "Soses",
 						status: "open",
-						joinable: true,
 						created_from_rule_id: rule.id,
 					})
 				);
