@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, ReactNode } from "react";
+import { useState, useEffect, ReactNode } from "react";
+import { useUser } from "@/hooks/use-user";
 import { X } from "lucide-react";
 import {
 	Dialog,
@@ -41,7 +42,24 @@ export function BookingDialog({
 	const [groupSize, setGroupSize] = useState<1 | 2 | 3 | 4>(1);
 	const [allowFill, setAllowFill] = useState(true);
 	const [paymentType, setPaymentType] = useState<PaymentType>("cash");
-	const [primaryName, setPrimaryName] = useState("");
+	const { profile } = useUser();
+
+	// synchronous cached profile for immediate UI fill (set by EnsureUser on page load)
+	let parsedCache: { name?: string; surname?: string } | null = null;
+	if (typeof window !== "undefined") {
+		try {
+			const raw = localStorage.getItem("ps_profile_cache");
+			parsedCache = raw ? JSON.parse(raw) : null;
+		} catch (e) {
+			parsedCache = null;
+		}
+	}
+
+	const firstName = profile?.name ?? parsedCache?.name ?? "";
+	const lastName = profile?.surname ?? parsedCache?.surname ?? "";
+	const computedPrimaryName = `${firstName}${
+		lastName ? ` ${lastName}` : ""
+	}`.trim();
 	const [participants, setParticipants] = useState<string[]>([]);
 	const [observations, setObservations] = useState("");
 	const [dd, setDd] = useState({
@@ -63,7 +81,7 @@ export function BookingDialog({
 			allow_fill: allowFill,
 			payment_type: paymentType,
 			observations,
-			primary_name: primaryName || undefined,
+			// primary_name intentionally omitted: server derives name from authenticated user
 			participants: participants.filter(Boolean),
 			direct_debit: paymentType === "direct_debit" ? dd : undefined,
 		};
@@ -118,9 +136,6 @@ export function BookingDialog({
 					onClick={(e) => e.stopPropagation()}>
 					<div className="flex items-center justify-between">
 						<h3 className="text-lg font-semibold">Reserva de classe</h3>
-						<SheetClose asChild>
-							<Button variant="ghost">Tancar</Button>
-						</SheetClose>
 					</div>
 
 					<div className="mt-4 space-y-4">
@@ -213,8 +228,8 @@ export function BookingDialog({
 							<label className="text-sm text-white/80">Nom del titular</label>
 							<Input
 								placeholder="El teu nom"
-								value={primaryName}
-								onChange={(e) => setPrimaryName(e.target.value)}
+								value={computedPrimaryName}
+								readOnly
 							/>
 						</div>
 
@@ -239,12 +254,11 @@ export function BookingDialog({
 						{error && <p className="text-red-400 text-sm">{error}</p>}
 
 						<div className="flex justify-end gap-2">
-							<Button
-								variant="ghost"
-								onClick={() => setOpen(false)}
-								disabled={submitting}>
-								Cancel·lar
-							</Button>
+							<SheetClose asChild>
+								<Button variant="ghost" disabled={submitting}>
+									Cancel·lar
+								</Button>
+							</SheetClose>
 							<Button onClick={handleSubmit} disabled={submitting}>
 								{submitting ? "Processant..." : "Confirmar reserva"}
 							</Button>
@@ -267,14 +281,6 @@ export function BookingDialog({
 				onPointerDown={(e) => e.stopPropagation()}
 				onClick={(e) => e.stopPropagation()}>
 				{/* Explicit close button that guarantees the dialog state is updated */}
-				<button
-					type="button"
-					aria-label="Tancar"
-					onClick={() => setOpen(false)}
-					className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
-					<X className="h-4 w-4" />
-					<span className="sr-only">Tancar</span>
-				</button>
 				<DialogHeader>
 					<DialogTitle>Reserva de classe</DialogTitle>
 				</DialogHeader>
@@ -367,8 +373,8 @@ export function BookingDialog({
 						<label className="text-sm text-white/80">Nom del titular</label>
 						<Input
 							placeholder="El teu nom"
-							value={primaryName}
-							onChange={(e) => setPrimaryName(e.target.value)}
+							value={computedPrimaryName}
+							readOnly
 						/>
 					</div>
 
