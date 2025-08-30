@@ -11,6 +11,7 @@ export default function ResetPasswordPage() {
   const router = useRouter();
 
   const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [ok, setOk] = useState(false);
 
@@ -52,6 +53,11 @@ export default function ResetPasswordPage() {
     e?.preventDefault();
     if (!password || password.length < 6) {
       toast.error("La contrasenya ha de tenir almenys 6 caràcters.");
+      return;
+    }
+
+    if (password !== passwordConfirm) {
+      toast.error("Les contrasenyes no coincideixen.");
       return;
     }
 
@@ -97,9 +103,24 @@ export default function ResetPasswordPage() {
           </div>
 
           <div>
+            <label className="block text-sm text-white/70 mb-2">Repeteix la contrasenya</label>
+            <input
+              type="password"
+              className="w-full py-2 px-3 rounded-md bg-white/5 border border-white/10 text-white"
+              value={passwordConfirm}
+              onChange={(e) => setPasswordConfirm(e.target.value)}
+              minLength={6}
+              required
+            />
+            {passwordConfirm && password !== passwordConfirm ? (
+              <p className="text-xs text-rose-400 mt-1">Les contrasenyes no coincideixen.</p>
+            ) : null}
+          </div>
+
+          <div>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || password !== passwordConfirm}
               className="w-full py-2 px-3 rounded-md bg-[#c3fb12] text-black font-bold">
               {loading ? "Actualitzant..." : "Actualitzar contrasenya"}
             </button>
