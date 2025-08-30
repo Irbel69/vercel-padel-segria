@@ -81,7 +81,8 @@ const ClientLayout = ({ children, nonce }: { children: ReactNode; nonce?: string
       {/* Show Success/Error messages anywhere from the app with toast() (react-hot-toast) */}
       <HotToaster
         toastOptions={{
-          duration: 3000,
+          // Increase default duration to 8 seconds so users have time to read messages
+          duration: 8000,
         }}
       />
 

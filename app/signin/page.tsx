@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/libs/supabase/client";
 import { Provider } from "@supabase/supabase-js";
 import toast from "react-hot-toast";
@@ -13,7 +14,10 @@ import AnimatedDottedBackground from "@/components/AnimatedDottedBackground";
 // Successful login redirects to /api/auth/callback where the Code Exchange is processed
 export default function Login() {
 	const supabase = createClient();
+	const router = useRouter();
 	const [email, setEmail] = useState<string>("");
+	const [password, setPassword] = useState<string>("");
+	const [showPassword, setShowPassword] = useState<boolean>(false);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [isDisabled, setIsDisabled] = useState<boolean>(false);
 
@@ -31,6 +35,8 @@ export default function Login() {
 		try {
 			const { type, provider } = options;
 			const redirectURL = window.location.origin + "/api/auth/callback";
+			// Use a dedicated reset redirect so reset emails land on the reset page
+			const resetRedirect = window.location.origin + "/reset-password";
 
 			if (type === "oauth") {
 				await supabase.auth.signInWithOAuth({
@@ -42,18 +48,110 @@ export default function Login() {
 			} else if (type === "magic_link") {
 				await supabase.auth.signInWithOtp({
 					email,
-					options: {
-						emailRedirectTo: redirectURL,
-					},
+					options: ({ emailRedirectTo: redirectURL } as any),
 				});
 
 				toast.success("Revisa el teu correu electrònic!");
 
 				setIsDisabled(true);
+			} else if (type === "password") {
+				// Basic client-side validation
+				if (!email) {
+					toast.error("Introdueix un correu electrònic vàlid.");
+					return;
+				}
+
+				if (!password || password.length < 6) {
+					toast.error("La contrasenya ha de tenir almenys 6 caràcters.");
+					return;
+				}
+
+				// Try sign in first, if user doesn't exist try sign up
+				const signInRes = await supabase.auth.signInWithPassword({
+					email,
+					password,
+				});
+
+				if (signInRes.error) {
+					const msg = (signInRes.error.message || "").toLowerCase();
+					// If user not found -> optionally create account
+					if (/user not found|no user|not found/.test(msg) || signInRes.error.status === 404) {
+						// Optional: create new user with password
+						const signUpRes = await supabase.auth.signUp({ email, password, options: ( { emailRedirectTo: redirectURL } as any ) });
+						if (signUpRes.error) {
+							throw signUpRes.error;
+						}
+						toast.success("Compte creat. Revisa el teu correu per verificar!");
+						setIsDisabled(true);
+					} else if (/invalid login|incorrect password|password/i.test(msg) || signInRes.error.status === 400) {
+						// Wrong password case: check whether the account exists and whether it has a password set.
+						try {
+							const res = await fetch('/api/auth/check-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+							if (!res.ok) {
+								// Do not fallback to creating account if the check endpoint failed — show error instead
+								const errBody = await res.text().catch(() => null);
+								console.error('check-password failed', res.status, errBody);
+								toast.error('Error verificant l\'usuari. Torna-ho a provar més tard.');
+								return;
+							}
+							const info = await res.json();
+							// If user exists but has no password (likely OAuth or magic-link account without password), send reset email to let user set one
+							if (info.exists && !info.has_password) {
+								await supabase.auth.resetPasswordForEmail(email, ({ redirectTo: resetRedirect } as any));
+								toast("Sembla que el teu compte no té contrasenya. T'hem enviat un correu per crear-la.");
+							} else if (info.exists && info.has_password) {
+								// The user exists and has a password: show incorrect password error
+								toast.error('Contrasenya incorrecta. Torna-ho a provar.');
+							} else {
+								// User doesn't exist (explicit) - offer to create
+								const signUpRes = await supabase.auth.signUp({ email, password, options: ( { emailRedirectTo: redirectURL } as any ) });
+								if (signUpRes.error) throw signUpRes.error;
+								toast.success("Compte creat. Revisa el teu correu per verificar!");
+								setIsDisabled(true);
+							}
+						} catch (err) {
+							console.error('Error checking password existence', err);
+							// Fallback: show generic error
+							toast.error('Hi ha hagut un error. Torna-ho a provar.');
+						}
+					} else {
+						throw signInRes.error;
+					}
+				} else {
+					toast.success("Has iniciat sessió correctament.");
+					// For password sign-in we redirect the user to the dashboard immediately
+					try {
+						router.push("/dashboard");
+					} catch (err) {
+						// fallback
+						window.location.href = "/dashboard";
+					}
+				}
 			}
 		} catch (error) {
 			console.log(error);
 			toast.error("Hi ha hagut un error. Torna-ho a provar.");
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	const handleResetPassword = async (e?: any) => {
+		e?.preventDefault();
+		if (!email) {
+			toast.error("Introdueix el teu correu per restablir la contrasenya.");
+			return;
+		}
+
+		setIsLoading(true);
+		try {
+			const { data, error } = await supabase.auth.resetPasswordForEmail(email, ({ redirectTo: window.location.origin + "/reset-password" } as any));
+
+			if (error) throw error;
+			toast.success("S'ha enviat un correu per restablir la contrasenya.");
+		} catch (err) {
+			console.error(err);
+			toast.error("No s'ha pogut enviar el correu de restabliment.");
 		} finally {
 			setIsLoading(false);
 		}
@@ -93,15 +191,15 @@ export default function Login() {
 					</div>
 
 					{/* Logo */}
-					<div className="flex justify-center mb-6">
+					<div className="flex justify-center mb-4 md:mb-6">
 						<div className="relative">
 							<div className="absolute inset-0 bg-[#c3fb12]/30 rounded-full blur-md" />
 							<Image
 								src="/logo_yellow.png"
 								alt={config.appName}
-								width={80}
-								height={80}
-								className="relative"
+								width={64}
+								height={64}
+								className="relative md:w-20 md:h-20"
 							/>
 						</div>
 					</div>
@@ -119,12 +217,12 @@ export default function Login() {
 
 					{/* Login card */}
 					<div
-						className="rounded-2xl p-6 md:p-8"
+						className="rounded-2xl p-4 md:p-8 max-h-[calc(100vh-120px)] md:max-h-[calc(100vh-160px)] overflow-y-auto"
 						style={{
 							background: "rgba(255, 255, 255, 0.05)",
 							backdropFilter: "blur(10px)",
 							border: "1px solid rgba(255, 255, 255, 0.1)",
-							boxShadow: "0 15px 35px rgba(0, 0, 0, 0.2)",
+							boxShadow: "0 8px 20px rgba(0, 0, 0, 0.2)",
 						}}>
 						{/* Social login */}
 						<button
@@ -177,10 +275,10 @@ export default function Login() {
 							</div>
 						</div>
 
-						{/* Magic link form */}
-						<form
-							className="space-y-4"
-							onSubmit={(e) => handleSignup(e, { type: "magic_link" })}>
+						{/* Auth form (magic link or password) */}
+							<form
+								className="space-y-4"
+								onSubmit={(e) => handleSignup(e, { type: showPassword && password.trim().length > 0 ? "password" : "magic_link" })}>
 							<div>
 								<label
 									htmlFor="email"
@@ -195,9 +293,30 @@ export default function Login() {
 									autoComplete="email"
 									placeholder="exemple@correu.com"
 									className="w-full py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#c3fb12]/50"
-									onChange={(e) => setEmail(e.target.value)}
+									onChange={(e) => {
+										const v = e.target.value;
+										setEmail(v);
+										const simpleEmail = /\S+@\S+\.\S+/;
+										// show password input automatically when email looks valid
+										setShowPassword(simpleEmail.test(v));
+									}}
 								/>
 							</div>
+
+							{showPassword && (
+								<div>
+									<label htmlFor="password" className="block text-sm font-medium text-white/70 mb-2">Contrasenya</label>
+									<input
+										id="password"
+										type="password"
+										value={password}
+										autoComplete="current-password"
+										placeholder="La teva contrasenya (Opcional)"
+										className="w-full py-3 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#c3fb12]/50"
+										onChange={(e) => setPassword(e.target.value)}
+									/>
+								</div>
+							)}
 
 							<button
 								className="w-full py-3 px-4 rounded-xl font-bold text-black transition-all transform hover:scale-105 disabled:opacity-70 disabled:hover:scale-100"
@@ -211,16 +330,26 @@ export default function Login() {
 									<div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin mx-auto" />
 								) : isDisabled ? (
 									"Enllaç enviat!"
+								) : showPassword && password.trim().length > 0 ? (
+									"Inicia sessió amb contrasenya"
 								) : (
 									"Envia'm un enllaç màgic"
 								)}
 							</button>
+
+								{password.trim().length > 0 && (
+									<div className="flex justify-between items-center mt-2">
+										<button type="button" onClick={handleResetPassword} className="text-xs text-white/60 hover:text-white underline">
+											Has oblidat la contrasenya?
+										</button>
+									</div>
+								)}
 						</form>
 
 						{/* Help text */}
 						<p className="mt-6 text-xs text-center text-white/40">
-							Rebràs un correu amb un enllaç d&apos;accés. <br />
-							No es requereix contrasenya.
+							Si només introdueixes el correu, t'enviarem un enllaç màgic per accedir. <br />
+							Si completes la contrasenya, s'intentarà iniciar sessió amb ella (o crear compte si no existeix).
 						</p>
 					</div>
 				</div>

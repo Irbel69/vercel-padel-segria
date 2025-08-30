@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -73,7 +74,7 @@ export default function HeroSection() {
 								asChild
 								size="lg"
 								className="bg-padel-primary text-padel-secondary hover:bg-padel-primary/90 hover:text-white transition-all duration-300 px-10 py-7 text-xl font-semibold rounded-2xl transform hover:scale-105 shadow-lg hover:shadow-xl">
-								<a href="/dashboard">Uneix-te!</a>
+								<Link href="/dashboard">Uneix-te!</Link>
 							</Button>
 						</div>
 					</div>
