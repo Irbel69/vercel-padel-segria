@@ -1,13 +1,19 @@
 export const dynamic = "force-dynamic";
 import UserCalendarView from "@/components/lessons/UserCalendarView";
 import UpcomingBookingsList from "@/components/lessons/UpcomingBookingsList";
+import LessonsHeader from "@/components/lessons/LessonsHeader";
+import EnsureUser from "@/components/EnsureUser";
 
 export default function LessonsPage() {
 	return (
-		<div className="space-y-4 overflow-x-hidden">
-			<h1 className="text-2xl font-bold text-white">Classes</h1>
+		<div className="space-y-4 md:space-y-6 overflow-x-hidden">
+			{/* Ensure profile is requested on page hydration so BookingDialog can use it */}
+			<EnsureUser />
+			<LessonsHeader title="Classes" subtitle="Selecciona un dia" />
+
 			<UserCalendarView />
-			<div className="mt-6">
+
+			<div className="mt-2 md:mt-4">
 				<h2 className="text-lg font-semibold text-white mb-2">
 					Les meves reserves
 				</h2>

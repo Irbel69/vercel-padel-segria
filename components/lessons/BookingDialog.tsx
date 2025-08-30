@@ -1,6 +1,7 @@
 "use client";
 
-import { useState,ReactNode } from "react";
+import { useState, useEffect, ReactNode } from "react";
+import { useUser } from "@/hooks/use-user";
 import {
 	Dialog,
 	DialogContent,
@@ -26,21 +27,48 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import type { CreateBookingPayload, PaymentType } from "@/types/lessons";
+import type {
+	CreateBookingPayload,
+	PaymentType,
+	LessonSlotStatus,
+} from "@/types/lessons";
 
 export function BookingDialog({
 	slotId,
 	trigger,
+	slotParticipantsCount = 0,
+	allowFillPolicy = null,
+	slotStatus,
 }: {
 	slotId: number;
 	trigger?: ReactNode;
+	slotParticipantsCount?: number;
+	allowFillPolicy?: boolean | null;
+	slotStatus?: LessonSlotStatus;
 }) {
 	const [open, setOpen] = useState(false);
 	const isMobile = useIsMobile();
 	const [groupSize, setGroupSize] = useState<1 | 2 | 3 | 4>(1);
 	const [allowFill, setAllowFill] = useState(true);
 	const [paymentType, setPaymentType] = useState<PaymentType>("cash");
-	const [primaryName, setPrimaryName] = useState("");
+	const { profile } = useUser();
+
+	// cached profile for immediate UI fill
+	let parsedCache: { name?: string; surname?: string } | null = null;
+	if (typeof window !== "undefined") {
+		try {
+			const raw = localStorage.getItem("ps_profile_cache");
+			parsedCache = raw ? JSON.parse(raw) : null;
+		} catch {
+			parsedCache = null;
+		}
+	}
+
+	const firstName = profile?.name ?? parsedCache?.name ?? "";
+	const lastName = profile?.surname ?? parsedCache?.surname ?? "";
+	const computedPrimaryName = `${firstName}${
+		lastName ? ` ${lastName}` : ""
+	}`.trim();
 	const [participants, setParticipants] = useState<string[]>([]);
 	const [observations, setObservations] = useState("");
 	const [dd, setDd] = useState({
@@ -53,16 +81,34 @@ export function BookingDialog({
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
+	const isFirst = (slotParticipantsCount || 0) === 0;
+	// Business rule requested: if slot has participants and status is open, force checkbox to checked+disabled for non-first users
+	const forceCheckedAndDisabled =
+		(slotParticipantsCount || 0) > 0 && slotStatus === "open";
+
+	const effectiveAllowFill = isFirst
+		? allowFill
+		: forceCheckedAndDisabled
+		? true
+		: Boolean(allowFillPolicy);
+
+	useEffect(() => {
+		if (forceCheckedAndDisabled) {
+			setAllowFill(true);
+		} else if (!isFirst && allowFillPolicy !== null) {
+			setAllowFill(Boolean(allowFillPolicy));
+		}
+	}, [isFirst, allowFillPolicy, forceCheckedAndDisabled]);
+
 	const handleSubmit = async () => {
 		setSubmitting(true);
 		setError(null);
 		const payload: CreateBookingPayload = {
 			slot_id: slotId,
 			group_size: groupSize,
-			allow_fill: allowFill,
+			allow_fill: effectiveAllowFill,
 			payment_type: paymentType,
 			observations,
-			primary_name: primaryName || undefined,
 			participants: participants.filter(Boolean),
 			direct_debit: paymentType === "direct_debit" ? dd : undefined,
 		};
@@ -79,6 +125,9 @@ export function BookingDialog({
 		}
 		setSubmitting(false);
 		setOpen(false);
+		try {
+			window.dispatchEvent(new CustomEvent("lesson:booked"));
+		} catch {}
 	};
 
 	const extraCount = groupSize - 1;
@@ -99,17 +148,17 @@ export function BookingDialog({
 	if (isMobile) {
 		return (
 			<Sheet>
-				<SheetTrigger asChild>{trigger ?? <Button variant="default">Apuntar-me</Button>}</SheetTrigger>
+				<SheetTrigger asChild>
+					{trigger ?? <Button variant="default">Apuntar-me</Button>}
+				</SheetTrigger>
 				<SheetContent
 					side="bottom"
 					className="inset-0 h-[100dvh] max-h-[100dvh] overflow-y-auto p-6"
-					style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}
-				>
+					style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
+					onPointerDown={(e) => e.stopPropagation()}
+					onClick={(e) => e.stopPropagation()}>
 					<div className="flex items-center justify-between">
 						<h3 className="text-lg font-semibold">Reserva de classe</h3>
-						<SheetClose asChild>
-							<Button variant="ghost">Tancar</Button>
-						</SheetClose>
 					</div>
 
 					<div className="mt-4 space-y-4">
@@ -133,8 +182,18 @@ export function BookingDialog({
 						<div className="flex items-center space-x-2">
 							<Checkbox
 								id="allowFill"
-								checked={allowFill}
-								onCheckedChange={(v) => setAllowFill(Boolean(v))}
+								checked={
+									forceCheckedAndDisabled
+										? true
+										: isFirst
+										? allowFill
+										: Boolean(allowFillPolicy)
+								}
+								disabled={forceCheckedAndDisabled || !isFirst}
+								onCheckedChange={(v) => {
+									if (!forceCheckedAndDisabled && isFirst)
+										setAllowFill(Boolean(v));
+								}}
 							/>
 							<label htmlFor="allowFill" className="text-sm text-white/80">
 								Permetre completar la classe amb altres persones
@@ -167,7 +226,9 @@ export function BookingDialog({
 								<Input
 									placeholder="Nom del titular"
 									value={dd.holder_name}
-									onChange={(e) => setDd({ ...dd, holder_name: e.target.value })}
+									onChange={(e) =>
+										setDd({ ...dd, holder_name: e.target.value })
+									}
 								/>
 								<Input
 									placeholder="Adreça"
@@ -200,14 +261,16 @@ export function BookingDialog({
 							<label className="text-sm text-white/80">Nom del titular</label>
 							<Input
 								placeholder="El teu nom"
-								value={primaryName}
-								onChange={(e) => setPrimaryName(e.target.value)}
+								value={computedPrimaryName}
+								readOnly
 							/>
 						</div>
 
 						{extraInputs.length > 0 && (
 							<div className="space-y-2">
-								<label className="text-sm text-white/80">Noms addicionals</label>
+								<label className="text-sm text-white/80">
+									Noms addicionals
+								</label>
 								<div className="grid gap-2">{extraInputs}</div>
 							</div>
 						)}
@@ -224,12 +287,11 @@ export function BookingDialog({
 						{error && <p className="text-red-400 text-sm">{error}</p>}
 
 						<div className="flex justify-end gap-2">
-							<Button
-								variant="ghost"
-								onClick={() => setOpen(false)}
-								disabled={submitting}>
-								Cancel·lar
-							</Button>
+							<SheetClose asChild>
+								<Button variant="ghost" disabled={submitting}>
+									Cancel·lar
+								</Button>
+							</SheetClose>
 							<Button onClick={handleSubmit} disabled={submitting}>
 								{submitting ? "Processant..." : "Confirmar reserva"}
 							</Button>
@@ -246,7 +308,10 @@ export function BookingDialog({
 			<DialogTrigger asChild>
 				{trigger ?? <Button variant="default">Apuntar-me</Button>}
 			</DialogTrigger>
-			<DialogContent className="max-w-lg">
+			<DialogContent
+				className="max-w-lg"
+				onPointerDown={(e) => e.stopPropagation()}
+				onClick={(e) => e.stopPropagation()}>
 				<DialogHeader>
 					<DialogTitle>Reserva de classe</DialogTitle>
 				</DialogHeader>
@@ -272,8 +337,18 @@ export function BookingDialog({
 					<div className="flex items-center space-x-2">
 						<Checkbox
 							id="allowFill"
-							checked={allowFill}
-							onCheckedChange={(v) => setAllowFill(Boolean(v))}
+							checked={
+								forceCheckedAndDisabled
+									? true
+									: isFirst
+									? allowFill
+									: Boolean(allowFillPolicy)
+							}
+							disabled={forceCheckedAndDisabled || !isFirst}
+							onCheckedChange={(v) => {
+								if (!forceCheckedAndDisabled && isFirst)
+									setAllowFill(Boolean(v));
+							}}
 						/>
 						<label htmlFor="allowFill" className="text-sm text-white/80">
 							Permetre completar la classe amb altres persones
@@ -339,8 +414,8 @@ export function BookingDialog({
 						<label className="text-sm text-white/80">Nom del titular</label>
 						<Input
 							placeholder="El teu nom"
-							value={primaryName}
-							onChange={(e) => setPrimaryName(e.target.value)}
+							value={computedPrimaryName}
+							readOnly
 						/>
 					</div>
 

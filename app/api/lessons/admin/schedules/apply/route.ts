@@ -143,8 +143,6 @@ export async function POST(request: Request) {
 							block.max_capacity ?? body.template.defaults?.max_capacity ?? 4,
 						location,
 						status: "open",
-						joinable:
-							block.joinable ?? body.template.defaults?.joinable ?? true,
 						created_from_batch_id: batch.id,
 					});
 					created_count++;
@@ -172,8 +170,6 @@ export async function POST(request: Request) {
 									4,
 								location,
 								status: "open",
-								joinable:
-									block.joinable ?? body.template.defaults?.joinable ?? true,
 								created_from_batch_id: batch.id,
 							});
 							replaced_count++;
@@ -188,8 +184,6 @@ export async function POST(request: Request) {
 								block.max_capacity ?? body.template.defaults?.max_capacity ?? 4,
 							location,
 							status: "open",
-							joinable:
-								block.joinable ?? body.template.defaults?.joinable ?? true,
 							created_from_batch_id: batch.id,
 						});
 						created_count++;

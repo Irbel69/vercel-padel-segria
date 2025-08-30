@@ -447,13 +447,13 @@ export default function Dashboard() {
 								<div className="grid gap-4">
 									{/* Email Card */}
 									<div
-										className="group relative overflow-hidden rounded-xl p-4 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] cursor-pointer"
+										className="group relative overflow-hidden rounded-xl p-4 transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
 										style={{
 											background: "linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)",
 											border: "1px solid rgba(255, 255, 255, 0.15)",
 											backdropFilter: "blur(10px)",
 										}}
-										onClick={() => setEmailDialogOpen(true)}
+										/* Editing disabled on dashboard: no onClick handler */
 									>
 										<div className="flex items-center gap-3">
 											<div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/30 flex items-center justify-center border border-blue-400/30">
@@ -463,9 +463,7 @@ export default function Dashboard() {
 												<div className="text-blue-300 text-sm font-medium mb-1">Correu electrònic</div>
 												<div className="text-white font-medium text-lg">{userProfile.email}</div>
 											</div>
-											<div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-												<Edit3 className="w-5 h-5 text-white/60" />
-											</div>
+											{/* edit icon intentionally hidden on dashboard to indicate non-editable */}
 										</div>
 										<div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 									</div>
@@ -473,13 +471,13 @@ export default function Dashboard() {
 									{/* Phone Card */}
 									{userProfile.phone && (
 										<div
-											className="group relative overflow-hidden rounded-xl p-4 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] cursor-pointer"
+											className="group relative overflow-hidden rounded-xl p-4 transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
 											style={{
 												background: "linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)",
 												border: "1px solid rgba(255, 255, 255, 0.15)",
 												backdropFilter: "blur(10px)",
 											}}
-											onClick={() => setPhoneDialogOpen(true)}
+											/* Editing disabled on dashboard: no onClick handler */
 										>
 											<div className="flex items-center gap-3">
 												<div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-green-600/30 flex items-center justify-center border border-green-400/30">
@@ -489,9 +487,7 @@ export default function Dashboard() {
 													<div className="text-green-300 text-sm font-medium mb-1">Telèfon</div>
 													<div className="text-white font-medium text-lg">{userProfile.phone}</div>
 												</div>
-												<div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-													<Edit3 className="w-5 h-5 text-white/60" />
-												</div>
+												{/* edit icon intentionally hidden on dashboard to indicate non-editable */}
 											</div>
 											<div className="absolute inset-0 bg-gradient-to-r from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 										</div>
