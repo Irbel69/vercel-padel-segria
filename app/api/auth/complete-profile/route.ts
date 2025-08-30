@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 		if (phone) {
 			const phoneStr = String(phone).trim();
 			// Remove common separators (spaces, dashes, parentheses)
-			const normalized = phoneStr.replace(/[\s\-()\.]/g, "");
+			const normalized = phoneStr.replace(/[\s\-().]/g, "");
 			const e164General = /^\+\d{6,15}$/;
 			if (!e164General.test(normalized)) {
 				return NextResponse.json(

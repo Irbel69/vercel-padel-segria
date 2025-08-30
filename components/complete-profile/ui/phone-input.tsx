@@ -16,6 +16,7 @@ import { Command, CommandInput, CommandList, CommandGroup, CommandEmpty, Command
 const ScrollArea: React.ForwardRefExoticComponent<React.HTMLAttributes<HTMLDivElement> & React.RefAttributes<HTMLDivElement>> = React.forwardRef(
   (props, ref) => <div ref={ref as any} {...props} />
 )
+ScrollArea.displayName = "ScrollArea"
 import { CheckIcon, ChevronsUpDown } from "lucide-react"
 
 type PhoneInputProps = Omit<
@@ -37,6 +38,7 @@ const FlagComponent = ({ country, countryName }: RPNInput.FlagProps & { countryN
     </span>
   )
 }
+FlagComponent.displayName = "FlagComponent"
 
 type LocalInputProps = React.ComponentProps<"input"> & { $variantBg?: boolean }
 const InputComponent = React.forwardRef<HTMLInputElement, LocalInputProps>(({ className, $variantBg, ...props }, ref) => (
@@ -135,6 +137,7 @@ const CountrySelect = ({ disabled, value: selectedCountry, options, onChange }: 
     </Popover>
   )
 }
+CountrySelect.displayName = "CountrySelect"
 
 type PhoneInputHandle = { validate: () => boolean }
 

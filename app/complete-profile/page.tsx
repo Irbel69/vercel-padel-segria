@@ -118,7 +118,7 @@ export default function CompleteProfile() {
 							// Normalize phone: remove common separators so server receives a compact E.164-like string (eg. +34123456789)
 							phone:
 								phone && phone.trim() !== ""
-									? String(phone).trim().replace(/[\s\-()\.]/g, "")
+									? String(phone).trim().replace(/[\s\-().]/g, "")
 									: null,
 							observations: observations.trim() || null,
 							imageRightsAccepted,

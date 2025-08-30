@@ -170,7 +170,7 @@ export default function EventCard({
                   <div className="mt-3 md:flex md:justify-end">
                     <Link href={landingHref} className="block w-full md:inline-block md:w-auto">
                           <button className="w-full md:w-auto bg-padel-primary text-black font-bold px-6 py-3 md:px-4 md:py-2 shadow-lg rounded-lg">
-                            Inscriure'm
+                            Inscriure&apos;m
                           </button>
                         </Link>
                   </div>
