@@ -56,6 +56,13 @@ export async function GET(request: Request) {
 			0
 		);
 		const anyLocker = active.some((b: any) => b.allow_fill === false);
+		// Derive allow_fill_policy: if there are active bookings and all share same allow_fill, expose it; else null
+		let allow_fill_policy: boolean | null = null;
+		if (active.length > 0) {
+			const first = Boolean(active[0].allow_fill);
+			const uniform = active.every((b: any) => Boolean(b.allow_fill) === first);
+			allow_fill_policy = uniform ? first : null;
+		}
 		const { lesson_bookings, ...rest } = slot;
 		const start = new Date(rest.start_at);
 		const end = new Date(rest.end_at);
@@ -68,6 +75,7 @@ export async function GET(request: Request) {
 			participants_count: participants,
 			// joinable is true when no active booking disallows fill
 			joinable: !anyLocker,
+			allow_fill_policy,
 			duration_minutes,
 		};
 	});

@@ -114,6 +114,9 @@ export function DaySlotsPanel({
 								{isBookable ? (
 									<BookingDialog
 										slotId={slot.id}
+										slotParticipantsCount={slot.participants_count || 0}
+										allowFillPolicy={slot.allow_fill_policy}
+										slotStatus={slot.status}
 										trigger={
 											<button
 												className={cn(

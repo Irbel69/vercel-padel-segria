@@ -10,6 +10,8 @@ export interface LessonSlot {
 	status: LessonSlotStatus;
 	// Derived on the fly from bookings: true when no non-cancelled booking has allow_fill = false
 	joinable: boolean;
+	// Derived: if all active bookings share same allow_fill, reflect it; else null
+	allow_fill_policy?: boolean | null;
 	// Present when fetched as an authenticated user
 	user_booked?: boolean;
 	// Aggregated participants per slot (non-cancelled)
