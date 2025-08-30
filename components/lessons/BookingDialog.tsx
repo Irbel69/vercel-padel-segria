@@ -2,6 +2,7 @@
 
 import { useState, useEffect, ReactNode } from "react";
 import { useUser } from "@/hooks/use-user";
+import { X } from "lucide-react";
 import {
 	Dialog,
 	DialogContent,
@@ -27,11 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import type {
-	CreateBookingPayload,
-	PaymentType,
-	LessonSlotStatus,
-} from "@/types/lessons";
+import type { CreateBookingPayload, PaymentType } from "@/types/lessons";
 
 export function BookingDialog({
 	slotId,
@@ -44,7 +41,7 @@ export function BookingDialog({
 	trigger?: ReactNode;
 	slotParticipantsCount?: number;
 	allowFillPolicy?: boolean | null;
-	slotStatus?: LessonSlotStatus;
+	slotStatus?: "open" | "full" | "cancelled" | "closed";
 }) {
 	const [open, setOpen] = useState(false);
 	const isMobile = useIsMobile();
@@ -53,13 +50,13 @@ export function BookingDialog({
 	const [paymentType, setPaymentType] = useState<PaymentType>("cash");
 	const { profile } = useUser();
 
-	// cached profile for immediate UI fill
+	// synchronous cached profile for immediate UI fill (set by EnsureUser on page load)
 	let parsedCache: { name?: string; surname?: string } | null = null;
 	if (typeof window !== "undefined") {
 		try {
 			const raw = localStorage.getItem("ps_profile_cache");
 			parsedCache = raw ? JSON.parse(raw) : null;
-		} catch {
+		} catch (e) {
 			parsedCache = null;
 		}
 	}
@@ -82,23 +79,23 @@ export function BookingDialog({
 	const [error, setError] = useState<string | null>(null);
 
 	const isFirst = (slotParticipantsCount || 0) === 0;
-	// Business rule requested: if slot has participants and status is open, force checkbox to checked+disabled for non-first users
-	const forceCheckedAndDisabled =
+	const forceCheckedDisabled =
 		(slotParticipantsCount || 0) > 0 && slotStatus === "open";
 
-	const effectiveAllowFill = isFirst
-		? allowFill
-		: forceCheckedAndDisabled
+	const effectiveAllowFill = forceCheckedDisabled
 		? true
+		: isFirst
+		? allowFill
 		: Boolean(allowFillPolicy);
 
 	useEffect(() => {
-		if (forceCheckedAndDisabled) {
+		// When opening or when policy changes, align local state for clarity
+		if (forceCheckedDisabled) {
 			setAllowFill(true);
 		} else if (!isFirst && allowFillPolicy !== null) {
 			setAllowFill(Boolean(allowFillPolicy));
 		}
-	}, [isFirst, allowFillPolicy, forceCheckedAndDisabled]);
+	}, [isFirst, allowFillPolicy, forceCheckedDisabled]);
 
 	const handleSubmit = async () => {
 		setSubmitting(true);
@@ -109,6 +106,7 @@ export function BookingDialog({
 			allow_fill: effectiveAllowFill,
 			payment_type: paymentType,
 			observations,
+			// primary_name intentionally omitted: server derives name from authenticated user
 			participants: participants.filter(Boolean),
 			direct_debit: paymentType === "direct_debit" ? dd : undefined,
 		};
@@ -124,10 +122,11 @@ export function BookingDialog({
 			return;
 		}
 		setSubmitting(false);
-		setOpen(false);
 		try {
 			window.dispatchEvent(new CustomEvent("lesson:booked"));
-		} catch {}
+		} catch (e) {
+			// noop (server-side rendering safety if ever invoked there)
+		}
 	};
 
 	const extraCount = groupSize - 1;
@@ -155,10 +154,14 @@ export function BookingDialog({
 					side="bottom"
 					className="inset-0 h-[100dvh] max-h-[100dvh] overflow-y-auto p-6"
 					style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
+					// Prevent clicks inside the sheet from bubbling to calendar day cards
 					onPointerDown={(e) => e.stopPropagation()}
 					onClick={(e) => e.stopPropagation()}>
 					<div className="flex items-center justify-between">
-						<h3 className="text-lg font-semibold">Reserva de classe</h3>
+						<h3 className="text-lg font-semibold">
+							Reserva de classe {slotParticipantsCount} - {slotStatus} -{" "}
+							{forceCheckedDisabled}
+						</h3>
 					</div>
 
 					<div className="mt-4 space-y-4">
@@ -183,16 +186,15 @@ export function BookingDialog({
 							<Checkbox
 								id="allowFill"
 								checked={
-									forceCheckedAndDisabled
+									forceCheckedDisabled
 										? true
 										: isFirst
 										? allowFill
 										: Boolean(allowFillPolicy)
 								}
-								disabled={forceCheckedAndDisabled || !isFirst}
+								disabled={forceCheckedDisabled || !isFirst}
 								onCheckedChange={(v) => {
-									if (!forceCheckedAndDisabled && isFirst)
-										setAllowFill(Boolean(v));
+									if (isFirst) setAllowFill(Boolean(v));
 								}}
 							/>
 							<label htmlFor="allowFill" className="text-sm text-white/80">
@@ -310,8 +312,10 @@ export function BookingDialog({
 			</DialogTrigger>
 			<DialogContent
 				className="max-w-lg"
+				// Prevent clicks inside the dialog from bubbling to parent calendar cards
 				onPointerDown={(e) => e.stopPropagation()}
 				onClick={(e) => e.stopPropagation()}>
+				{/* Explicit close button that guarantees the dialog state is updated */}
 				<DialogHeader>
 					<DialogTitle>Reserva de classe</DialogTitle>
 				</DialogHeader>
@@ -338,16 +342,15 @@ export function BookingDialog({
 						<Checkbox
 							id="allowFill"
 							checked={
-								forceCheckedAndDisabled
+								forceCheckedDisabled
 									? true
 									: isFirst
 									? allowFill
 									: Boolean(allowFillPolicy)
 							}
-							disabled={forceCheckedAndDisabled || !isFirst}
+							disabled={forceCheckedDisabled || !isFirst}
 							onCheckedChange={(v) => {
-								if (!forceCheckedAndDisabled && isFirst)
-									setAllowFill(Boolean(v));
+								if (isFirst) setAllowFill(Boolean(v));
 							}}
 						/>
 						<label htmlFor="allowFill" className="text-sm text-white/80">

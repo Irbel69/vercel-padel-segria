@@ -316,6 +316,9 @@ export default function UserCalendarView() {
 											{isBookable ? (
 												<BookingDialog
 													slotId={slot.id}
+													slotParticipantsCount={slot.participants_count || 0}
+													slotStatus={slot.status}
+													allowFillPolicy={slot.allow_fill_policy}
 													trigger={
 														<button
 															className={cn(

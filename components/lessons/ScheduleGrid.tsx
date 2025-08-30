@@ -65,7 +65,12 @@ export function ScheduleGrid({ fromISO, toISO }: Props) {
 									Complet
 								</Button>
 							) : (
-								<BookingDialog slotId={s.id} />
+								<BookingDialog
+									slotId={s.id}
+									slotParticipantsCount={s.participants_count || 0}
+									slotStatus={s.status}
+									allowFillPolicy={s.allow_fill_policy}
+								/>
 							)}
 						</div>
 					</Card>
