@@ -19,24 +19,27 @@ export function RankingsDashboard() {
 	const pagination: RankingsResponse["pagination"] | null =
 		data?.pagination ?? null;
 
-	const renderRecentForm = (form: ("W" | "L")[]) => {
+	const renderRecentForm = (form: ("W" | "L" | "N")[]) => {
 		const max = 5;
 		const items = form.slice(0, max);
-		const placeholders = Array.from({
-			length: Math.max(0, max - items.length),
-		});
+		const placeholdersCount = Math.max(0, max - items.length);
+		const reversed = [...items].reverse();
 		return (
 			<div className="flex items-center gap-1">
-				{items.map((r, i) => (
+				{Array.from({ length: placeholdersCount }).map((_, i) => (
+					<span key={`p-${i}`} className="w-2.5 h-2.5 rounded-sm bg-white/20" />
+				))}
+				{reversed.map((r, i) => (
 					<span
 						key={i}
 						className={`w-2.5 h-2.5 rounded-sm ${
-							r === "W" ? "bg-green-500" : "bg-red-500"
+							r === "W"
+								? "bg-green-500"
+								: r === "L"
+								? "bg-red-500"
+								: "bg-gray-400"
 						}`}
 					/>
-				))}
-				{placeholders.map((_, i) => (
-					<span key={`p-${i}`} className="w-2.5 h-2.5 rounded-sm bg-white/20" />
 				))}
 			</div>
 		);
