@@ -83,5 +83,51 @@ export async function DELETE(
 		}
 	}
 
+	// 3) Recompute slot status (open/full) based on confirmed bookings only
+	try {
+		// Fetch slot information
+		const { data: slot, error: slotErr } = await supabase
+			.from("lesson_slots")
+			.select("id, max_capacity, status")
+			.eq("id", booking.slot_id)
+			.single();
+		if (slotErr || !slot) {
+			console.warn("Could not fetch slot to recompute status", slotErr);
+		} else {
+			// Only adjust status when current status is open/full
+			if (slot.status === "open" || slot.status === "full") {
+				// Sum confirmed participants for this slot
+				const { data: confirmedBookings, error: sumErr } = await supabase
+					.from("lesson_bookings")
+					.select("group_size")
+					.eq("slot_id", slot.id)
+					.eq("status", "confirmed");
+				if (sumErr) {
+					console.warn(
+						"Could not list confirmed bookings to recompute status",
+						sumErr
+					);
+				} else {
+					const confirmedCount = (confirmedBookings || []).reduce(
+						(sum: number, b: any) => sum + (b.group_size || 0),
+						0
+					);
+					const newStatus = confirmedCount >= (slot.max_capacity || 0) ? "full" : "open";
+					if (newStatus !== slot.status) {
+						const { error: updStatusErr } = await supabase
+							.from("lesson_slots")
+							.update({ status: newStatus })
+							.eq("id", slot.id);
+						if (updStatusErr) {
+							console.warn("Could not update slot status after cancellation", updStatusErr);
+						}
+					}
+				}
+			}
+		}
+	} catch (e) {
+		console.warn("Unexpected error recomputing slot status after cancellation", e);
+	}
+
 	return NextResponse.json({ message: "Reserva cancel·lada" });
 }
