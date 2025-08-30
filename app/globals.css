@@ -195,6 +195,37 @@ progress::-webkit-progress-value {
 	animation-play-state: running;
 }
 
+/* Container that draws a subtle gradient border and inner dark background — used across complete-profile fields */
+.gradient-border {
+	position: relative;
+	background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+	padding: 1px; /* small gap so inner element can show as field */
+}
+.gradient-border > * {
+	display: block;
+	border-radius: 0.5rem; /* match rounded-lg */
+	background-clip: padding-box;
+}
+.gradient-border::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: 0.5rem;
+	padding: 1px;
+	background: linear-gradient(90deg, rgba(229,240,0,0.18), rgba(229,240,0,0.08));
+		-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+		mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+		-webkit-mask-composite: xor;
+		mask-composite: exclude;
+	pointer-events: none;
+}
+
+/* Make input focus more visible in dark backgrounds */
+.focus-visible-ring {
+	box-shadow: 0 0 0 3px rgba(229,240,0,0.12), 0 1px 2px rgba(0,0,0,0.6);
+	outline: none;
+}
+
 /* Staggered item enter animation */
 @keyframes itemEnter {
 	from { transform: translateY(6px); opacity: 0 }

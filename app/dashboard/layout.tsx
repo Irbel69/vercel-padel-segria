@@ -39,7 +39,8 @@ export default async function LayoutPrivate({
 	} 
 
 	return (
-		<div className="min-h-screen bg-black relative overflow-hidden">
+		// Use 100dvh to ensure full viewport height on mobile (handles browser chrome)
+		<div className="min-h-[100dvh] bg-black relative overflow-hidden ">
 			{/* Background decorative elements */}
 			<div className="absolute inset-0 overflow-hidden pointer-events-none">
 				{/* Use transform-based offsets to avoid increasing scroll width on mobile */}
@@ -52,12 +53,19 @@ export default async function LayoutPrivate({
 
 			<SidebarProvider>
 				<AppSidebar />
-				<main className="flex-1 relative z-10">
+				{/* Make main take full height and be a flex column so we can control
+					where scrolling happens. The visual page should not scroll; the
+					content area will handle overflow. */}
+				<main className="flex-1 relative z-10 flex flex-col ">
 					{/* Header */}
 					<div
-						className="flex h-16 items-center border-b px-4 lg:px-8 bg-white/5 border-white/10"
+						className="fixed left-0 right-0 top-0 z-40 md:relative flex items-center border-b px-4 lg:px-8 bg-white/5 backdrop-blur-sm border-white/10"
+						// On mobile, add safe-area padding so the trigger/button isn't hidden by notches
+						style={{ paddingTop: 'env(safe-area-inset-top, 0px)', height: 'calc(4rem + env(safe-area-inset-top, 0px))', paddingBottom: '0.5rem' }}
 					>
-						<SidebarTrigger className="text-white hover:bg-white/10" />
+						<div className="flex items-center" style={{ paddingTop: 0 }}>
+							<SidebarTrigger className="text-white hover:bg-white/10" />
+						</div>
 						<div className="ml-auto flex items-center space-x-4">
 							<span className="hidden sm:block text-sm text-white/70">
 								Benvingut
@@ -67,7 +75,11 @@ export default async function LayoutPrivate({
 					</div>
 
 					{/* Main content */}
-					<div className="flex-1 space-y-6 p-4 lg:p-8 pt-6">{children}</div>
+					<div className="flex-1 space-y-6 p-4 lg:p-8 mt-12" style={{ paddingTop: '0' }}>
+						{/* Ensure a minimum gap between header and page titles so headings aren't glued to the top */}
+						<div className="mt-2" />
+						{children}
+					</div>
 				</main>
 				
 				{/* Add to Home Screen component - only shows on mobile when not installed */}

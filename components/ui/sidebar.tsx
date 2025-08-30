@@ -285,8 +285,9 @@ const SidebarTrigger = React.forwardRef<
       variant="ghost"
       size="icon"
       className={cn(
-        // Bigger: h-12/w-12 on mobile, h-14/w-14 on md+ (desktop)
-        "h-12 w-12 md:h-14 md:w-14 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring transition-colors",
+        // Increased hit area: h-14/w-14 on mobile, h-16/w-16 on md+ (desktop)
+        // Also keep good focus ring and transition
+        "h-14 w-14 md:h-16 md:w-16 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring transition-colors",
         className
       )}
       onClick={(event) => {
@@ -297,10 +298,10 @@ const SidebarTrigger = React.forwardRef<
     >
       {isOpen ? (
         // show an X (close) icon when open
-        <X className="h-6 w-6 md:h-7 md:w-7" />
+        <X className="h-6 w-6 " />
       ) : (
         // show a hamburger menu when closed
-        <Menu className="h-6 w-6 md:h-7 md:w-7" />
+        <Menu className="h-6 w-6" />
       )}
       <span className="sr-only">{isOpen ? "Tancar Barra Lateral" : "Obrir Barra Lateral"}</span>
     </Button>

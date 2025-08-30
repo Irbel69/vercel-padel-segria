@@ -68,6 +68,14 @@ export default function EventCard({
   const isAlmostFull = occupied >= 75 && occupied < 100;
   const isFull = occupied >= 100 || event.status === "closed";
 
+  // If the registration deadline has passed, treat the event as closed for UI purposes.
+  const registrationClosed =
+    !!event.registration_deadline && new Date(event.registration_deadline) < new Date();
+
+  // Consider registration-closed as closed for the "isFull" / status calculations so
+  // the UI reflects the closed state consistently (no CTA shown, gray overlay, etc.)
+  const effectiveIsFull = isFull || registrationClosed;
+
   const { ref, scale, opacity, brightness } = useScrollScale({
     scaleRange: [0.97, 1.015],
   });
@@ -119,9 +127,14 @@ export default function EventCard({
               canRegister={canRegister}
               capacityPillColor={capacityPillColor}
               occupied={occupied}
-              isFull={isFull}
+              isFull={effectiveIsFull}
               isAlmostFull={isAlmostFull}
               className={imageUrl ? "md:h-full md:aspect-auto" : "md:h-48"}
+              // Pass derived status so child components can render CLOSED state and styles
+              registrationClosed={registrationClosed}
+              effectiveStatus={
+                registrationClosed ? "closed" : isFull ? "full" : isAlmostFull ? "almost_full" : "open"
+              }
             />
           </div>
 
@@ -133,16 +146,17 @@ export default function EventCard({
                 formatDateTime={formatDateTime}
                 imageUrl={imageUrl}
                 getRegistrationStatusBadge={getRegistrationStatusBadge}
+                effectiveStatus={registrationClosed ? 'closed' : isFull ? 'full' : isAlmostFull ? 'almost_full' : 'open'}
               />
 
               {/* Progress bar - placed inside the same horizontal padding as Actions so widths align */}
               <div className="px-4 md:px-5 pt-2">
                 {/* Constrain width on md+ to visually match the CTA button width while staying full width on mobile */}
                 <div className="w-full md:w-auto md:max-w-[360px] ml-0 md:ml-auto">
-                  {!hideProgress && (
+                  {!hideProgress && !registrationClosed && (
                     <ProgressBar
                       occupied={occupied}
-                      isFull={isFull}
+                      isFull={effectiveIsFull}
                       isAlmostFull={isAlmostFull}
                       isInFocus={isInFocus}
                     />
@@ -153,12 +167,12 @@ export default function EventCard({
               <div className="px-4 md:px-5 pb-4 md:pb-5">
                 {/* If landingHref is provided, show a single CTA that redirects to tournaments dashboard */}
                 {landingHref ? (
-                  <div className="mt-3">
-                    <Link href={landingHref} className="w-full block">
-                      <button className="w-full bg-padel-primary text-black font-bold px-6 py-3 md:px-4 md:py-2 shadow-lg rounded-lg">
-                        Inscriure'm
-                      </button>
-                    </Link>
+                  <div className="mt-3 md:flex md:justify-end">
+                    <Link href={landingHref} className="block w-full md:inline-block md:w-auto">
+                          <button className="w-full md:w-auto bg-padel-primary text-black font-bold px-6 py-3 md:px-4 md:py-2 shadow-lg rounded-lg">
+                            Inscriure'm
+                          </button>
+                        </Link>
                   </div>
                 ) : (
                   !hideActions && (

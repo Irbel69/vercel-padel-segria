@@ -22,9 +22,11 @@ type Props = {
   onJoinSolo?: () => void;
   joinSoloSubmitting?: boolean;
   isUserRegistered?: boolean;
+  // optional event title to display in the dialog header
+  eventTitle?: string | null;
 };
 
-export default function InviteDialog({ openForEventId, onClose, generatedCode, autoGeneratingCode, copyConfirmed, inviteEmail, inviteSubmitting, onChangeEmail, onSubmitInvite, onShare, onCopy, onJoinSolo, joinSoloSubmitting, isUserRegistered }: Props) {
+export default function InviteDialog({ openForEventId, onClose, generatedCode, autoGeneratingCode, copyConfirmed, inviteEmail, inviteSubmitting, onChangeEmail, onSubmitInvite, onShare, onCopy, onJoinSolo, joinSoloSubmitting, isUserRegistered, eventTitle }: Props) {
   const inviteCodeRef = useRef<HTMLSpanElement | null>(null);
   const longPressTimer = useRef<number | null>(null);
   const selectingActive = useRef<boolean>(false);
@@ -111,9 +113,10 @@ export default function InviteDialog({ openForEventId, onClose, generatedCode, a
     >
       <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="bg-zinc-900/90 backdrop-blur-md border-white/10 text-white max-w-md">
         <DialogHeader>
-          <DialogTitle>Inscripció amb Parella</DialogTitle>
+          <DialogTitle>{eventTitle ?? "Inscripció a l'Event"}</DialogTitle>
           <DialogDescription>
-            Crea una invitació per inscriure&apos;t amb parella. Copia el codi o envia&apos;l per correu.
+            Pots inscriure&apos;t sol o amb parella compartint el codi perquè l&apos;altra persona
+            s&apos;uneixi.
           </DialogDescription>
         </DialogHeader>
 

@@ -14,13 +14,15 @@ type ContentProps = {
   imageUrl?: string | null;
   // optional badge renderer passed from parent
   getRegistrationStatusBadge?: (s: string) => React.ReactNode;
+  // optional effective status, e.g. 'closed' when registration deadline passed
+  effectiveStatus?: string;
 };
 
 /**
  * Content section component for EventCard
  * Handles title, date, location, secondary info, and prizes
  */
-export function Content({ event, formatDate, formatDateTime, imageUrl, getRegistrationStatusBadge }: ContentProps) {
+export function Content({ event, formatDate, formatDateTime, imageUrl, getRegistrationStatusBadge, effectiveStatus }: ContentProps) {
   return (
     <div className={`p-4 md:p-5 border-white/10 ${imageUrl ? 'text-white' : ''}`}>
       {/* Header with title and date */}
@@ -53,7 +55,7 @@ export function Content({ event, formatDate, formatDateTime, imageUrl, getRegist
           </div>
 
           {/* Place button to the right of the location text. On small screens it stays inline; on very small screens we show a compact label. */}
-          <div className="ml-auto flex-shrink-0">
+          <div className="ml-auto flex-shrink-0 md:ml-2">
             <LocationMapButton
               latitude={event.latitude!}
               longitude={event.longitude!}
@@ -69,8 +71,9 @@ export function Content({ event, formatDate, formatDateTime, imageUrl, getRegist
       <div className="flex flex-wrap gap-2 text-xs md:text-sm mb-4">
         {event.registration_deadline && (
           <div className={`flex items-center gap-1 mt-2 ${imageUrl ? 'text-gray-200' : 'text-gray-400'} font-medium text-sm my-1`}>
-            <Clock className="h-4 w-4 flex-shrink-0" />
-            <span>Límit d&apos;inscripció: {formatDateTime(event.registration_deadline)}</span>
+            {/* If event is effectively closed, render clock and text in red to indicate closed registration */}
+            <Clock className={`h-4 w-4 flex-shrink-0 ${effectiveStatus === 'closed' ? 'text-red-400' : ''}`} />
+            <span className={`${effectiveStatus === 'closed' ? 'text-red-400' : ''}`}>Límit d&apos;inscripció: {formatDateTime(event.registration_deadline)}</span>
           </div>
         )}
 

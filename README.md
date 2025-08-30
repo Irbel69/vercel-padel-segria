@@ -1,6 +1,6 @@
 # Padel Segrià
 
-A modern padel tournament management platform built with Next.js, Supabase, and security-first principles.
+A modern pàdel tournament management platform built with Next.js, Supabase, and security-first principles.
 
 ## 🔒 Security Implementation
 
@@ -88,3 +88,46 @@ Let's ship it, FAST ⚡️
 ShipFast members get 30% OFF on all plans! 🎁
 
 ![datafast](https://github.com/user-attachments/assets/2a9710f8-9a39-4593-b4bf-9ee933529870)
+
+---
+
+## Playwright / E2E tests
+
+This project includes Playwright tests under `__tests__/playwright/` for UI flows such as `complete-profile`.
+
+Two ways to run Playwright without permanently modifying your project dependencies:
+
+- Quick (no package.json changes): run via `npm exec` or `npx` which downloads the CLI temporarily:
+
+```powershell
+# install browsers to cache (optional, will download binaries)
+npx -p @playwright/test playwright install --with-deps
+
+# run the playwright tests in the folder (temporary package, no package.json change)
+npx -p @playwright/test playwright test __tests__/playwright
+```
+
+- Project-local (recommended for CI/team): add `@playwright/test` as a devDependency and use npm scripts. This repo already contains a devDependency entry and two npm scripts:
+
+```json
+"scripts": {
+	"playwright:install": "playwright install --with-deps",
+	"test:e2e": "playwright test __tests__/playwright --project=chromium"
+}
+```
+
+Then run:
+
+```powershell
+# install playwright and browsers locally
+npm i -D @playwright/test
+npm run playwright:install
+
+# run the tests
+npm run test:e2e
+```
+
+Notes:
+- Playwright will download browser binaries (Chromium/Firefox/WebKit) — this does not modify package.json but stores binaries in the Playwright cache or in the path defined by `PLAYWRIGHT_BROWSERS_PATH`.
+- Use `npm exec` / `npx` for one-off runs. Use the project-local installation for CI or repeated runs.
+

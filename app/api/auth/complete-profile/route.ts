@@ -34,22 +34,28 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
-		// Validate phone format (Spanish format with +34)
-		if (phone && !phone.match(/^\+34\s\d{3}\s\d{3}\s\d{3}$/)) {
-			return NextResponse.json(
-				{
-					error: "El format del telèfon no és vàlid. Utilitza: +34 XXX XXX XXX",
-				},
-				{ status: 400 }
-			);
+		// Validate phone format: accept any international phone by normalizing
+		// spaces and checking a general E.164-like pattern (+ and 6-15 digits).
+		if (phone) {
+			const phoneStr = String(phone).trim();
+			// Remove common separators (spaces, dashes, parentheses)
+			const normalized = phoneStr.replace(/[\s\-()\.]/g, "");
+			const e164General = /^\+\d{6,15}$/;
+			if (!e164General.test(normalized)) {
+				return NextResponse.json(
+					{
+						error: "El format del telèfon no és vàlid. Prova amb un format internacional, per exemple: +34123456789",
+					},
+					{ status: 400 }
+				);
+			}
 		}
 
-		// Validate required checkboxes
-		if (!imageRightsAccepted || !privacyPolicyAccepted) {
+		// Only the privacy policy acceptance is required server-side.
+		if (!privacyPolicyAccepted) {
 			return NextResponse.json(
 				{
-					error:
-						"Has d'acceptar les condicions d'ús i autorització de drets d'imatge",
+					error: "Has d'acceptar les polítiques d'ús i privacitat",
 				},
 				{ status: 400 }
 			);

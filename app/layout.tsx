@@ -66,11 +66,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 				/>
 			</head>
 			<body
-				className="bg-black touch-pan-y h-full"
+				className="bg-black touch-pan-y min-h-screen overflow-x-hidden overflow-y-auto"
 				style={{
-					overflowX: "hidden",
 					overscrollBehaviorX: "none",
-					// ensure body handles vertical scroll only
 					overscrollBehavior: "auto",
 				}}>
 				<ThemeProvider
@@ -79,10 +77,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 					defaultTheme="dark"
 					enableSystem={false}
 					disableTransitionOnChange>
-					<div
-						className="relative min-h-full overflow-y-hidden w-full bg-black"
+					{/* Allow vertical scrolling globally; `/dashboard` uses its own
+					   full-height/no-page-scroll behavior in `app/dashboard/layout.tsx`. */}
+					<div className="relative min-h-screen w-full bg-black overflow-x-hidden overflow-y-hidden"
 						style={{
-							overflowX: "hidden",
 							paddingLeft: "env(safe-area-inset-left)",
 							paddingRight: "env(safe-area-inset-right)",
 						}}>

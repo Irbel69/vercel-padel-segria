@@ -253,7 +253,7 @@ export function getInstallInstructions(platform: Platform, browserName: string):
  */
 export function getPromotionTexts(platform: Platform, canAutoInstall: boolean) {
   const baseTexts = {
-    title: "Instal·la Padel Segrià",
+  title: "Instal·la Padel Segrià",
     subtitle: "Accés ràpid i experiència nativa"
   };
 
@@ -304,7 +304,7 @@ export function getPromotionTexts(platform: Platform, canAutoInstall: boolean) {
     case "desktop-chromium":
       return {
         ...baseTexts,
-        title: "Instal·la Padel Segrià al teu ordinador",
+  title: "Instal·la Padel Segrià al teu ordinador",
         description: "Aconsegueix una aplicació independent per gestionar els teus tornejos",
         primaryButton: canAutoInstall ? "Instal·lar ara" : "Com instal·lar",
         secondaryButton: "Més tard"
@@ -314,7 +314,7 @@ export function getPromotionTexts(platform: Platform, canAutoInstall: boolean) {
     case "desktop-safari":
       return {
         ...baseTexts,
-        title: "Afegeix Padel Segrià als marcadors",
+  title: "Afegeix Padel Segrià als marcadors",
         description: "Crea un accés ràpid a l'aplicació des del teu navegador",
         primaryButton: "Com fer-ho",
         secondaryButton: "Més tard"

@@ -94,11 +94,13 @@ const HeaderContent = ({ transparent = false }: HeaderProps) => {
 			<header
 				className={`${
 					isHomePage || transparent
-						? "fixed top-0 left-0 right-0 z-50 transition-all duration-300"
-						: "bg-base-200"
+						? "sticky top-0 backdrop-blur-sm transition-all duration-300"
+						: "sticky top-0 z-40 bg-base-200/95 backdrop-blur-md  md:bg-base-200 md:static"
 				} ${
-					// Keep transparent while fixed on homepage, and also while menu is open
-					isHomePage || transparent || isOpen ? "bg-transparent" : ""
+					// Add background on scroll or when not homepage
+					isHomePage || transparent ? 
+						(hasScrolled ? "bg-black/80" : "bg-transparent") : 
+						""
 				}`}>
 				<nav
 					className="container flex items-center justify-between px-8 py-4 mx-auto transition-all duration-300"

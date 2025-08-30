@@ -91,7 +91,7 @@ self.addEventListener('fetch', (event) => {
                 return new Response(`
                   <!DOCTYPE html>
                   <html>
-                    <head><title>Padel Segria - Offline</title></head>
+                    <head><title>Padel Segrià - Offline</title></head>
                     <body>
                       <h1>Sin conexión</h1>
                       <p>La aplicación no está disponible sin conexión.</p>

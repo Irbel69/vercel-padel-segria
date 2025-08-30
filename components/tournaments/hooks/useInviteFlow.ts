@@ -96,7 +96,7 @@ export function useInviteFlow() {
 
   const handleShare = async (code: string) => {
     const shareData = {
-      title: "Únete a mi equipo en Padel Segria",
+  title: "Únete a mi equipo en Padel Segrià",
       text: `Usa aquest codi per unir-te al meu equip en el torneig: ${code}`,
       url: window.location.origin,
     } as const;

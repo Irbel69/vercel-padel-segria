@@ -36,6 +36,11 @@ export async function updateSession(request: NextRequest) {
 
 	const url = request.nextUrl.clone();
 
+	// Feature flag: when set to "true" (string), allow public access to /complete-profile
+	// This is useful for temporary testing (Playwright). Keep it easy to revert: remove
+	// the env var or set it to "false" to restore original behavior.
+	const allowPublicCompleteProfile = process.env.ALLOW_PUBLIC_COMPLETE_PROFILE === "true";
+
 	// Protected routes that require authentication
 	const protectedRoutes = ["/dashboard"];
 	// Routes that require profile completion
@@ -93,9 +98,13 @@ export async function updateSession(request: NextRequest) {
 			.eq("id", user.id)
 			.single();
 
-		if (!userProfile || !userProfile.name || !userProfile.surname) {
-			url.pathname = "/complete-profile";
-			return NextResponse.redirect(url);
+		// If we're temporarily allowing public access to complete-profile, skip
+		// forcing users into it so Playwright / tests can open the page.
+		if (!allowPublicCompleteProfile) {
+			if (!userProfile || !userProfile.name || !userProfile.surname) {
+				url.pathname = "/complete-profile";
+				return NextResponse.redirect(url);
+			}
 		}
 
 		// Check admin access for admin routes
@@ -113,9 +122,13 @@ export async function updateSession(request: NextRequest) {
 			.eq("id", user.id)
 			.single();
 
-		if (userProfile && userProfile.name && userProfile.surname) {
-			url.pathname = "/dashboard";
-			return NextResponse.redirect(url);
+		// When allowing public access, don't redirect authenticated users away
+		// from the page even if their profile appears complete.
+		if (!allowPublicCompleteProfile) {
+			if (userProfile && userProfile.name && userProfile.surname) {
+				url.pathname = "/dashboard";
+				return NextResponse.redirect(url);
+			}
 		}
 	}
 

@@ -193,7 +193,7 @@ export default function Dashboard() {
 	}
 
 	return (
-		<div className="space-y-4 md:space-y-8">
+		<div className="space-y-4 md:space-y-8 h-full ">
 			{/* Welcome Header - Optimized for mobile */}
 			<div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 md:gap-4">
 				<div className="space-y-1 md:space-y-2">
@@ -201,7 +201,7 @@ export default function Dashboard() {
 						Hola, {userProfile.name}! 👋
 					</h1>
 					<p className="text-white/70 text-sm md:text-lg">
-						Benvingut al teu tauler de control de Pàdel Segrià
+						Benvingut al teu tauler de control de Padel Segrià
 					</p>
 				</div>
 			</div>

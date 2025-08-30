@@ -10,9 +10,10 @@ type Props = {
   openForEventId: number | null;
   onClose: () => void;
   isUserRegistered?: boolean;
+  eventTitle?: string | null;
 };
 
-export default function InviteDialogContainer({ openForEventId, onClose, isUserRegistered }: Props) {
+export default function InviteDialogContainer({ openForEventId, onClose, isUserRegistered, eventTitle }: Props) {
   const { toast } = useToast();
   const {
     inviteForEventId,
@@ -70,6 +71,8 @@ export default function InviteDialogContainer({ openForEventId, onClose, isUserR
       onJoinSolo={handleJoinSolo}
       joinSoloSubmitting={registerMutation.isPending}
       isUserRegistered={isUserRegistered}
+      eventTitle={eventTitle ?? null}
+      // eventTitle is not available here; parent should pass a title via context or prop if needed
     />
   );
 }

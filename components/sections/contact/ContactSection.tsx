@@ -62,7 +62,7 @@ export function ContactSection() {
 		e.preventDefault();
 		// Build mailto: link to open user's default email client with form content
 		const recipient = "info@padelsegria.com";
-		const subject = `Contacte des de Padel Segria - ${
+		const subject = `Contacte des de Padel Segrià - ${
 			formData.name || "Nou contacte"
 		}`;
 

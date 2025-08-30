@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 /**
  * Hero Section - Padel Segria Landing Page
  *
- * Context: Este Hero Section es para la landing page de Padel Segria, una plataforma para gestionar torneos de pádel en la provincia de Segrià (España).
+ * Context: Este Hero Section es para la landing page de Padel Segria, una plataforma para gestionar torneos de pàdel en la provincia de Segrià (España).
  * Objetivo: Transmitir energía, competitividad y motivar a los jugadores a unirse y competir.
  */
 export default function HeroSection() {

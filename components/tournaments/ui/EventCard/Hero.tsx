@@ -47,6 +47,10 @@ type HeroProps = {
   isFull: boolean;
   isAlmostFull: boolean;
   className?: string;
+  // new prop: indicates registration deadline has passed
+  registrationClosed?: boolean;
+  // an explicit effective status string derived by parent
+  effectiveStatus?: string;
 };
 
 /**
@@ -65,10 +69,12 @@ export function Hero({
   isFull,
   isAlmostFull,
   className,
+  registrationClosed,
+  effectiveStatus,
 }: HeroProps) {
   // Call hook at top-level to respect Hooks rules and compute status once
   const reducedMotion = useReducedMotion();
-  const status = isFull ? "full" : isAlmostFull ? "almost_full" : "open";
+  const status = effectiveStatus ?? (isFull ? "full" : isAlmostFull ? "almost_full" : "open");
 
   return (
     <div className={`relative w-full aspect-video ${className ?? ""}`}>
@@ -181,7 +187,7 @@ export function Hero({
       )}
 
       {/* When event is full/closed, add a subtle gray overlay to communicate completion */}
-      {isFull && (
+      {(isFull || registrationClosed) && (
         <div aria-hidden className="absolute inset-0 bg-slate-800/60" />
       )}
 
@@ -190,7 +196,7 @@ export function Hero({
         {
           <div className="drop-shadow">
             {/* Wrap the status badge with animation when event is almost full (and not full) */}
-            {isAlmostFull && !isFull ? (
+            {isAlmostFull && !isFull && !registrationClosed ? (
               <MotionUrgentBadge reducedMotion={reducedMotion}>
                 {getStatusBadge(status)}
               </MotionUrgentBadge>
@@ -207,8 +213,13 @@ export function Hero({
             {getRegistrationStatusBadge(event.user_registration_status)}
           </div>
         )}
+        {/* When registration is closed, make the capacity pill red to indicate closure */}
         <span
-          className={`px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-sm  ${capacityPillColor}`}
+          className={`px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-sm  ${
+            registrationClosed || effectiveStatus === 'closed'
+              ? 'bg-red-500/20 text-red-400'
+              : capacityPillColor
+          }`}
         >
           {event.current_participants || 0}/{event.max_participants}
         </span>

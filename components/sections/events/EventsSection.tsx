@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Calendar } from "lucide-react";
 import EventList from "@/components/tournaments/EventList";
+import { useBadges } from "@/components/tournaments/hooks/useBadges";
 import type { Event as EventType } from "@/types";
 import Link from "next/link";
 
@@ -74,13 +75,8 @@ export function EventsSection() {
 		}
 	};
 
-	const getStatusBadge = (s: string) => {
-		return <span className="px-2 py-1 text-xs rounded bg-white/5">{s}</span>;
-	};
-
-	const getRegistrationStatusBadge = (s: string) => {
-		return <span className="px-2 py-1 text-xs rounded bg-white/5">{s}</span>;
-	};
+	// Use centralized badge helpers so landing matches dashboard styling
+	const { getStatusBadge, getRegistrationStatusBadge } = useBadges();
 
 	const canRegister = (e: EventType) => e.status !== "closed";
 	const canUnregister = (e: EventType) => e.status !== "closed";
@@ -197,7 +193,23 @@ export function EventsSection() {
 											return ta - tb;
 										});
 
-										const visible = sorted.slice(0, 3);
+										// Filter out events that are effectively closed/full or whose registration deadline passed.
+										// Criteria: status === 'closed' OR (current_participants >= max_participants) OR registration_deadline < now
+										const now = Date.now();
+										const filtered = sorted.filter((ev) => {
+											if (ev.status === "closed") return false;
+											if (typeof ev.current_participants === "number" && typeof ev.max_participants === "number") {
+												if (ev.current_participants >= ev.max_participants) return false;
+											}
+											try {
+												if (ev.registration_deadline && new Date(ev.registration_deadline).getTime() < now) return false;
+											} catch (e) {
+												// If parsing fails, keep the event
+											}
+											return true;
+										});
+
+										const visible = filtered.slice(0, 3);
 										const next = sorted[3];
 
 										return (

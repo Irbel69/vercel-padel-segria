@@ -19,7 +19,7 @@ After implementing the feature, use Puppeteer to verify visually and functionall
 
 ## Overview
 
-Padel Segria is a web platform for managing padel tournaments across the Segria province in Spain. The platform allows users to view tournaments, rankings, and manage their personal statistics.
+Padel Segria is a web platform for managing pàdel tournaments across the Segrià province in Spain. The platform allows users to view tournaments, rankings, and manage their personal statistics.
 
 ## Development Priorities
 

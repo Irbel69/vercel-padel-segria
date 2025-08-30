@@ -34,6 +34,7 @@ export default function TournamentsPage() {
 
   // UI state controlled at page level
   const [inviteForEventId, setInviteForEventId] = useState<number | null>(null);
+  const [inviteForEventTitle, setInviteForEventTitle] = useState<string | null>(null);
   const [joinCodeOpen, setJoinCodeOpen] = useState(false);
 
   const isUserRegistered = !!(inviteForEventId && userRegistrations?.some((r) => r.event_id === inviteForEventId));
@@ -76,7 +77,11 @@ export default function TournamentsPage() {
             pagination={pagination}
             isEventsLoading={isEventsLoading}
             processingEvents={processingEvents}
-            onInvite={(id) => setInviteForEventId(id)}
+            onInvite={(id) => {
+              const ev = events?.find((e) => e.id === id);
+              setInviteForEventTitle(ev?.title ?? null);
+              setInviteForEventId(id);
+            }}
             onUnregister={handleUnregister}
             onPageChange={setPage}
             formatDate={formatDate}
@@ -86,7 +91,11 @@ export default function TournamentsPage() {
             canRegister={canRegister}
             canUnregister={canUnregister}
             isRegistrationUrgent={isRegistrationUrgent}
-            onShowCode={(id) => setInviteForEventId(id)}
+            onShowCode={(id) => {
+              const ev = events?.find((e) => e.id === id);
+              setInviteForEventTitle(ev?.title ?? null);
+              setInviteForEventId(id);
+            }}
           />
         </TabsContent>
 
@@ -110,8 +119,12 @@ export default function TournamentsPage() {
 
       <InviteDialogContainer
         openForEventId={inviteForEventId}
-        onClose={() => setInviteForEventId(null)}
+        onClose={() => {
+          setInviteForEventId(null);
+          setInviteForEventTitle(null);
+        }}
         isUserRegistered={isUserRegistered}
+        eventTitle={inviteForEventTitle}
       />
 
       <JoinByCodeDialogContainer
