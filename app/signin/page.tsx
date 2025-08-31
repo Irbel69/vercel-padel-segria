@@ -348,8 +348,8 @@ export default function Login() {
 
 						{/* Help text */}
 						<p className="mt-6 text-xs text-center text-white/40">
-							Si només introdueixes el correu, t'enviarem un enllaç màgic per accedir. <br />
-							Si completes la contrasenya, s'intentarà iniciar sessió amb ella (o crear compte si no existeix).
+							Si només introdueixes el correu, t&apos;enviarem un enllaç màgic per accedir. <br />
+							Si completes la contrasenya, s&apos;intentarà iniciar sessió amb ella (o crear compte si no existeix).
 						</p>
 					</div>
 				</div>

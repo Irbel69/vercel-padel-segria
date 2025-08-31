@@ -25,11 +25,14 @@ export default function UpcomingBookingsList() {
 				if (!mounted) return;
 				setItems(json.bookings ?? []);
 			} catch (e: any) {
-				if (!mounted) return;
-				setError(e?.message ?? "Error carregant reserves");
+				if (mounted) {
+					setError(e?.message ?? "Error carregant reserves");
+				}
 			} finally {
-				if (!mounted) return;
-				setLoading(false);
+				// Don't return from finally; only update state when component is still mounted
+				if (mounted) {
+					setLoading(false);
+				}
 			}
 		};
 
@@ -57,11 +60,14 @@ export default function UpcomingBookingsList() {
 				throw new Error(j?.error || `Error ${res.status}`);
 			}
 			toast.success("Reserva cancel·lada");
-			try {
-				window.dispatchEvent(new CustomEvent("lesson:booked"));
-			} catch (e) {
-				// noop
-			}
+				// Notify listeners about the booking change; ignore dispatch errors
+				try {
+					window.dispatchEvent(new CustomEvent("lesson:booked"));
+				} catch (dispatchErr) {
+					// If dispatching fails in some environments, just log for diagnostics
+					// (kept minimal to satisfy lint rules)
+					// console.debug('dispatch lesson:booked failed', dispatchErr);
+				}
 		} catch (err: any) {
 			// rollback
 			setItems(prev);

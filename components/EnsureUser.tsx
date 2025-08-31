@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useUser } from "@/hooks/use-user";
+import type { JSX } from "react";
 
 // Small client component that ensures the user/profile is fetched as soon
 // as the page hydrates so child client components (like BookingDialog)
