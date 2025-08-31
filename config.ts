@@ -33,7 +33,8 @@ const config = {
 		theme: "light",
 		// REQUIRED — This color will be reflected on the whole app outside of the document (loading bar, Chrome tabs, etc..). By default it takes the primary color from your DaisyUI theme (make sure to update your the theme name after "data-theme=")
 		// OR you can just do this to use a custom color: main: "#f37055". HEX only.
-		main: "#3B82F6", // Blue color
+		// Use project padel yellow to match Tailwind token `padel-primary` (#e5f000)
+		main: "#e5f000", // Padel yellow
 	},
 	auth: {
 		// REQUIRED — the path to log in users. It's use to protect private routes (like /dashboard). It's used in apiClient (/libs/api.js) upon 401 errors from our API

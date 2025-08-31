@@ -69,8 +69,8 @@ export function CreateMatchDialog({
 	return (
 		<>
 			<Dialog open={open} onOpenChange={onOpenChange}>
-		<DialogContent className="bg-black/90 border-white/20 text-white max-w-2xl max-h-[100dvh] sm:max-h-[90dvh] p-0">
-					<div className="flex flex-col h-full">
+		<DialogContent className="bg-black/90 border-white/20 text-white max-w-2xl max-h-[100dvh] sm:max-h-[90dvh] p-0 overflow-y-scroll">
+				<div className="flex flex-col h-full">
 						<div className="px-4 sm:px-6 pt-4 sm:pt-6">
 							<DialogHeader>
 								<DialogTitle className="leading-snug break-words">Crear Nou Partit</DialogTitle>
@@ -109,8 +109,10 @@ export function CreateMatchDialog({
 							</div>
 						</div>
 
-						<div className="px-4 sm:px-6 pb-4 sm:pb-6">
-							<DialogFooter>
+						{/* Footer: keep visible by making it sticky within the dialog */}
+						<div className="px-4 sm:px-6 pb-4 sm:pb-6 bg-transparent">
+							<div className="sticky bottom-0 bg-gradient-to-t from-black/80 pt-4"> 
+								<DialogFooter>
 								<Button
 									type="button"
 									variant="outline"
@@ -128,8 +130,9 @@ export function CreateMatchDialog({
 									{isSubmitting ? "Creant..." : "Crear Partit"}
 								</Button>
 							</DialogFooter>
+							</div>
+							</div>
 						</div>
-					</div>
 				</DialogContent>
 			</Dialog>
 
