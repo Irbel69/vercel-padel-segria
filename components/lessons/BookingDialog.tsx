@@ -386,7 +386,7 @@ export function BookingDialog({
 				{trigger ?? <Button variant="default">Apuntar-me</Button>}
 			</DialogTrigger>
 			<DialogContent
-				className="max-w-lg"
+				className="max-w-lg max-h-[85vh] max-h-[85dvh] overflow-y-auto"
 				onPointerDown={(e) => e.stopPropagation()}
 				onClick={(e) => e.stopPropagation()}>
 				<DialogHeader>
