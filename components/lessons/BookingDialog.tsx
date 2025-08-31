@@ -55,7 +55,9 @@ export function BookingDialog({
     try {
       const raw = localStorage.getItem("ps_profile_cache");
       parsedCache = raw ? JSON.parse(raw) : null;
-    } catch {}
+    } catch {
+		// hi
+	}
   }
 
   const firstName = profile?.name ?? parsedCache?.name ?? "";
@@ -192,7 +194,9 @@ export function BookingDialog({
     setSubmitting(false);
     try {
       window.dispatchEvent(new CustomEvent("lesson:booked"));
-    } catch {}
+    } catch {
+		// hi
+	}
   };
 
   const extraCount = groupSize - 1;
