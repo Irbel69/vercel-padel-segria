@@ -44,6 +44,9 @@ import { useEffect, useState } from "react";
 import CountUp from "react-countup";
 import { useRouter } from "next/navigation";
 import EditFieldDialog from "@/components/EditFieldDialog";
+import UpcomingBookingsList from "@/components/lessons/UpcomingBookingsList";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -98,16 +101,16 @@ export default function Dashboard() {
 
 	// Function to update profile field
 	const updateProfileField = async (field: string, value: string) => {
-		const response = await fetch('/api/user/profile', {
-			method: 'PUT',
+		const response = await fetch("/api/user/profile", {
+			method: "PUT",
 			headers: {
-				'Content-Type': 'application/json',
+				"Content-Type": "application/json",
 			},
 			body: JSON.stringify({ [field]: value }),
 		});
 
 		if (!response.ok) {
-			throw new Error('Failed to update profile');
+			throw new Error("Failed to update profile");
 		}
 
 		// Update local state
@@ -128,36 +131,36 @@ export default function Dashboard() {
 
 				setUser(authUser);
 
-						// Fetch profile and qualities in parallel
-						const [profileRes, qualitiesRes] = await Promise.all([
-							supabase
-								.from("users")
-								.select(
-									"id,name,surname,trend,email,phone,observations,created_at,is_admin"
-								)
-								.eq("id", authUser.id)
-								.single(),
-							supabase
-								.from("user_qualities")
-								.select(
-									`
+				// Fetch profile and qualities in parallel
+				const [profileRes, qualitiesRes] = await Promise.all([
+					supabase
+						.from("users")
+						.select(
+							"id,name,surname,trend,email,phone,observations,created_at,is_admin"
+						)
+						.eq("id", authUser.id)
+						.single(),
+					supabase
+						.from("user_qualities")
+						.select(
+							`
 									quality_id,
 									qualities!inner (
 										id,
 										name
 									)
 								`
-								)
-								.eq("user_id", authUser.id),
-						]);
+						)
+						.eq("user_id", authUser.id),
+				]);
 
-						if (!profileRes.data) {
-							router.push("/complete-profile");
-							return;
-						}
+				if (!profileRes.data) {
+					router.push("/complete-profile");
+					return;
+				}
 
-						setUserProfile(profileRes.data);
-						setUserQualities(qualitiesRes.data || []);
+				setUserProfile(profileRes.data);
+				setUserQualities(qualitiesRes.data || []);
 			} catch (error) {
 				console.error("Error loading user data:", error);
 			} finally {
@@ -267,7 +270,12 @@ export default function Dashboard() {
 						<CardContent className="p-3 text-center">
 							<BarChart3 className="w-6 h-6 text-purple-400 mx-auto mb-2" />
 							<div className="text-xl font-bold text-white">
-								<CountUp end={winPercentage} duration={2.5} delay={1.1} suffix="%" />
+								<CountUp
+									end={winPercentage}
+									duration={2.5}
+									delay={1.1}
+									suffix="%"
+								/>
 							</div>
 							<div className="text-xs text-white/60">Victòries</div>
 						</CardContent>
@@ -287,7 +295,9 @@ export default function Dashboard() {
 								{userQualities.map((uq: any) => {
 									const IconComponent = getQualityIcon(uq.qualities.name);
 									return (
-										<div key={uq.quality_id} className="flex flex-col items-center">
+										<div
+											key={uq.quality_id}
+											className="flex flex-col items-center">
 											<div className="w-12 h-12 rounded-xl bg-gradient-to-br from-padel-primary/20 to-padel-primary/30 flex items-center justify-center border border-padel-primary/40">
 												<IconComponent className="w-6 h-6 text-padel-primary" />
 											</div>
@@ -334,7 +344,8 @@ export default function Dashboard() {
 									)}
 									<Badge className="bg-blue-400/20 text-blue-400 border-blue-400/30">
 										<Calendar className="w-3 h-3 mr-1" />
-										Membre des de {new Date(userProfile.created_at).getFullYear()}
+										Membre des de{" "}
+										{new Date(userProfile.created_at).getFullYear()}
 									</Badge>
 								</div>
 							</div>
@@ -387,7 +398,12 @@ export default function Dashboard() {
 								}}>
 								<BarChart3 className="w-8 h-8 text-purple-400 mx-auto mb-2" />
 								<div className="text-2xl font-bold text-white">
-									<CountUp end={winPercentage} duration={2.5} delay={1.1} suffix="%" />
+									<CountUp
+										end={winPercentage}
+										duration={2.5}
+										delay={1.1}
+										suffix="%"
+									/>
 								</div>
 								<div className="text-sm text-white/60">% Victòries</div>
 							</div>
@@ -400,41 +416,41 @@ export default function Dashboard() {
 								Qualitats Destacades
 							</h3>
 
-						{userQualities && userQualities.length > 0 ? (
-							<div className="flex items-center justify-center gap-6">
-								{userQualities.map((uq: any, index: number) => {
-									const IconComponent = getQualityIcon(uq.qualities.name);
-									return (
-										<div
-											key={uq.quality_id}
-											className="flex flex-col items-center transition-all duration-300 hover:scale-105">
-											<div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-padel-primary/20 to-padel-primary/30 flex items-center justify-center border-2 border-padel-primary/40 shadow-lg">
-												<IconComponent className="w-10 h-10 text-padel-primary drop-shadow-sm" />
+							{userQualities && userQualities.length > 0 ? (
+								<div className="flex items-center justify-center gap-6">
+									{userQualities.map((uq: any, index: number) => {
+										const IconComponent = getQualityIcon(uq.qualities.name);
+										return (
+											<div
+												key={uq.quality_id}
+												className="flex flex-col items-center transition-all duration-300 hover:scale-105">
+												<div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-padel-primary/20 to-padel-primary/30 flex items-center justify-center border-2 border-padel-primary/40 shadow-lg">
+													<IconComponent className="w-10 h-10 text-padel-primary drop-shadow-sm" />
+												</div>
+												<span className="text-white text-sm font-medium text-center block mt-3 max-w-20 leading-tight">
+													{uq.qualities.name}
+												</span>
 											</div>
-											<span className="text-white text-sm font-medium text-center block mt-3 max-w-20 leading-tight">
-												{uq.qualities.name}
-											</span>
-										</div>
-									);
-								})}
-							</div>
-						) : (
-							<div
-								className="text-center p-8 rounded-xl"
-								style={{
-									background: "rgba(255, 255, 255, 0.05)",
-									border: "1px solid rgba(255, 255, 255, 0.1)",
-								}}>
-								<Award className="w-12 h-12 text-white/30 mx-auto mb-4" />
-								<div className="text-white/60 mb-2">
-									No tens qualitats assignades encara
+										);
+									})}
 								</div>
-								<div className="text-sm text-white/40">
-									Un administrador pot assignar-te fins a 3 qualitats
+							) : (
+								<div
+									className="text-center p-8 rounded-xl"
+									style={{
+										background: "rgba(255, 255, 255, 0.05)",
+										border: "1px solid rgba(255, 255, 255, 0.1)",
+									}}>
+									<Award className="w-12 h-12 text-white/30 mx-auto mb-4" />
+									<div className="text-white/60 mb-2">
+										No tens qualitats assignades encara
+									</div>
+									<div className="text-sm text-white/40">
+										Un administrador pot assignar-te fins a 3 qualitats
+									</div>
 								</div>
-							</div>
-						)}
-					</div>
+							)}
+						</div>
 
 						{/* Additional Information */}
 						<div className="grid grid-cols-1 gap-6">
@@ -449,7 +465,8 @@ export default function Dashboard() {
 									<div
 										className="group relative overflow-hidden rounded-xl p-4 transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
 										style={{
-											background: "linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)",
+											background:
+												"linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)",
 											border: "1px solid rgba(255, 255, 255, 0.15)",
 											backdropFilter: "blur(10px)",
 										}}
@@ -460,8 +477,12 @@ export default function Dashboard() {
 												<Mail className="w-6 h-6 text-blue-400" />
 											</div>
 											<div className="flex-1">
-												<div className="text-blue-300 text-sm font-medium mb-1">Correu electrònic</div>
-												<div className="text-white font-medium text-lg">{userProfile.email}</div>
+												<div className="text-blue-300 text-sm font-medium mb-1">
+													Correu electrònic
+												</div>
+												<div className="text-white font-medium text-lg">
+													{userProfile.email}
+												</div>
 											</div>
 											{/* edit icon intentionally hidden on dashboard to indicate non-editable */}
 										</div>
@@ -473,7 +494,8 @@ export default function Dashboard() {
 										<div
 											className="group relative overflow-hidden rounded-xl p-4 transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
 											style={{
-												background: "linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)",
+												background:
+													"linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)",
 												border: "1px solid rgba(255, 255, 255, 0.15)",
 												backdropFilter: "blur(10px)",
 											}}
@@ -484,8 +506,12 @@ export default function Dashboard() {
 													<Phone className="w-6 h-6 text-green-400" />
 												</div>
 												<div className="flex-1">
-													<div className="text-green-300 text-sm font-medium mb-1">Telèfon</div>
-													<div className="text-white font-medium text-lg">{userProfile.phone}</div>
+													<div className="text-green-300 text-sm font-medium mb-1">
+														Telèfon
+													</div>
+													<div className="text-white font-medium text-lg">
+														{userProfile.phone}
+													</div>
 												</div>
 												{/* edit icon intentionally hidden on dashboard to indicate non-editable */}
 											</div>
@@ -512,6 +538,21 @@ export default function Dashboard() {
 						)}
 					</CardContent>
 				</Card>
+			</div>
+
+			{/* Bookings section (visible on all sizes) */}
+			<div className="space-y-2 md:space-y-3">
+				<div className="flex items-center justify-between">
+					<h2 className="text-lg md:text-xl font-semibold text-white">
+						Les meves reserves
+					</h2>
+					<Link href="/dashboard/lessons" className="shrink-0">
+						<Button className="bg-padel-primary text-black hover:opacity-90">
+							Reserva la teva propera classe
+						</Button>
+					</Link>
+				</div>
+				<UpcomingBookingsList />
 			</div>
 
 			{/* Edit Dialogs */}
