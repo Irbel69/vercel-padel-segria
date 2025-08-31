@@ -114,8 +114,10 @@ export function AdminCalendarView({
 	}, [viewDate, slots]);
 
 	const navigateMonth = (direction: "prev" | "next") => {
-		const newDate = new Date(viewDate);
-		newDate.setMonth(newDate.getMonth() + (direction === "next" ? 1 : -1));
+		// Normalize to day 1 before changing month to avoid overflow (e.g., Aug 31 -> Oct 1)
+		const year = viewDate.getFullYear();
+		const month = viewDate.getMonth() + (direction === "next" ? 1 : -1);
+		const newDate = new Date(year, month, 1);
 		setViewDate(newDate);
 		onDateChange?.(newDate);
 	};
