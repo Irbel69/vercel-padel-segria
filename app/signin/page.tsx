@@ -34,7 +34,7 @@ export default function Login() {
 
 		try {
 			const { type, provider } = options;
-			const redirectURL = window.location.origin + "/api/auth/callback";
+			const redirectURL = window.location.origin + "/auth/callback";
 			// Use a dedicated reset redirect so reset emails land on the reset page
 			const resetRedirect = window.location.origin + "/reset-password";
 
@@ -89,7 +89,7 @@ export default function Login() {
 							const res = await fetch('/api/auth/check-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
 							if (!res.ok) {
 								// Do not fallback to creating account if the check endpoint failed — show error instead
-								const errBody = await res.text().catch(() => null);
+								const errBody = await res.text().catch((): null => null);
 								console.error('check-password failed', res.status, errBody);
 								toast.error('Error verificant l\'usuari. Torna-ho a provar més tard.');
 								return;

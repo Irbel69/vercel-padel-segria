@@ -10,15 +10,18 @@ async function handler(req: NextRequest) {
 	const requestUrl = new URL(req.url);
 	const code = requestUrl.searchParams.get("code");
 
-		if (code) {
+			if (code) {
 		const supabase = createClient();
 		const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
-		if (error) {
+			if (error) {
 			console.error("Error exchanging code for session:", error);
-			return NextResponse.redirect(
-				requestUrl.origin + "/signin?error=auth_error"
-			);
+				// If PKCE code_verifier isn't available on the server (common when the provider
+				// redirected to this API route directly), try sending the user to the
+				// client-side callback to finish the exchange in the browser.
+				const fallback = NextResponse.redirect(requestUrl.origin + "/auth/callback" + requestUrl.search, { status: 303 });
+				fallback.headers.set('Cache-Control', 'no-store');
+				return fallback;
 		}
 
 		if (data.user) {
