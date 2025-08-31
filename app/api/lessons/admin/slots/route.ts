@@ -1,12 +1,39 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/libs/supabase/server";
 
+// Helper: ensure caller is admin
+async function ensureAdmin(supabase: any) {
+	const {
+		data: { user },
+		error: authError,
+	} = await supabase.auth.getUser();
+	if (authError || !user)
+		return { ok: false, status: 401, message: "No autorizado" };
+	const { data: profile, error: profileError } = await supabase
+		.from("users")
+		.select("is_admin")
+		.eq("id", user.id)
+		.single();
+	if (profileError || !profile?.is_admin)
+		return { ok: false, status: 403, message: "Accés no autoritzat" };
+	return { ok: true };
+}
+
 export async function GET(request: Request) {
 	const { searchParams } = new URL(request.url);
 	const from = searchParams.get("from");
 	const to = searchParams.get("to");
 
 	const supabase = createClient();
+
+	// Admin gate
+	const admin = await ensureAdmin(supabase);
+	if (!admin.ok) {
+		return NextResponse.json(
+			{ error: admin.message },
+			{ status: admin.status }
+		);
+	}
 
 	// Get slots with booking count
 	let query = supabase

@@ -11,6 +11,12 @@ import { Separator } from "@/components/ui/separator";
 import { Users, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+	Accordion,
+	AccordionContent,
+	AccordionItem,
+	AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface AdminSlotDetailDialogProps {
 	slotId?: number | null;
@@ -30,6 +36,14 @@ type SlotBooking = {
 	status: string;
 	created_at: string;
 	participants: { id: number; name: string; is_primary: boolean }[];
+	payment_type?: "direct_debit" | "bizum" | "cash";
+	direct_debit?: {
+		iban?: string | null;
+		holder_name?: string | null;
+		holder_address?: string | null;
+		holder_dni?: string | null;
+		is_authorized?: boolean;
+	} | null;
 };
 
 export default function AdminSlotDetailDialog({
@@ -74,7 +88,10 @@ export default function AdminSlotDetailDialog({
 					primaryName,
 					companions,
 					groupSize: b.group_size,
-				};
+					payment_type: b.payment_type,
+					user_phone: b.user?.phone || null,
+					direct_debit: b.direct_debit || null,
+				} as const;
 			});
 	}, [bookings]);
 
@@ -143,6 +160,79 @@ export default function AdminSlotDetailDialog({
 													) : (
 														<div className="text-white/60 text-xs mt-1">
 															Individual
+														</div>
+													)}
+													{/* Payment info for confirmed inscription */}
+													{g.payment_type && (
+														<div className="mt-2">
+															{g.payment_type === "cash" ? (
+																<div className="inline-flex items-center rounded bg-white/10 px-2 py-0.5 text-[11px] text-white/80">
+																	Pagament: Efectiu
+																</div>
+															) : g.payment_type === "bizum" ? (
+																<Accordion type="single" collapsible>
+																	<AccordionItem value={`g-bizum-${g.id}`}>
+																		<AccordionTrigger className="text-xs text-white/80">
+																			Pagament: Bizum
+																		</AccordionTrigger>
+																		<AccordionContent>
+																			<div className="text-xs text-white/80 space-y-1">
+																				<div>
+																					<span className="text-white/60">
+																						Telèfon titular:{" "}
+																					</span>
+																					<span>{g.user_phone || "—"}</span>
+																				</div>
+																			</div>
+																		</AccordionContent>
+																	</AccordionItem>
+																</Accordion>
+															) : g.payment_type === "direct_debit" ? (
+																<Accordion type="single" collapsible>
+																	<AccordionItem value={`g-dd-${g.id}`}>
+																		<AccordionTrigger className="text-xs text-white/80">
+																			Pagament: Rebut bancari
+																		</AccordionTrigger>
+																		<AccordionContent>
+																			<div className="text-xs text-white/80 space-y-1">
+																				<div>
+																					<span className="text-white/60">
+																						IBAN:{" "}
+																					</span>
+																					<span className="font-mono break-all">
+																						{g.direct_debit?.iban || "—"}
+																					</span>
+																				</div>
+																				<div>
+																					<span className="text-white/60">
+																						Titular:{" "}
+																					</span>
+																					<span>
+																						{g.direct_debit?.holder_name || "—"}
+																					</span>
+																				</div>
+																				<div>
+																					<span className="text-white/60">
+																						Adreça:{" "}
+																					</span>
+																					<span>
+																						{g.direct_debit?.holder_address ||
+																							"—"}
+																					</span>
+																				</div>
+																				<div>
+																					<span className="text-white/60">
+																						DNI:{" "}
+																					</span>
+																					<span>
+																						{g.direct_debit?.holder_dni || "—"}
+																					</span>
+																				</div>
+																			</div>
+																		</AccordionContent>
+																	</AccordionItem>
+																</Accordion>
+															) : null}
 														</div>
 													)}
 												</div>
@@ -218,6 +308,86 @@ export default function AdminSlotDetailDialog({
 															Noms:
 														</span>
 														{b.participants.map((p) => p.name).join(", ")}
+													</div>
+												)}
+
+												{/* Payment details accordion (admin only view) */}
+												{b.payment_type && (
+													<div className="mt-2">
+														<Accordion type="single" collapsible>
+															<AccordionItem value={`payment-${b.id}`}>
+																<AccordionTrigger className="text-xs text-white/80">
+																	Pagament:{" "}
+																	{b.payment_type === "direct_debit"
+																		? "Rebut bancari"
+																		: b.payment_type === "bizum"
+																		? "Bizum"
+																		: "Efectiu"}
+																</AccordionTrigger>
+																<AccordionContent>
+																	{b.payment_type === "direct_debit" ? (
+																		<div className="text-xs text-white/80 space-y-1">
+																			<div>
+																				<span className="text-white/60">
+																					IBAN:{" "}
+																				</span>
+																				<span className="font-mono break-all">
+																					{b.direct_debit?.iban || "—"}
+																				</span>
+																			</div>
+																			<div>
+																				<span className="text-white/60">
+																					Titular:{" "}
+																				</span>
+																				<span>
+																					{b.direct_debit?.holder_name || "—"}
+																				</span>
+																			</div>
+																			<div>
+																				<span className="text-white/60">
+																					Adreça:{" "}
+																				</span>
+																				<span>
+																					{b.direct_debit?.holder_address ||
+																						"—"}
+																				</span>
+																			</div>
+																			<div>
+																				<span className="text-white/60">
+																					DNI:{" "}
+																				</span>
+																				<span>
+																					{b.direct_debit?.holder_dni || "—"}
+																				</span>
+																			</div>
+																			{typeof b.direct_debit?.is_authorized ===
+																				"boolean" && (
+																				<div>
+																					<span className="text-white/60">
+																						Autoritzat:{" "}
+																					</span>
+																					<span
+																						className={
+																							b.direct_debit.is_authorized
+																								? "text-green-300"
+																								: "text-yellow-300"
+																						}>
+																						{b.direct_debit.is_authorized
+																							? "Sí"
+																							: "Pendent"}
+																					</span>
+																				</div>
+																			)}
+																		</div>
+																	) : (
+																		<div className="text-xs text-white/70">
+																			No hi ha dades addicionals per a aquest
+																			mètode de pagament.
+																		</div>
+																	)}
+																</AccordionContent>
+															</AccordionItem>
+														</Accordion>
 													</div>
 												)}
 											</div>
