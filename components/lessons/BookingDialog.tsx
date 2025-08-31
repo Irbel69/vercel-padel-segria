@@ -55,7 +55,10 @@ export function BookingDialog({
 		try {
 			const raw = localStorage.getItem("ps_profile_cache");
 			parsedCache = raw ? JSON.parse(raw) : null;
-		} catch {}
+		} catch (err) {
+			// Ignore malformed cache data but keep a tiny hint for devs in console
+			// console.debug('Failed to parse ps_profile_cache', err);
+		}
 	}
 
 	const firstName = profile?.name ?? parsedCache?.name ?? "";
@@ -192,7 +195,10 @@ export function BookingDialog({
 		setSubmitting(false);
 		try {
 			window.dispatchEvent(new CustomEvent("lesson:booked"));
-		} catch {}
+		} catch (err) {
+			// Some environments may restrict CustomEvent dispatching; ignore failures
+			// console.debug('dispatch lesson:booked failed', err);
+		}
 	};
 
 	const extraCount = groupSize - 1;
