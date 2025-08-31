@@ -2,7 +2,6 @@
 
 import { useState, useEffect, ReactNode } from "react";
 import { useUser } from "@/hooks/use-user";
-import { X } from "lucide-react";
 import {
 	Dialog,
 	DialogContent,
@@ -50,15 +49,13 @@ export function BookingDialog({
 	const [paymentType, setPaymentType] = useState<PaymentType>("cash");
 	const { profile } = useUser();
 
-	// synchronous cached profile for immediate UI fill (set by EnsureUser on page load)
+	// Synchronous cached profile for immediate UI fill
 	let parsedCache: { name?: string; surname?: string } | null = null;
 	if (typeof window !== "undefined") {
 		try {
 			const raw = localStorage.getItem("ps_profile_cache");
 			parsedCache = raw ? JSON.parse(raw) : null;
-		} catch (e) {
-			parsedCache = null;
-		}
+		} catch {}
 	}
 
 	const firstName = profile?.name ?? parsedCache?.name ?? "";
@@ -66,6 +63,7 @@ export function BookingDialog({
 	const computedPrimaryName = `${firstName}${
 		lastName ? ` ${lastName}` : ""
 	}`.trim();
+
 	const [participants, setParticipants] = useState<string[]>([]);
 	const [observations, setObservations] = useState("");
 	const [dd, setDd] = useState({
@@ -77,11 +75,39 @@ export function BookingDialog({
 	});
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [ibanError, setIbanError] = useState<string | null>(null);
+
+	// Helpers: IBAN formatting and validation
+	const normalizeIban = (value: string) =>
+		value.replace(/\s+/g, "").toUpperCase();
+	const formatIban = (value: string) => {
+		const raw = normalizeIban(value)
+			.replace(/[^A-Z0-9]/g, "")
+			.slice(0, 34);
+		return raw.replace(/(.{4})/g, "$1 ").trim();
+	};
+	const validateIban = (value: string) => {
+		const iban = normalizeIban(value);
+		if (!iban) return false;
+		if (!/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(iban)) return false;
+		// Move first 4 chars to end
+		const rearranged = iban.slice(4) + iban.slice(0, 4);
+		// Convert letters to numbers (A=10 .. Z=35) and compute mod 97 iteratively
+		let remainder = 0;
+		for (let i = 0; i < rearranged.length; i++) {
+			const ch = rearranged[i];
+			const code =
+				ch >= "A" && ch <= "Z" ? (ch.charCodeAt(0) - 55).toString() : ch;
+			for (let j = 0; j < code.length; j++) {
+				remainder = (remainder * 10 + (code.charCodeAt(j) - 48)) % 97;
+			}
+		}
+		return remainder === 1;
+	};
 
 	const isFirst = (slotParticipantsCount || 0) === 0;
 	const forceCheckedDisabled =
 		(slotParticipantsCount || 0) > 0 && slotStatus === "open";
-
 	const effectiveAllowFill = forceCheckedDisabled
 		? true
 		: isFirst
@@ -89,7 +115,7 @@ export function BookingDialog({
 		: Boolean(allowFillPolicy);
 
 	useEffect(() => {
-		// When opening or when policy changes, align local state for clarity
+		// Align local state when policy changes
 		if (forceCheckedDisabled) {
 			setAllowFill(true);
 		} else if (!isFirst && allowFillPolicy !== null) {
@@ -97,18 +123,60 @@ export function BookingDialog({
 		}
 	}, [isFirst, allowFillPolicy, forceCheckedDisabled]);
 
+	// Derived flags for direct debit completeness
+	const isDdSelected = paymentType === "direct_debit";
+	const isIbanValid = !isDdSelected ? true : validateIban(dd.iban);
+	const isDdIncomplete =
+		isDdSelected &&
+		(!dd.is_authorized ||
+			!dd.iban?.trim() ||
+			!isIbanValid ||
+			!dd.holder_name?.trim() ||
+			!dd.holder_address?.trim() ||
+			!dd.holder_dni?.trim());
+
 	const handleSubmit = async () => {
 		setSubmitting(true);
 		setError(null);
+
+		// Require mandatory fields and valid IBAN for direct debit
+		if (paymentType === "direct_debit") {
+			if (!dd.is_authorized) {
+				setError("Cal acceptar l'autorització de domiciliació bancària");
+				setSubmitting(false);
+				return;
+			}
+			if (!validateIban(dd.iban)) {
+				setIbanError("IBAN no vàlid");
+				setError("IBAN no vàlid");
+				setSubmitting(false);
+				return;
+			}
+			if (
+				!dd.iban?.trim() ||
+				!dd.holder_name?.trim() ||
+				!dd.holder_address?.trim() ||
+				!dd.holder_dni?.trim()
+			) {
+				setError(
+					"Cal completar IBAN, Nom del titular, Adreça i DNI per al rebut bancari"
+				);
+				setSubmitting(false);
+				return;
+			}
+		}
+
 		const payload: CreateBookingPayload = {
 			slot_id: slotId,
 			group_size: groupSize,
 			allow_fill: effectiveAllowFill,
 			payment_type: paymentType,
 			observations,
-			// primary_name intentionally omitted: server derives name from authenticated user
 			participants: participants.filter(Boolean),
-			direct_debit: paymentType === "direct_debit" ? dd : undefined,
+			direct_debit:
+				paymentType === "direct_debit"
+					? { ...dd, iban: normalizeIban(dd.iban) }
+					: undefined,
 		};
 
 		const res = await fetch("/api/lessons/book", {
@@ -124,9 +192,7 @@ export function BookingDialog({
 		setSubmitting(false);
 		try {
 			window.dispatchEvent(new CustomEvent("lesson:booked"));
-		} catch (e) {
-			// noop (server-side rendering safety if ever invoked there)
-		}
+		} catch {}
 	};
 
 	const extraCount = groupSize - 1;
@@ -143,7 +209,7 @@ export function BookingDialog({
 		/>
 	));
 
-	// On mobile use a full-screen sheet with vertical scrolling enabled.
+	// Mobile: full-screen sheet
 	if (isMobile) {
 		return (
 			<Sheet>
@@ -154,14 +220,10 @@ export function BookingDialog({
 					side="bottom"
 					className="inset-0 h-[100dvh] max-h-[100dvh] overflow-y-auto p-6"
 					style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
-					// Prevent clicks inside the sheet from bubbling to calendar day cards
 					onPointerDown={(e) => e.stopPropagation()}
 					onClick={(e) => e.stopPropagation()}>
 					<div className="flex items-center justify-between">
-						<h3 className="text-lg font-semibold">
-							Reserva de classe {slotParticipantsCount} - {slotStatus} -{" "}
-							{forceCheckedDisabled}
-						</h3>
+						<h3 className="text-lg font-semibold">Reserva de classe</h3>
 					</div>
 
 					<div className="mt-4 space-y-4">
@@ -223,8 +285,19 @@ export function BookingDialog({
 								<Input
 									placeholder="IBAN"
 									value={dd.iban}
-									onChange={(e) => setDd({ ...dd, iban: e.target.value })}
+									onChange={(e) => {
+										const next = formatIban(e.target.value);
+										setDd({ ...dd, iban: next });
+										if (ibanError) setIbanError(null);
+									}}
+									onBlur={() => {
+										if (dd.iban && !validateIban(dd.iban))
+											setIbanError("IBAN no vàlid");
+									}}
 								/>
+								{ibanError && (
+									<p className="text-xs text-red-400">{ibanError}</p>
+								)}
 								<Input
 									placeholder="Nom del titular"
 									value={dd.holder_name}
@@ -294,7 +367,9 @@ export function BookingDialog({
 									Cancel·lar
 								</Button>
 							</SheetClose>
-							<Button onClick={handleSubmit} disabled={submitting}>
+							<Button
+								onClick={handleSubmit}
+								disabled={submitting || isDdIncomplete}>
 								{submitting ? "Processant..." : "Confirmar reserva"}
 							</Button>
 						</div>
@@ -304,7 +379,7 @@ export function BookingDialog({
 		);
 	}
 
-	// Desktop / fallback: keep the existing dialog popup
+	// Desktop dialog
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
@@ -312,10 +387,8 @@ export function BookingDialog({
 			</DialogTrigger>
 			<DialogContent
 				className="max-w-lg"
-				// Prevent clicks inside the dialog from bubbling to parent calendar cards
 				onPointerDown={(e) => e.stopPropagation()}
 				onClick={(e) => e.stopPropagation()}>
-				{/* Explicit close button that guarantees the dialog state is updated */}
 				<DialogHeader>
 					<DialogTitle>Reserva de classe</DialogTitle>
 				</DialogHeader>
@@ -379,8 +452,17 @@ export function BookingDialog({
 							<Input
 								placeholder="IBAN"
 								value={dd.iban}
-								onChange={(e) => setDd({ ...dd, iban: e.target.value })}
+								onChange={(e) => {
+									const next = formatIban(e.target.value);
+									setDd({ ...dd, iban: next });
+									if (ibanError) setIbanError(null);
+								}}
+								onBlur={() => {
+									if (dd.iban && !validateIban(dd.iban))
+										setIbanError("IBAN no vàlid");
+								}}
 							/>
+							{ibanError && <p className="text-xs text-red-400">{ibanError}</p>}
 							<Input
 								placeholder="Nom del titular"
 								value={dd.holder_name}
@@ -447,7 +529,9 @@ export function BookingDialog({
 							disabled={submitting}>
 							Cancel·lar
 						</Button>
-						<Button onClick={handleSubmit} disabled={submitting}>
+						<Button
+							onClick={handleSubmit}
+							disabled={submitting || isDdIncomplete}>
 							{submitting ? "Processant..." : "Confirmar reserva"}
 						</Button>
 					</div>
