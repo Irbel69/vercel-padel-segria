@@ -65,15 +65,49 @@ export async function POST(request: Request) {
 	if (exErr)
 		return NextResponse.json({ error: exErr.message }, { status: 500 });
 
+	// Helper to compute the UTC start Date for a local (tz) HH:mm on a specific day
+	const getUtcStartForLocalTime = (
+		day: Date,
+		hour: number,
+		minute: number,
+		timeZone: string
+	) => {
+		const dtf = new Intl.DateTimeFormat("en-US", {
+			timeZone,
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+			hour: "2-digit",
+			minute: "2-digit",
+			second: "2-digit",
+			hour12: false,
+		});
+		const parts = dtf.formatToParts(day);
+		const map = Object.fromEntries(parts.map((p) => [p.type, p.value]));
+		const asUTC = Date.UTC(
+			Number(map.year),
+			Number(map.month) - 1,
+			Number(map.day),
+			Number(map.hour),
+			Number(map.minute),
+			Number(map.second)
+		);
+		const offsetMs = asUTC - day.getTime();
+		const offsetHours = offsetMs / 3600000;
+		const utc = new Date(day);
+		utc.setUTCHours(hour - offsetHours, minute || 0, 0, 0);
+		return utc;
+	};
+
 	for (let ts = from.getTime(); ts <= to.getTime(); ts += dayMs) {
 		const day = new Date(ts);
 		const dow = day.getUTCDay();
-		if (!body.days_of_week.includes(dow)) continue;
+		// When overwriting a single day, ignore weekday mask so the preview includes the target day
+		if (!overwriteDay && !body.days_of_week.includes(dow)) continue;
 
-		// Start of day per base_time_start
+		// Start of day per base_time_start using local timezone
 		const [bh, bm] = body.base_time_start.split(":").map(Number);
-		const cursorStart = new Date(day);
-		cursorStart.setUTCHours(bh, bm || 0, 0, 0);
+		const cursorStart = getUtcStartForLocalTime(day, bh, bm || 0, tz);
 		let cursor = new Date(cursorStart);
 
 		// If overwriteDay and there are no blocks, preview zero slots for the day

@@ -117,14 +117,52 @@ export async function POST(request: Request) {
 	const inserts: any[] = [];
 	const deletions: number[] = [];
 
+	// Helper to compute the UTC start Date for a local (timeZone) HH:mm on a specific day
+	const getUtcStartForLocalTime = (
+		day: Date,
+		hour: number,
+		minute: number,
+		timeZone: string
+	) => {
+		// Compute the timezone offset (in ms) for this calendar day in the given timeZone
+		const dtf = new Intl.DateTimeFormat("en-US", {
+			timeZone,
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+			hour: "2-digit",
+			minute: "2-digit",
+			second: "2-digit",
+			hour12: false,
+		});
+		const parts = dtf.formatToParts(day);
+		const map = Object.fromEntries(parts.map((p) => [p.type, p.value]));
+		// This represents the same 'instant' as `day`, expressed in the timeZone
+		const asUTC = Date.UTC(
+			Number(map.year),
+			Number(map.month) - 1,
+			Number(map.day),
+			Number(map.hour),
+			Number(map.minute),
+			Number(map.second)
+		);
+		const offsetMs = asUTC - day.getTime();
+		const offsetHours = offsetMs / 3600000;
+		// Local hour -> UTC hour by subtracting the offset
+		const utc = new Date(day);
+		utc.setUTCHours(hour - offsetHours, minute || 0, 0, 0);
+		return utc;
+	};
+
 	for (let ts = from.getTime(); ts <= to.getTime(); ts += dayMs) {
 		const day = new Date(ts);
 		const dow = day.getUTCDay();
-		if (!body.days_of_week.includes(dow)) continue;
+		// If overwriting a specific day, ignore weekday mask to ensure application
+		if (!overwriteDay && !body.days_of_week.includes(dow)) continue;
 
 		const [bh, bm] = body.base_time_start.split(":").map(Number);
-		const cursorStart = new Date(day);
-		cursorStart.setUTCHours(bh, bm || 0, 0, 0);
+		// Interpret base_time_start as local time in `timezone` and convert to UTC
+		const cursorStart = getUtcStartForLocalTime(day, bh, bm || 0, timezone);
 		let cursor = new Date(cursorStart);
 
 		for (const block of body.template.blocks) {

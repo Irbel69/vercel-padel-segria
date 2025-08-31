@@ -1,0 +1,53 @@
+import {
+	Activity,
+	Trophy,
+	Target,
+	Award,
+	Star,
+	Crown,
+	Medal,
+	ArrowUpRight,
+	Eye,
+	Flame,
+	Zap,
+	Heart,
+	Wind,
+	Shield,
+	Swords,
+	BrainCircuit,
+	Users,
+	Gamepad2,
+	type LucideIcon,
+} from "lucide-react";
+
+export const qualityIconMap: Record<string, LucideIcon> = {
+	Lideratge: Crown,
+	Anticipació: Eye,
+	Potència: Flame,
+	Velocitat: Zap,
+	Resistència: Heart,
+	Reflexos: Activity,
+	Flexibilitat: Wind,
+	Equilibri: Target,
+	Mobilitat: ArrowUpRight,
+	Defensa: Shield,
+	Atac: Swords,
+	Control: BrainCircuit,
+	"Col·locació": Target,
+	Volea: Award,
+	Globo: Trophy,
+	Rematada: Flame,
+	Vibora: Zap,
+	Servei: Star,
+	Sortida: ArrowUpRight,
+	Contraatac: Activity,
+	"Baixada de pared": Shield,
+	Bandeja: Medal,
+	Comunicació: Users,
+	Adaptació: Wind,
+	X3: Gamepad2,
+};
+
+export const getQualityIcon = (qualityName: string): LucideIcon => {
+	return qualityIconMap[qualityName] || Award;
+};
