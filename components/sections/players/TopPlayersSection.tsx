@@ -289,7 +289,7 @@ export function TopPlayersSection() {
 								<h3 className="text-xl font-bold text-white">
 									Vols ser un top player?
 								</h3>
-								<p className="text-gray-300 text-sm">
+								<p className="text-gray-300 text-lg">
 									Uneix-te als nostres tornejos i demostra el teu talent!
 								</p>
 								<div className="flex flex-col sm:flex-row gap-3">

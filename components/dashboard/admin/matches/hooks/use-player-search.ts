@@ -25,7 +25,7 @@ async function fetchPlayers(search: string = ""): Promise<MatchPlayer[]> {
 	if (search.length > 100) {
 		throw new Error("Terme de cerca massa llarg");
 	}
-	
+
 	// Solo permitir letras, espacios y caracteres catalanes/españoles
 	if (search && !/^[a-zA-ZÀ-ÿ\u00f1\u00d1\s]*$/.test(search)) {
 		throw new Error("Només es permeten lletres i espais");
@@ -53,7 +53,30 @@ async function fetchPlayers(search: string = ""): Promise<MatchPlayer[]> {
 	return data.users || [];
 }
 
-export function usePlayerSearch() {
+// Fetch participants for a specific event (registrations -> users mapping)
+async function fetchEventParticipants(eventId: number, search: string = ""): Promise<MatchPlayer[]> {
+	const params = new URLSearchParams();
+	if (search.trim()) params.append('search', search.trim());
+
+	const response = await fetch(`/api/admin/events/${eventId}?${params.toString()}`);
+	const data = await response.json();
+
+	if (!response.ok) {
+		throw new Error(data?.error || 'Error cargando participantes');
+	}
+
+	const regs = data.participants || [];
+	return regs.map((r: any) => ({
+		id: r.users?.id || String(r.user_id),
+		name: r.users?.name || r.name || '',
+		surname: r.users?.surname || '',
+		avatar_url: r.users?.avatar_url || '',
+		score: r.users?.score ?? undefined,
+	}));
+}
+
+
+export function usePlayerSearch({ eventId, onlyInscritos }:{ eventId?: number, onlyInscritos?: boolean } = {}) {
 	const [searchTerm, setSearchTerm] = useState("");
 	
 	// Debounce search term para evitar peticiones excesivas
@@ -65,8 +88,8 @@ export function usePlayerSearch() {
 		isLoading,
 		error,
 	} = useQuery({
-		queryKey: ['admin-players', debouncedSearchTerm],
-		queryFn: () => fetchPlayers(debouncedSearchTerm),
+		queryKey: onlyInscritos && eventId ? ['admin-event-participants', eventId, debouncedSearchTerm] : ['admin-players', debouncedSearchTerm],
+		queryFn: () => (onlyInscritos && eventId ? fetchEventParticipants(eventId, debouncedSearchTerm) : fetchPlayers(debouncedSearchTerm)),
 		staleTime: 2 * 60 * 1000, // 2 minutos - los datos se consideran frescos
 		gcTime: 5 * 60 * 1000, // 5 minutos - tiempo antes de limpiar caché
 		refetchOnWindowFocus: false,

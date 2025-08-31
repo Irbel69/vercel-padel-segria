@@ -110,17 +110,19 @@ export default function UpcomingBookingsList() {
 					});
 					return (
 						<Card key={b.booking_id} className="p-3">
-							<div className="flex items-center justify-between gap-3">
-								<div className="flex items-center gap-3">
+							{/* parent needs min-w-0 so children can shrink/truncate correctly */}
+							<div className="flex items-center justify-between gap-3 min-w-0">
+								{/* date/time block: prevent wrap, allow truncation and responsive sizing */}
+								<div className="flex items-center gap-3 whitespace-nowrap min-w-0">
 									<CalendarDays className="w-4 h-4 text-white/70" />
-									<span className="text-white font-medium">{dateLabel}</span>
+									<span className="text-white font-medium text-xs md:text-sm truncate">{dateLabel}</span>
 									<span className="text-white/70">•</span>
 									<Clock className="w-4 h-4 text-white/70" />
-									<span className="text-white/80">{timeLabel}</span>
+									<span className="text-white/80 text-xs md:text-sm truncate">{timeLabel}</span>
 								</div>
-								<div className="flex items-center gap-2 text-white/70">
+								<div className="flex items-center gap-2 text-white/70 min-w-0">
 									<MapPin className="w-4 h-4" />
-									<span>{b.slot.location}</span>
+									<span className="truncate">{b.slot.location}</span>
 								</div>
 							</div>
 							<div className="mt-1 text-xs text-white/60">

@@ -114,7 +114,7 @@ export function RankingsSection() {
 						<Trophy className="w-7 h-7 text-padel-primary" />
 					</div>
 					{pagination && (
-						<p className="text-center text-xs sm:text-sm text-gray-300">
+						<p className="text-center text-lg sm:text-sm text-gray-300">
 							<Badge className="bg-padel-primary/20 text-padel-primary border border-padel-primary/20 text-xs sm:text-sm">
 								{pagination.totalPlayers} jugadors
 							</Badge>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -96,7 +96,17 @@ export function ContactSection() {
 		});
 	};
 
-	// Stats handled via CommunityStats component defaults
+	// Control accordion open state on mobile
+	const [openItems, setOpenItems] = useState<string[]>([]);
+
+	// Open contact info by default on mobile (Tailwind md breakpoint = 768px)
+	useEffect(() => {
+		if (typeof window !== "undefined") {
+			if (window.innerWidth < 768) {
+				setOpenItems(["info"]);
+			}
+		}
+	}, []);
 
 	return (
 		<section id="contact" className="py-12 md:py-24 relative overflow-visible">
@@ -245,7 +255,11 @@ export function ContactSection() {
 
 				{/* Mobile Accordion for Contact Info & Stats */}
 				<div className="mt-8 md:hidden">
-					<Accordion type="multiple" className="w-full" defaultValue={[]}>
+					<Accordion
+						type="multiple"
+						className="w-full"
+						value={openItems}
+						onValueChange={(vals) => setOpenItems(vals as string[])}>
 						<AccordionItem value="info">
 							<AccordionTrigger className="text-white">
 								Informació de contacte

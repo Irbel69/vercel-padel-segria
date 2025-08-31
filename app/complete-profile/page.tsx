@@ -224,7 +224,25 @@ export default function CompleteProfile() {
 										</div>
 									</div>
 
-									<div className="flex justify-end pt-4">
+									<div className="flex justify-end items-center pt-4 gap-4">
+										{/* Left yellow text link: Ja tinc compte -> sign out and redirect to /signin (Catalan) */}
+										<button
+											type="button"
+											className="text-[var(--padel-primary)] font-medium hover:underline mr-auto text-sm"
+											onClick={async () => {
+												setIsLoading(true);
+												try {
+													await supabase.auth.signOut();
+												} catch (err) {
+													console.error('Error signing out:', err);
+												}
+												setIsLoading(false);
+												router.push('/signin');
+											}}
+										>
+											Ja tinc compte
+										</button>
+
 										<Button
 											type="button"
 											onClick={next}

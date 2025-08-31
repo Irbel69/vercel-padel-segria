@@ -19,7 +19,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Crown, MoreVertical, CalendarClock, Pencil, Trash2 } from "lucide-react";
+import { Crown, MoreVertical, CalendarClock, Pencil, Trash2, AlertTriangle } from "lucide-react";
 import { MatchPair } from './MatchPair';
 import type { MatchCardProps } from './types';
 import { toast } from "@/hooks/use-toast";
@@ -98,14 +98,14 @@ export function MatchCard({ match, onDelete, onUpdated, eventId }: MatchCardProp
 					{totalPlayers < 4 && (
 						<Badge
 							variant="outline"
-							className="border-orange-500/30 text-orange-400"
+							className="border-red-500/30 bg-red-600/15 text-red-300"
 							aria-label={`${totalPlayers} ${totalPlayers === 1 ? 'jugador' : 'jugadors'}`}
 						>
+								<AlertTriangle className="h-4 w-4 text-red-300 mr-1" aria-hidden="true" />
 							{totalPlayers} jugador{totalPlayers !== 1 ? "s" : ""}
 						</Badge>
 					)}
 				</div>
-
 				{/* Actions */}
 				<Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
 					<TooltipProvider delayDuration={400}>
@@ -156,7 +156,7 @@ export function MatchCard({ match, onDelete, onUpdated, eventId }: MatchCardProp
 						</div>
 					</PopoverContent>
 				</Popover>
-
+					
 				{/* Delete Confirmation Dialog */}
 				<AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
 					<AlertDialogContent>
@@ -224,6 +224,7 @@ export function MatchCard({ match, onDelete, onUpdated, eventId }: MatchCardProp
 					</ul>
 				</div>
 			)}
+			
 
 			{/* Footer */}
 			<div className="mt-4">

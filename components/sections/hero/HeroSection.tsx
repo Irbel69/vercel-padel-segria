@@ -62,10 +62,9 @@ export default function HeroSection() {
 							</h1>
 						</div>
 
-						{/* Subheadline */}
+						{/* Subheadline (Catalan - vibrant) */}
 						<p className="text-white/90 text-lg sm:text-xl md:text-2xl lg:text-3xl font-light max-w-2xl mx-auto md:mx-0 leading-relaxed px-4 md:px-0">
-							The mark of great players is not how good they are at their best,
-							but how good they are at their worst.
+							Sent la passió, domina la pista: uneix-te a la comunitat del Segria i viu cada partit com una festa.
 						</p>
 
 						{/* Call-to-Action Button */}

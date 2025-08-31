@@ -24,6 +24,7 @@ export interface PlayerSelectorProps {
 	onOpenChange: (open: boolean) => void;
 	onPlayerSelect: (player: MatchPlayer) => void;
 	selectedPlayers: (MatchPlayer | null)[];
+	eventId?: number;
 }
 
 export interface MatchCardProps {

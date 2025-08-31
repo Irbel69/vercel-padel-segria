@@ -124,7 +124,7 @@ export function EventsSection() {
 					<h2 className="text-2xl leading-tight md:text-5xl lg:text-6xl font-bold text-white mb-3 md:mb-6">
 						Propers Tornejos
 					</h2>
-					<p className="text-sm md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed px-1 md:px-2">
+					<p className="text-lg md:text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed px-1 md:px-2">
 						Descobreix els tornejos més emocionants que estan per venir.
 						Uneix-te a la competició i demostra el teu talent en les millors
 						pistes de Segrià.
