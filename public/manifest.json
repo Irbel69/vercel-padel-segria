@@ -61,20 +61,5 @@
       "purpose": "maskable any"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/screenshots/dashboard-mobile.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Àrea personal - Vista mòbil"
-    },
-    {
-      "src": "/screenshots/dashboard-desktop.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Àrea personal - Vista d'escriptori"
-    }
-  ]
+  "screenshots": []
 }

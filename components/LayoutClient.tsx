@@ -34,22 +34,14 @@ const CrispChat = (): null => {
 	}, []);
 
 	useEffect(() => {
-		if (config?.crisp?.id) {
-			// Set up Crisp
-			Crisp.configure(config.crisp.id);
+		// Only load Crisp on allowed routes to respect CSP and avoid loading 3P scripts everywhere.
+		if (!config?.crisp?.id) return;
 
-			// (Optional) If onlyShowOnRoutes array is not empty in config.js file, Crisp will be hidden on the routes in the array.
-			// Use <AppButtonSupport> instead to show it (user clicks on the button to show Crisp—it cleans the UI)
-			if (
-				config.crisp.onlyShowOnRoutes &&
-				!config.crisp.onlyShowOnRoutes?.includes(pathname)
-			) {
-				Crisp.chat.hide();
-				Crisp.chat.onChatClosed(() => {
-					Crisp.chat.hide();
-				});
-			}
-		}
+		const { onlyShowOnRoutes } = config.crisp;
+		const routeAllowed = !onlyShowOnRoutes || onlyShowOnRoutes.length === 0 || onlyShowOnRoutes.includes(pathname);
+		if (!routeAllowed) return; // don't configure Crisp on this route
+
+		Crisp.configure(config.crisp.id);
 	}, [pathname]);
 
 	// Add User Unique ID to Crisp to easily identify users when reaching support (optional)

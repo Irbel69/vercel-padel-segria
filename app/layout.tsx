@@ -7,6 +7,7 @@ import DottedBackground from "@/components/DottedBackground";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { ThemeProvider } from "@/components/theme-provider";
 import { getNonce } from "@/lib/nonce";
+import { Analytics } from "@vercel/analytics/next"
 import config from "@/config";
 import "./globals.css";
 
@@ -86,6 +87,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 						}}>
 						<DottedBackground />
 						<ServiceWorkerRegister />
+						<Analytics />
 						{/* ClientLayout contains all the client wrappers (Crisp chat support, toast messages, tooltips, etc.) */}
 						<ClientLayout nonce={nonce}>{children}</ClientLayout>
 					</div>
