@@ -8,7 +8,8 @@ import {
 	SheetTitle,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { Users, Clock } from "lucide-react";
+import { Users, Clock, XCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -72,7 +73,7 @@ export default function AdminSlotDetailDialog({
 	}, [open, slotId]);
 
 	// Derived UI data
-	const confirmedGroups = useMemo(() => {
+		const confirmedGroups = useMemo(() => {
 		return bookings
 			.filter((b) => b.status === "confirmed")
 			.map((b) => {
@@ -84,7 +85,7 @@ export default function AdminSlotDetailDialog({
 					"Sense nom";
 				const companions = (b.participants || []).filter((p) => !p.is_primary);
 				return {
-					id: b.id,
+								id: b.id,
 					primaryName,
 					companions,
 					groupSize: b.group_size,
@@ -107,6 +108,32 @@ export default function AdminSlotDetailDialog({
 			.filter((b) => b.status === "confirmed")
 			.reduce((sum, b) => sum + (b.group_size || 0), 0);
 	}, [bookings]);
+
+		async function cancelBooking(bookingId: number) {
+			if (!bookingId) return;
+			try {
+				setLoading(true);
+				setError(null);
+				const res = await fetch(`/api/lessons/admin/bookings/${bookingId}`, {
+					method: "DELETE",
+				});
+				if (!res.ok) {
+					const j = await res.json().catch(() => ({}));
+					throw new Error(j.error || `Error ${res.status}`);
+				}
+				// Refresh bookings list
+				if (slotId) {
+					const r = await fetch(`/api/lessons/admin/slots/${slotId}/bookings`);
+					const j = await r.json();
+					setBookings(j.bookings || []);
+					setParticipantsCount(j.participants_count || 0);
+				}
+			} catch (e: any) {
+				setError(e?.message ?? "Error cancel·lant la reserva");
+			} finally {
+				setLoading(false);
+			}
+		}
 
 	return (
 		<Sheet open={open} onOpenChange={onOpenChange}>
@@ -235,6 +262,18 @@ export default function AdminSlotDetailDialog({
 															) : null}
 														</div>
 													)}
+													<div className="mt-3">
+														<Button
+															variant="destructive"
+															size="sm"
+															onClick={() => cancelBooking(g.id)}
+															className="h-7"
+															title="Cancel·lar reserva"
+														>
+															<XCircle className="w-4 h-4 mr-1" />
+															Cancel·lar
+														</Button>
+													</div>
 												</div>
 												<div className="text-xs text-white/70 flex items-center gap-1 whitespace-nowrap">
 													<Users className="w-3 h-3" /> {g.groupSize}
