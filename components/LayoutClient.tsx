@@ -4,55 +4,16 @@ import { User } from "@supabase/supabase-js";
 import { createClient } from "@/libs/supabase/client";
 import { useEffect, useState, ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { Crisp } from "crisp-sdk-web";
+// Crisp chat removed (not used). If you want to re-enable, add Crisp SDK and reintroduce CrispChat.
 import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "react-hot-toast";
 import { Tooltip } from "react-tooltip";
 import config from "@/config";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-// Crisp customer chat support:
-// This component is separated from ClientLayout because it needs to be wrapped with <SessionProvider> to use useSession() hook
-const CrispChat = (): null => {
-	const pathname = usePathname();
-
-	const supabase = createClient();
-	const [data, setData] = useState<{ user: User }>(null);
-
-	// This is used to get the user data from Supabase Auth (if logged in) => user ID is used to identify users in Crisp
-	useEffect(() => {
-		const getUser = async () => {
-			const {
-				data: { user },
-			} = await supabase.auth.getUser();
-
-			if (user) {
-				setData({ user });
-			}
-		};
-		getUser();
-	}, []);
-
-	useEffect(() => {
-		// Only load Crisp on allowed routes to respect CSP and avoid loading 3P scripts everywhere.
-		if (!config?.crisp?.id) return;
-
-		const { onlyShowOnRoutes } = config.crisp;
-		const routeAllowed = !onlyShowOnRoutes || onlyShowOnRoutes.length === 0 || onlyShowOnRoutes.includes(pathname);
-		if (!routeAllowed) return; // don't configure Crisp on this route
-
-		Crisp.configure(config.crisp.id);
-	}, [pathname]);
-
-	// Add User Unique ID to Crisp to easily identify users when reaching support (optional)
-	useEffect(() => {
-		if (data?.user && config?.crisp?.id) {
-			Crisp.session.setData({ userId: data.user?.id });
-		}
-	}, [data]);
-
-	return null;
-};
+// Crisp functionality intentionally removed. The project previously included a Crisp chat component
+// which injected third-party scripts; since Crisp is not used, we avoid adding those scripts to
+// simplify CSP and reduce third-party surface.
 
 // All the client wrappers are here (they can't be in server components)
 // 1. NextTopLoader: Show a progress bar at the top when navigating between pages
@@ -88,8 +49,7 @@ const ClientLayout = ({
 				className="z-[60] !opacity-100 max-w-sm shadow-lg"
 			/>
 
-			{/* Set Crisp customer chat support */}
-			<CrispChat />
+			{/* Crisp chat intentionally disabled (not used) */}
 		</QueryClientProvider>
 	);
 };

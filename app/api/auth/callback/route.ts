@@ -15,13 +15,20 @@ async function handler(req: NextRequest) {
 		const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
 			if (error) {
-			console.error("Error exchanging code for session:", error);
-				// If PKCE code_verifier isn't available on the server (common when the provider
-				// redirected to this API route directly), try sending the user to the
-				// client-side callback to finish the exchange in the browser.
-				const fallback = NextResponse.redirect(requestUrl.origin + "/auth/callback" + requestUrl.search, { status: 303 });
-				fallback.headers.set('Cache-Control', 'no-store');
-				return fallback;
+				// Common reason: PKCE code_verifier is stored in browser localStorage and not
+				// available on the server. In that case, redirect to the client-side handler
+				// which will perform the exchange in the browser where the PKCE state exists.
+				const msg = String(error.message || error);
+				if (error.status === 400 || /code verifier|invalid request|both auth code and code verifier/i.test(msg)) {
+					const fallback = NextResponse.redirect(requestUrl.origin + "/auth/callback" + requestUrl.search, { status: 303 });
+					fallback.headers.set('Cache-Control', 'no-store');
+					return fallback;
+				}
+				// For other errors, log and redirect to signin
+				console.error("Error exchanging code for session:", error);
+				const fallback2 = NextResponse.redirect(requestUrl.origin + "/signin?error=auth_error", { status: 303 });
+				fallback2.headers.set('Cache-Control', 'no-store');
+				return fallback2;
 		}
 
 		if (data.user) {
