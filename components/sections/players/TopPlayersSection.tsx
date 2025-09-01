@@ -308,6 +308,7 @@ export function TopPlayersSection() {
                     <Trophy className="w-4 h-4 mr-2" /> Uneix-te
                   </Button>
                   </Link>
+                  <Link href="/dashboard">
                   <Button
                     variant="outline"
                     size="lg"
@@ -315,6 +316,7 @@ export function TopPlayersSection() {
                   >
                     <Users className="w-4 h-4 mr-2" /> Veure tots
                   </Button>
+                  </Link>
                 </div>
               </div>
             </CardContent>
