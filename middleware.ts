@@ -41,15 +41,11 @@ export async function middleware(request: NextRequest) {
       "'self'",
       "'unsafe-inline'", // acceptable for styles
       "https://fonts.googleapis.com/",
-      "https://client.crisp.chat/",
     ].join(" ");
 
     const scriptSrcElem = [
       "'self'",
       `'nonce-${nonce}'`,
-      "https://client.crisp.chat/",
-      "https://settings.crisp.chat/",
-      "https://widget.crisp.chat/",
     ].join(" ");
 
     const imgSrc = [
@@ -61,9 +57,7 @@ export async function middleware(request: NextRequest) {
       "https://pbs.twimg.com/",
       "https://images.unsplash.com/",
       "https://logos-world.net/",
-      "https://client.crisp.chat/",
-      "https://image.crisp.chat/",
-      "https://storage.crisp.chat/",
+  // Crisp domains removed
     ];
 
     const connectSrc = [
@@ -73,9 +67,7 @@ export async function middleware(request: NextRequest) {
       "https://vercel.live/",
       "https://vitals.vercel-insights.com/",
       "https://api.resend.com/",
-      "https://client.crisp.chat/",
-      "https://settings.crisp.chat/",
-      "wss://client.crisp.chat/",
+  // Crisp domains removed
     ];
 
     if (supabaseHost) {
@@ -94,10 +86,10 @@ export async function middleware(request: NextRequest) {
       `script-src-elem ${scriptSrcElem}`,
       `style-src ${styleSrc}`,
       `style-src-elem ${styleSrc}`,
-      `font-src 'self' data: https://fonts.gstatic.com/ https://client.crisp.chat/`,
+  `font-src 'self' data: https://fonts.gstatic.com/`,
       `img-src ${imgSrc.join(" ")}`,
       `connect-src ${connectSrc.join(" ")}`,
-      `frame-src 'self' https://client.crisp.chat/`,
+  `frame-src 'self'`,
       `worker-src 'self' blob:`,
       `child-src 'self' blob:`,
       `object-src 'none'`,
