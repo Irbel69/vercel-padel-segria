@@ -39,8 +39,12 @@ export default function Login() {
 			const resetRedirect = window.location.origin + "/reset-password";
 
 			if (type === "oauth") {
-				// Initiate OAuth on the server to persist PKCE verifier in cookies
-				window.location.href = `/api/auth/oauth?provider=${provider}`;
+				await supabase.auth.signInWithOAuth({
+					provider,
+					options: {
+						redirectTo: redirectURL,
+					},
+				});
 			} else if (type === "magic_link") {
 				await supabase.auth.signInWithOtp({
 					email,
