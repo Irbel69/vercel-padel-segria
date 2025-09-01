@@ -228,7 +228,7 @@ export default function CompleteProfile() {
 										{/* Left yellow text link: Ja tinc compte -> sign out and redirect to /signin (Catalan) */}
 										<button
 											type="button"
-											className="text-[var(--padel-primary)] font-medium hover:underline mr-auto text-sm"
+											className="text-[var(--padel-primary)] font-medium underline mr-auto text-sm"
 											onClick={async () => {
 												setIsLoading(true);
 												try {
