@@ -46,6 +46,8 @@ export async function middleware(request: NextRequest) {
     const scriptSrcElem = [
       "'self'",
       `'nonce-${nonce}'`,
+      // Allow a known small inline bootstrap script by hash (Next.js may inline minimal boot code)
+      "'sha256-L48vfNqEGvfFx/QBzIwyw4BwkFQlmhv4qUdPeVuAdOc='",
     ].join(" ");
 
     const imgSrc = [

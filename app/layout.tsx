@@ -7,8 +7,8 @@ import DottedBackground from "@/components/DottedBackground";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { ThemeProvider } from "@/components/theme-provider";
 import { getNonce } from "@/lib/nonce";
-import { Analytics } from "@vercel/analytics/next"
 import config from "@/config";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const font = Inter({ subsets: ["latin"] });
@@ -87,8 +87,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 						}}>
 						<DottedBackground />
 						<ServiceWorkerRegister />
+						{/* Vercel Analytics — middleware provides a per-request nonce so inline bootstrap is allowed */}
 						<Analytics />
-						{/* ClientLayout contains all the client wrappers (Crisp chat support, toast messages, tooltips, etc.) */}
+						{/* ClientLayout contains all the client wrappers (toast messages, tooltips, etc.) */}
 						<ClientLayout nonce={nonce}>{children}</ClientLayout>
 					</div>
 				</ThemeProvider>
