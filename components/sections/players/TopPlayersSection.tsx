@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, CSSProperties } from "react";
+import { useState } from "react";
 import { TopPlayersTicker } from "./TopPlayersTicker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,6 +28,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useTopPlayers } from "@/hooks/use-top-players";
+import Link from "next/link";
 
 // Map de cualidades -> iconos (para desktop grid)
 const qualitiesPool = [
@@ -299,12 +300,14 @@ export function TopPlayersSection() {
                   Uneix-te als nostres tornejos i demostra el teu talent!
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3">
+                  <Link href="/dashboard">
                   <Button
                     size="lg"
                     className="bg-padel-primary text-padel-secondary hover:bg-padel-primary/90 font-semibold flex-1 py-2"
                   >
                     <Trophy className="w-4 h-4 mr-2" /> Uneix-te
                   </Button>
+                  </Link>
                   <Button
                     variant="outline"
                     size="lg"
@@ -342,7 +345,7 @@ function HeaderBlock() {
 }
 
 // Shared styles objects
-const glassCardStyle: CSSProperties = {
+const glassCardStyle: React.CSSProperties = {
   background: "rgba(255, 255, 255, 0.1)",
   borderRadius: "20px",
   boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
@@ -351,7 +354,7 @@ const glassCardStyle: CSSProperties = {
   border: "1px solid rgba(255, 255, 255, 0.2)",
 };
 
-const bottomCtaStyle: CSSProperties = {
+const bottomCtaStyle: React.CSSProperties = {
   background: "rgba(255, 255, 255, 0.1)",
   borderRadius: "16px",
   boxShadow: "0 4px 30px rgba(0, 0, 0, 0.2)",
