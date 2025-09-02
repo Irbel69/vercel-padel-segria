@@ -302,27 +302,34 @@ export function RankingsSection() {
 
 				{/* Pagination */}
 				{pagination && pagination.totalPages > 1 && (
-					<div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
+					// Layout: on mobile show only icon buttons at left/right of the page info;
+					// on sm+ screens show full buttons with labels.
+					<div className="flex items-center justify-between gap-3 w-full">
+						{/* Prev button: icon-only on mobile, label+icon on sm+ */}
 						<Button
 							variant="outline"
 							size="sm"
 							onClick={handlePrev}
 							disabled={pagination.currentPage === 1}
-							className="bg-white/10 border-white/20 text-white hover:bg-white/20 w-full sm:w-auto">
-							<ChevronLeft className="w-4 h-4 mr-1 sm:mr-0" />
-							<span className="sm:hidden">Anterior</span>
+							className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex items-center justify-center w-10 h-8 sm:w-auto sm:h-auto">
+							<ChevronLeft className="w-4 h-4" />
+							<span className="hidden sm:inline ml-2">Anterior</span>
 						</Button>
-						<p className="text-white/70 text-xs sm:text-sm text-center">
+
+						{/* Page info centered */}
+						<p className="flex-1 text-white/70 text-xs sm:text-sm text-center mx-2">
 							Pàgina {pagination.currentPage} de {pagination.totalPages}
 						</p>
+
+						{/* Next button: icon-only on mobile, label+icon on sm+ */}
 						<Button
 							variant="outline"
 							size="sm"
 							onClick={handleNext}
 							disabled={!pagination.hasMore}
-							className="bg-white/10 border-white/20 text-white hover:bg-white/20 w-full sm:w-auto">
-							<span className="sm:hidden">Següent</span>
-							<ChevronRight className="w-4 h-4 ml-1 sm:ml-0" />
+							className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex items-center justify-center w-10 h-8 sm:w-auto sm:h-auto">
+							<span className="hidden sm:inline mr-2">Següent</span>
+							<ChevronRight className="w-4 h-4" />
 						</Button>
 					</div>
 				)}
