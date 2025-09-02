@@ -193,7 +193,7 @@ export default function Login() {
 					{/* Logo */}
 					<div className="flex justify-center mb-4 md:mb-6">
 						<div className="relative">
-							<div className="absolute inset-0 bg-[#c3fb12]/30 rounded-full blur-md" />
+							<div className="absolute inset-0 rounded-full blur-md" />
 							<Image
 								src="/logo_yellow.png"
 								alt={config.appName}

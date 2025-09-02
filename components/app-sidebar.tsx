@@ -123,8 +123,8 @@ export function AppSidebar() {
     >
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-3 px-4 py-4">
-          <div className="relative logo-glow">
-            <div className="absolute inset-0 bg-padel-primary/30 rounded-full blur-sm" />
+          <div className="relative">
+            <div className="absolute inset-0 rounded-full blur-sm" />
             <Image
               src="/logo_yellow.png"
               alt="Padel Segrià"
