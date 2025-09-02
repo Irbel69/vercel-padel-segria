@@ -78,7 +78,7 @@ const AnimatedDottedBackground = () => {
 	return (
 		<canvas
 			ref={canvasRef}
-			className="absolute inset-0 z-0 pointer-events-none bg-black"
+			className="absolute inset-0 z-0 h-screen pointer-events-none bg-black"
 			style={{ opacity: 0.9 }}
 		/>
 	);

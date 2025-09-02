@@ -67,7 +67,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 				/>
 			</head>
 			<body
-				className="bg-black touch-pan-y min-h-screen overflow-x-hidden overflow-y-auto"
+				className={`bg-black touch-pan-y min-h-screen overflow-x-hidden overflow-y-auto`}
 				style={{
 					overscrollBehaviorX: "none",
 					overscrollBehavior: "auto",

@@ -158,7 +158,17 @@ export default function Login() {
 	};
 
 	return (
-		<main className="h-screen flex items-center justify-center relative overflow-hidden">
+			<main
+				className="flex items-center justify-center relative"
+						style={{
+							// Use the small viewport height (svh) unit and subtract the safe-area
+							// insets so padding doesn't increase the rendered height and cause
+							// unwanted scrolling on mobile devices with notches / home indicator.
+							minHeight: 'calc(100svh - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
+							paddingTop: 'env(safe-area-inset-top)',
+							paddingBottom: 'env(safe-area-inset-bottom)',
+							boxSizing: 'border-box'
+						}}>
 			{/* Animated background */}
 			<AnimatedDottedBackground />
 
@@ -169,7 +179,17 @@ export default function Login() {
 			</div>
 
 			<div className="container px-4 relative z-10">
-				<div className="max-w-md mx-auto">
+				<div
+					className="max-w-md mx-auto"
+					style={{
+						// Constrain the whole column (back link, logo, header, card)
+						// to the viewport so only this block scrolls internally on
+						// small devices and the page itself doesn't produce an outer scroll.
+						maxHeight: 'calc(100svh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
+						overflowY: 'auto',
+						boxSizing: 'border-box',
+						paddingBottom: 'env(safe-area-inset-bottom)'
+					}}>
 					{/* Back to home */}
 					<div className="mb-6">
 						<Link
@@ -217,7 +237,7 @@ export default function Login() {
 
 					{/* Login card */}
 					<div
-						className="rounded-2xl p-4 md:p-8 max-h-[calc(100vh-120px)] md:max-h-[calc(100vh-160px)] overflow-y-auto"
+						className="rounded-2xl p-4 md:p-8"
 						style={{
 							background: "rgba(255, 255, 255, 0.05)",
 							backdropFilter: "blur(10px)",
