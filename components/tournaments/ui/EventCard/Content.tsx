@@ -95,6 +95,8 @@ export function Content({ event, formatDate, formatDateTime, imageUrl, getRegist
                     width={44}
                     height={44}
                     className="object-cover w-full h-full"
+                    // Ensure Google-hosted avatars load correctly (match <img referrerPolicy="no-referrer" /> used elsewhere)
+                    referrerPolicy="no-referrer"
                   />
                 ) : (
                   <div
