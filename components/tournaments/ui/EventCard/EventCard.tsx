@@ -96,11 +96,12 @@ export default function EventCard({
     return unsubscribe;
   }, [scale, event.title]);
 
+  // Higher-contrast capacity pill with subtle glow and ring for readability over imagery
   const capacityPillColor = isFull
-    ? "bg-slate-700 text-slate-200"
+    ? "bg-slate-800/80 text-slate-100 ring-1 ring-slate-300/30 drop-shadow-[0_0_0.35rem_rgba(148,163,184,0.25)]"
     : isAlmostFull
-    ? "bg-amber-500/20 text-amber-300"
-    : "bg-green-500/20 text-green-400";
+    ? "bg-amber-500/25 text-amber-200 ring-1 ring-amber-300/50 drop-shadow-[0_0_0.45rem_rgba(245,158,11,0.45)]"
+  : "bg-green-700/55 text-white ring-1 ring-green-400/70 drop-shadow-[0_0_0.5rem_rgba(34,197,94,0.55)]";
 
   const filter = useMotionTemplate`brightness(${brightness})`;
 
@@ -129,7 +130,10 @@ export default function EventCard({
               occupied={occupied}
               isFull={effectiveIsFull}
               isAlmostFull={isAlmostFull}
-              className={imageUrl ? "md:h-full md:aspect-auto" : "md:h-48"}
+              // Ensure hero stretches to the full height of the card on md+ so
+              // the placeholder SVG matches the content column height when
+              // CTAs (like Cancel) increase the right column's height.
+              className={imageUrl ? "md:h-full md:aspect-auto" : "md:h-full md:aspect-auto"}
               // Pass derived status so child components can render CLOSED state and styles
               registrationClosed={registrationClosed}
               effectiveStatus={

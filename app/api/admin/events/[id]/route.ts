@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/libs/supabase/server";
+import { createClient, createClientWithAuth } from "@/libs/supabase/server";
 import type { CreateEventData } from "@/types";
 
 // GET /api/admin/events/[id] - Obtener evento específico
@@ -8,7 +8,9 @@ export async function GET(
 	{ params }: { params: { id: string } }
 ) {
 	try {
-		const supabase = createClient();
+		// Try cookie-based auth first; if missing (common on some iOS fetches),
+		// allow Authorization: Bearer <token> header to authenticate.
+		let supabase = createClient();
 
 		// Verificar autenticación
 		const {
@@ -17,8 +19,23 @@ export async function GET(
 		} = await supabase.auth.getUser();
 
 		if (authError || !user) {
-			return NextResponse.json({ error: "No autoritzat" }, { status: 401 });
-		}
+				// Fallback to Authorization header
+				const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
+				const token = authHeader?.toLowerCase().startsWith("bearer ")
+					? authHeader.slice(7).trim()
+					: undefined;
+				if (token) {
+					supabase = createClientWithAuth(token);
+					const {
+						data: { user: hdrUser },
+					} = await supabase.auth.getUser();
+					if (!hdrUser) {
+						return NextResponse.json({ error: "No autoritzat" }, { status: 401 });
+					}
+				} else {
+					return NextResponse.json({ error: "No autoritzat" }, { status: 401 });
+				}
+			}
 
 		// Verificar si es administrador
 		const { data: userProfile, error: profileError } = await supabase
@@ -197,7 +214,10 @@ export async function PUT(
 		maybeAssign("latitude", body.latitude, true);
 		maybeAssign("longitude", body.longitude, true);
 		maybeAssign("prizes", body.prizes, true);
-		maybeAssign("max_participants", body.max_participants);
+			maybeAssign("max_participants", body.max_participants);
+			if (Object.prototype.hasOwnProperty.call(body, "pair_required")) {
+				updatePayload["pair_required"] = body.pair_required as boolean;
+			}
 		maybeAssign("registration_deadline", body.registration_deadline);
 		if (typeof newStatus !== "undefined") updatePayload["status"] = newStatus;
 		// image_url solo si viene (permite null explícito para borrar)

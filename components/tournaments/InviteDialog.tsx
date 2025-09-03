@@ -24,9 +24,11 @@ type Props = {
   isUserRegistered?: boolean;
   // optional event title to display in the dialog header
   eventTitle?: string | null;
+  // when true, user must join with a partner; hide solo button and change text
+  pairRequired?: boolean;
 };
 
-export default function InviteDialog({ openForEventId, onClose, generatedCode, autoGeneratingCode, copyConfirmed, inviteEmail, inviteSubmitting, onChangeEmail, onSubmitInvite, onShare, onCopy, onJoinSolo, joinSoloSubmitting, isUserRegistered, eventTitle }: Props) {
+export default function InviteDialog({ openForEventId, onClose, generatedCode, autoGeneratingCode, copyConfirmed, inviteEmail, inviteSubmitting, onChangeEmail, onSubmitInvite, onShare, onCopy, onJoinSolo, joinSoloSubmitting, isUserRegistered, eventTitle, pairRequired }: Props) {
   const inviteCodeRef = useRef<HTMLSpanElement | null>(null);
   const longPressTimer = useRef<number | null>(null);
   const selectingActive = useRef<boolean>(false);
@@ -115,8 +117,9 @@ export default function InviteDialog({ openForEventId, onClose, generatedCode, a
         <DialogHeader>
           <DialogTitle>{eventTitle ?? "Inscripció a l'Event"}</DialogTitle>
           <DialogDescription>
-            Pots inscriure&apos;t sol o amb parella compartint el codi perquè l&apos;altra persona
-            s&apos;uneixi.
+            {pairRequired
+              ? "Aquest esdeveniment requereix inscriure's amb parella. Genera i comparteix el codi amb la teva parella per unir-se."
+              : "Pots inscriure't sol o amb parella compartint el codi perquè l'altra persona s'uneixi."}
           </DialogDescription>
         </DialogHeader>
 
@@ -190,7 +193,7 @@ export default function InviteDialog({ openForEventId, onClose, generatedCode, a
           {/* Join solo button placed above the close button as requested */}
           {/* Using optional chaining for new props to keep backwards compatibility */}
           <div className="w-full">
-            {!isUserRegistered && (
+            {!isUserRegistered && !pairRequired && onJoinSolo && (
               <Button onClick={() => { if (onJoinSolo) { onJoinSolo(); } else { onClose(); } }} disabled={joinSoloSubmitting} className="mb-2 bg-padel-primary text-black hover:bg-padel-primary/90 w-full" size="lg">
                 {joinSoloSubmitting ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" />Unint-me...</>) : ("Unir-me sol")}
               </Button>

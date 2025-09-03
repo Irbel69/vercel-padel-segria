@@ -35,6 +35,7 @@ export default function TournamentsPage() {
   // UI state controlled at page level
   const [inviteForEventId, setInviteForEventId] = useState<number | null>(null);
   const [inviteForEventTitle, setInviteForEventTitle] = useState<string | null>(null);
+  const [invitePairRequired, setInvitePairRequired] = useState<boolean | null>(null);
   const [joinCodeOpen, setJoinCodeOpen] = useState(false);
 
   const isUserRegistered = !!(inviteForEventId && userRegistrations?.some((r) => r.event_id === inviteForEventId));
@@ -80,6 +81,7 @@ export default function TournamentsPage() {
             onInvite={(id) => {
               const ev = events?.find((e) => e.id === id);
               setInviteForEventTitle(ev?.title ?? null);
+              setInvitePairRequired(ev?.pair_required ?? null);
               setInviteForEventId(id);
             }}
             onUnregister={handleUnregister}
@@ -122,9 +124,11 @@ export default function TournamentsPage() {
         onClose={() => {
           setInviteForEventId(null);
           setInviteForEventTitle(null);
+          setInvitePairRequired(null);
         }}
         isUserRegistered={isUserRegistered}
         eventTitle={inviteForEventTitle}
+        pairRequired={!!invitePairRequired}
       />
 
       <JoinByCodeDialogContainer

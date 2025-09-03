@@ -11,9 +11,10 @@ type Props = {
   onClose: () => void;
   isUserRegistered?: boolean;
   eventTitle?: string | null;
+  pairRequired?: boolean;
 };
 
-export default function InviteDialogContainer({ openForEventId, onClose, isUserRegistered, eventTitle }: Props) {
+export default function InviteDialogContainer({ openForEventId, onClose, isUserRegistered, eventTitle, pairRequired }: Props) {
   const { toast } = useToast();
   const {
     inviteForEventId,
@@ -68,10 +69,11 @@ export default function InviteDialogContainer({ openForEventId, onClose, isUserR
       onSubmitInvite={handleInviteSubmit}
       onShare={handleShare}
       onCopy={copyToClipboard}
-      onJoinSolo={handleJoinSolo}
+      onJoinSolo={pairRequired ? undefined : handleJoinSolo}
       joinSoloSubmitting={registerMutation.isPending}
       isUserRegistered={isUserRegistered}
       eventTitle={eventTitle ?? null}
+      pairRequired={!!pairRequired}
       // eventTitle is not available here; parent should pass a title via context or prop if needed
     />
   );

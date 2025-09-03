@@ -8,10 +8,7 @@ const nextConfig = {
       "pbs.twimg.com",
       "images.unsplash.com",
       "logos-world.net",
-      // Crisp chat images
-      "client.crisp.chat",
-      "image.crisp.chat",
-      "storage.crisp.chat",
+  // (Crisp chat images removed)
     ],
     // Allow Supabase Storage images from your project host
     remotePatterns: [

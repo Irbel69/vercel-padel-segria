@@ -65,7 +65,7 @@ const menuItems = [
 
 const adminItems = [
   {
-    title: "Esdeveniments",
+    title: "Tornejos",
     url: "/dashboard/admin/events",
     icon: Calendar,
     description: "Gestió de tornejos",
@@ -121,10 +121,10 @@ export function AppSidebar() {
         "border-r border-sidebar-border bg-sidebar/95 backdrop-blur-xl animate-sidebar-enter"
       )}
     >
-      <SidebarHeader className="border-b border-sidebar-border">
+      <SidebarHeader className="border-b border-sidebar-border pt-[env(safe-area-inset-top)] md:pt-0">
         <div className="flex items-center gap-3 px-4 py-4">
-          <div className="relative logo-glow">
-            <div className="absolute inset-0 bg-padel-primary/30 rounded-full blur-sm" />
+          <div className="relative">
+            <div className="absolute inset-0 rounded-full blur-sm" />
             <Image
               src="/logo_yellow.png"
               alt="Padel Segrià"

@@ -38,6 +38,22 @@ export function createPublicClient() {
 	);
 }
 
+// Create a server-side Supabase client that authenticates using a provided access token.
+// Useful as a fallback when Safari/iOS doesn't send our auth cookies with fetch to API routes.
+export function createClientWithAuth(accessToken: string) {
+	return createSupabaseClient(
+		process.env.NEXT_PUBLIC_SUPABASE_URL!,
+		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+		{
+			global: {
+				headers: {
+					Authorization: `Bearer ${accessToken}`,
+				},
+			},
+		}
+	);
+}
+
 // Service Role client for specific admin operations (bypasses RLS)
 // ONLY use for controlled operations like invite code validation
 export function createServiceClient() {

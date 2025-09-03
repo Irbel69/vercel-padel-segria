@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 // React is available in scope for JSX
-import { LocationMapButton } from "@/components/LocationMapButton";
 import { Badge } from "@/components/ui/badge";
 import { motion, useReducedMotion } from "framer-motion";
 import { UserPlus } from "lucide-react";
@@ -77,7 +76,10 @@ export function Hero({
   const status = effectiveStatus ?? (isFull ? "full" : isAlmostFull ? "almost_full" : "open");
 
   return (
-    <div className={`relative w-full aspect-video ${className ?? ""}`}>
+    // Mobile-first: keep aspect-video on small screens, but allow full height
+    // from `sm` upwards so the placeholder SVG fills when controls (cancel
+    // button) are visible and card height grows.
+    <div className={`relative w-full aspect-video sm:aspect-auto sm:h-full ${className ?? ""}`}>
       {/* If a future event image exists, render it; else vibrant gradient hero with padel court pattern */}
       {imageUrl ? (
         <Image src={imageUrl} alt={event.title} fill className="object-cover" />
@@ -88,10 +90,15 @@ export function Hero({
 
           {/* Padel court pattern overlay */}
           <div className="absolute inset-0 opacity-20">
+            {/* Ensure svg fills container fully. Use width/height 100% and
+                preserveAspectRatio slice to cover, but allow the parent to be
+                full-height on sm+. */}
             <svg
-              className="w-full h-full"
+              className="w-full h-full block"
               viewBox="0 0 400 225"
               preserveAspectRatio="xMidYMid slice"
+              width="100%"
+              height="100%"
             >
               {/* Court outline */}
               <rect
@@ -171,24 +178,25 @@ export function Hero({
         </div>
       )}
 
-      {/* Enhanced diagonal sheen with yellow tint */}
-      <div className="absolute inset-0 opacity-40 [background:linear-gradient(120deg,transparent,rgba(229,240,0,0.15),transparent)]" />
+      {/* Enhanced diagonal sheen with yellow tint (reduced to be subtle) */}
+      <div className="absolute inset-0 opacity-20 [background:linear-gradient(120deg,transparent,rgba(229,240,0,0.08),transparent)]" />
 
-      {/* Additional depth layer */}
-      <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 via-transparent to-transparent" />
+      {/* Additional depth layer (lighter so images remain visible) */}
+      <div className="absolute inset-0 bg-gradient-to-t from-gray-900/20 via-transparent to-transparent" />
 
-      {/* If an external image is present, add a stronger dark overlay to ensure contrast
-          and switch text/buttons to lighter colors. */}
+      {/* If an external image is present, add a subtle dark overlay to ensure contrast
+          but keep the photo clearly visible. */}
       {imageUrl && (
         <div
           aria-hidden
-          className="absolute inset-0 bg-black/45 backdrop-blur-sm"
+          className="absolute inset-0 bg-black/18 backdrop-blur-[1px]"
         />
       )}
 
-      {/* When event is full/closed, add a subtle gray overlay to communicate completion */}
+      {/* When event is full/closed, use a softer overlay to communicate completion
+          without fully obscuring the image. */}
       {(isFull || registrationClosed) && (
-        <div aria-hidden className="absolute inset-0 bg-slate-800/60" />
+        <div aria-hidden className="absolute inset-0 bg-slate-800/30" />
       )}
 
       {/* Overlays: status and capacity */}
@@ -215,9 +223,9 @@ export function Hero({
         )}
         {/* When registration is closed, make the capacity pill red to indicate closure */}
         <span
-          className={`px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-sm  ${
+          className={`px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-sm ${
             registrationClosed || effectiveStatus === 'closed'
-              ? 'bg-red-500/20 text-red-400'
+              ? 'bg-red-600/25 text-red-200 ring-1 ring-red-400/50 drop-shadow-[0_0_0.45rem_rgba(239,68,68,0.45)]'
               : capacityPillColor
           }`}
         >

@@ -41,6 +41,7 @@ import type { Event, EventsListResponse, CreateEventData } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { uploadEventCover } from "@/libs/supabase/storage";
+import { createClient as createSbBrowser } from "@/libs/supabase/client";
 
 export default function AdminEventsPage() {
   const { user, profile, isLoading: userLoading } = useUser();
@@ -129,6 +130,7 @@ export default function AdminEventsPage() {
     longitude: undefined,
     prizes: "",
     max_participants: 16,
+    pair_required: true,
     registration_deadline: "",
     image_url: undefined,
   });
@@ -231,6 +233,17 @@ export default function AdminEventsPage() {
     });
   };
 
+  // Convert an ISO datetime (or any date string) to YYYY-MM-DD for <input type="date" />
+  const toDateInputValue = (iso?: string | null) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+
   const resetForm = () => {
     setFormData({
       title: "",
@@ -258,13 +271,15 @@ export default function AdminEventsPage() {
   const openEditModal = (event: Event) => {
     setFormData({
       title: event.title,
-      date: event.date,
+      // date inputs expect YYYY-MM-DD, ensure we pass that format
+      date: toDateInputValue(event.date),
       location: event.location || "",
       latitude: event.latitude || undefined,
       longitude: event.longitude || undefined,
       prizes: event.prizes || "",
       max_participants: event.max_participants,
-      registration_deadline: event.registration_deadline,
+      pair_required: event.pair_required ?? true,
+      registration_deadline: toDateInputValue(event.registration_deadline),
       image_url: event.image_url || undefined,
     });
     setEditingEvent(event);
@@ -458,11 +473,38 @@ export default function AdminEventsPage() {
             eventId: editingEvent.id,
             image_url: publicUrl,
           });
-          await fetch(`/api/admin/events/${editingEvent.id}`, {
+          // Include Authorization header for Safari/iOS which may drop cookies on fetch to API routes
+          const sb = createSbBrowser();
+          const { data: sessionData } = await sb.auth.getSession();
+          const accessToken = sessionData.session?.access_token;
+          let resp = await fetch(`/api/admin/events/${editingEvent.id}`, {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+            },
+            credentials: "include",
             body: JSON.stringify({ image_url: publicUrl }),
           });
+          if (resp.status === 401) {
+            // Try to refresh session and retry once
+            await sb.auth.getSession();
+            const { data: s2 } = await sb.auth.getSession();
+            const at2 = s2.session?.access_token;
+            resp = await fetch(`/api/admin/events/${editingEvent.id}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                ...(at2 ? { Authorization: `Bearer ${at2}` } : {}),
+              },
+              credentials: "include",
+              body: JSON.stringify({ image_url: publicUrl }),
+            });
+          }
+          if (!resp.ok) {
+            console.warn("[AdminEvents] PUT image_url failed", resp.status);
+            throw new Error(`PUT image_url failed: ${resp.status}`);
+          }
           console.debug("[AdminEvents] PUT image_url done");
           // Since we persisted, we can mark as not dirty (no need to resend on save)
           setImageDirty(false);
@@ -500,11 +542,36 @@ export default function AdminEventsPage() {
         console.debug("[AdminEvents] PUT image_url null immediately", {
           eventId: editingEvent.id,
         });
-        await fetch(`/api/admin/events/${editingEvent.id}`, {
+        const sb = createSbBrowser();
+        const { data: sessionData } = await sb.auth.getSession();
+        const accessToken = sessionData.session?.access_token;
+        let resp = await fetch(`/api/admin/events/${editingEvent.id}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          },
+          credentials: "include",
           body: JSON.stringify({ image_url: null }),
         });
+        if (resp.status === 401) {
+          await sb.auth.getSession();
+          const { data: s2 } = await sb.auth.getSession();
+          const at2 = s2.session?.access_token;
+          resp = await fetch(`/api/admin/events/${editingEvent.id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              ...(at2 ? { Authorization: `Bearer ${at2}` } : {}),
+            },
+            credentials: "include",
+            body: JSON.stringify({ image_url: null }),
+          });
+        }
+        if (!resp.ok) {
+          console.warn("[AdminEvents] PUT image_url null failed", resp.status);
+          throw new Error(`PUT image_url null failed: ${resp.status}`);
+        }
         console.debug("[AdminEvents] PUT image_url null done");
         setImageDirty(false);
       } catch (e) {
@@ -683,6 +750,7 @@ export default function AdminEventsPage() {
         longitude: formData.longitude,
         prizes: formData.prizes,
         max_participants: formData.max_participants,
+        pair_required: formData.pair_required,
         registration_deadline: formData.registration_deadline,
       };
       // Only include image_url when it changed or on create flow with selected file uploaded later
@@ -700,13 +768,32 @@ export default function AdminEventsPage() {
         keys: Object.keys(payload),
         image_url: payload.image_url ?? null,
       });
-      const response = await fetch(url, {
+      const sb = createSbBrowser();
+      const { data: sessionData } = await sb.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      let response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         },
+        credentials: "include",
         body: JSON.stringify(payload),
       });
+      if (response.status === 401) {
+        await sb.auth.getSession();
+        const { data: s2 } = await sb.auth.getSession();
+        const at2 = s2.session?.access_token;
+        response = await fetch(url, {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+            ...(at2 ? { Authorization: `Bearer ${at2}` } : {}),
+          },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        });
+      }
 
       const data = await response.json();
 
@@ -722,9 +809,15 @@ export default function AdminEventsPage() {
             selectedImageFile,
             data.data.id
           );
-          await fetch(`/api/admin/events/${data.data.id}`, {
+          const { data: sessionData2 } = await sb.auth.getSession();
+          const accessToken2 = sessionData2.session?.access_token;
+          let putResp = await fetch(`/api/admin/events/${data.data.id}`, {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              ...(accessToken2 ? { Authorization: `Bearer ${accessToken2}` } : {}),
+            },
+            credentials: "include",
             body: JSON.stringify({
               // send only image_url so other fields remain unchanged
               image_url: publicUrl,
@@ -735,6 +828,26 @@ export default function AdminEventsPage() {
               max_participants: data.data.max_participants,
             }),
           });
+          if (putResp.status === 401) {
+            await sb.auth.getSession();
+            const { data: s3 } = await sb.auth.getSession();
+            const at3 = s3.session?.access_token;
+            putResp = await fetch(`/api/admin/events/${data.data.id}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                ...(at3 ? { Authorization: `Bearer ${at3}` } : {}),
+              },
+              credentials: "include",
+              body: JSON.stringify({
+                image_url: publicUrl,
+                title: data.data.title,
+                date: data.data.date,
+                registration_deadline: data.data.registration_deadline,
+                max_participants: data.data.max_participants,
+              }),
+            });
+          }
         } catch (e) {
           console.warn("Unable to upload image post-create:", e);
         }
@@ -1156,25 +1269,39 @@ export default function AdminEventsPage() {
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="max_participants" className="text-white">
-                    Màxim de participants *
-                  </Label>
-                  <Input
-                    id="max_participants"
-                    type="number"
-                    min="4"
-                    max="64"
-                    value={formData.max_participants}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        max_participants: parseInt(e.target.value),
-                      }))
-                    }
-                    className="bg-white/10 border-white/20 text-white"
-                    required
-                  />
+                <div className="flex flex-col gap-2">
+                  <div>
+                    <Label htmlFor="max_participants" className="text-white">
+                      Màxim de participants *
+                    </Label>
+                    <Input
+                      id="max_participants"
+                      type="number"
+                      min="4"
+                      max="64"
+                      value={formData.max_participants}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          max_participants: parseInt(e.target.value),
+                        }))
+                      }
+                      className="bg-white/10 border-white/20 text-white"
+                      required
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="text-white text-sm flex items-center gap-2" htmlFor="pair_required">
+                      <input
+                        id="pair_required"
+                        type="checkbox"
+                        checked={!!formData.pair_required}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, pair_required: e.target.checked }))}
+                        className="h-4 w-4 rounded border-white/30 bg-white/10"
+                      />
+                      Requereix inscriure's amb parella
+                    </label>
+                  </div>
                 </div>
 
                 <div className="md:col-span-2">

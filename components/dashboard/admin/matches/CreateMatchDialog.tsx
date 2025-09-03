@@ -69,7 +69,7 @@ export function CreateMatchDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="bg-black/90 border-white/20 text-white max-w-2xl max-h-[100dvh] sm:max-h-[90dvh] p-0 overflow-y-scroll">
+        <DialogContent className="bg-black/90 border-white/20 text-white mb-[calc(env(safe-area-inset-bottom)+5rem)] max-w-2xl max-h-[100dvh] sm:max-h-[90dvh] p-0 overflow-y-scroll">
           <div className="flex flex-col h-full">
             <div className="px-4 sm:px-6 pt-4 sm:pt-6">
               <DialogHeader>
@@ -105,11 +105,7 @@ export function CreateMatchDialog({
                   onWinnerChange={setWinnerPair}
                 />
 
-                <p className="text-sm text-white/60 text-center">
-                  Fes clic en una posició buida per afegir un jugador.
-                  <br />
-                  Utilitza les corones per seleccionar la parella guanyadora.
-                </p>
+               
               </div>
             </div>
 

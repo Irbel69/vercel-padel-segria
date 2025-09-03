@@ -22,9 +22,9 @@ export async function POST(
 		const eventId = parseInt(params.id);
 
 		// Verificar que el evento existe y está disponible
-		const { data: event, error: eventError } = await supabase
+			const { data: event, error: eventError } = await supabase
 			.from("events")
-			.select("*")
+				.select("*")
 			.eq("id", eventId)
 			.single();
 
@@ -35,13 +35,21 @@ export async function POST(
 			);
 		}
 
-		// Verificar que el evento esté abierto para inscripciones
+			// Verificar que el evento esté abierto para inscripciones
 		if (event.status === "closed") {
 			return NextResponse.json(
 				{ error: "Les inscripcions per aquest esdeveniment estan tancades" },
 				{ status: 400 }
 			);
 		}
+
+			// If event requires pair, disallow solo registration via this endpoint
+			if ((event as any).pair_required === true) {
+				return NextResponse.json(
+					{ error: "Aquest esdeveniment requereix inscriure's amb parella" },
+					{ status: 400 }
+				);
+			}
 
 		// Verificar que no haya pasado la fecha límite
 		const registrationDeadline = new Date(event.registration_deadline);

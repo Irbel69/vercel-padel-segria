@@ -41,7 +41,7 @@ export function MatchesList({
 					</div>
 				) : (
 					<div className="space-y-4">
-						{matches.map((match) => (
+						{matches.slice().reverse().map((match) => (
 							<MatchCard key={match.id} match={match} onDelete={onDeleteMatch} onUpdated={onUpdated} eventId={eventId} />
 						))}
 					</div>

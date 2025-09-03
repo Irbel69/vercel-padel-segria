@@ -19,7 +19,14 @@ import { useUser } from "@/hooks/use-user";
 
 const DEFAULT_LIMIT = 10;
 
-export function RankingsSection() {
+type RankingsSectionProps = {
+	/** Hide the Prev/Next buttons when false (landing page) */
+	showNavButtons?: boolean;
+	/** Hide the internal section header when the parent page provides its own header */
+	showHeader?: boolean;
+};
+
+export function RankingsSection({ showNavButtons = true, showHeader = true }: RankingsSectionProps) {
 	const [page, setPage] = useState(1);
 	const { user } = useUser();
 	const userId = user?.id;
@@ -104,23 +111,25 @@ export function RankingsSection() {
 	return (
 		<section id="rankings">
 			<div className="container mx-auto px-3 sm:px-4 relative z-10">
-				{/* Header */}
-				<div className="text-left sm:text-center mb-6 md:mb-12">
-					<div className="flex items-center justify-center gap-3 mb-4">
-						<Trophy className="w-7 h-7 text-padel-primary" />
-						<h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-							Rankings
-						</h2>
-						<Trophy className="w-7 h-7 text-padel-primary" />
+				{/* Header (rendered only when showHeader=true) */}
+				{showHeader && (
+					<div className="text-left sm:text-center mb-6 md:mb-12">
+						<div className="flex items-center justify-center gap-3 mb-4">
+							<Trophy className="w-7 h-7 text-padel-primary" />
+							<h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+								Rankings
+							</h2>
+							<Trophy className="w-7 h-7 text-padel-primary" />
+						</div>
+						{pagination && (
+							<p className="text-center text-lg sm:text-sm text-gray-300">
+								<Badge className="bg-padel-primary/20 text-padel-primary border border-padel-primary/20 text-xs sm:text-sm">
+									{pagination.totalPlayers} jugadors
+								</Badge>
+							</p>
+							)}
 					</div>
-					{pagination && (
-						<p className="text-center text-lg sm:text-sm text-gray-300">
-							<Badge className="bg-padel-primary/20 text-padel-primary border border-padel-primary/20 text-xs sm:text-sm">
-								{pagination.totalPlayers} jugadors
-							</Badge>
-						</p>
-					)}
-				</div>
+				)}
 
 				{/* Rankings */}
 				<Card
@@ -302,28 +311,47 @@ export function RankingsSection() {
 
 				{/* Pagination */}
 				{pagination && pagination.totalPages > 1 && (
-					<div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={handlePrev}
-							disabled={pagination.currentPage === 1}
-							className="bg-white/10 border-white/20 text-white hover:bg-white/20 w-full sm:w-auto">
-							<ChevronLeft className="w-4 h-4 mr-1 sm:mr-0" />
-							<span className="sm:hidden">Anterior</span>
-						</Button>
-						<p className="text-white/70 text-xs sm:text-sm text-center">
-							Pàgina {pagination.currentPage} de {pagination.totalPages}
-						</p>
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={handleNext}
-							disabled={!pagination.hasMore}
-							className="bg-white/10 border-white/20 text-white hover:bg-white/20 w-full sm:w-auto">
-							<span className="sm:hidden">Següent</span>
-							<ChevronRight className="w-4 h-4 ml-1 sm:ml-0" />
-						</Button>
+					// Layout: on mobile show only icon buttons at left/right of the page info;
+					// on sm+ screens show full buttons with labels.
+					<div className="flex items-center justify-between gap-3 w-full">
+						{/* Prev button: icon-only on mobile, label+icon on sm+ */}
+						{showNavButtons ? (
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={handlePrev}
+								disabled={pagination.currentPage === 1}
+								className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex items-center justify-center w-10 h-8 sm:w-auto sm:h-auto">
+								<ChevronLeft className="w-4 h-4" />
+								<span className="hidden sm:inline ml-2">Anterior</span>
+							</Button>
+						) : (
+							<div className="w-10 h-8" />
+						)}
+
+						{/* Page info centered (hidden on landing when showNavButtons=false) */}
+						{showNavButtons ? (
+							<p className="flex-1 text-white/70 text-xs sm:text-sm text-center mx-2">
+								Pàgina {pagination.currentPage} de {pagination.totalPages}
+							</p>
+						) : (
+							<div className="flex-1" />
+						)}
+
+						{/* Next button: icon-only on mobile, label+icon on sm+ */}
+						{showNavButtons ? (
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={handleNext}
+								disabled={!pagination.hasMore}
+								className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex items-center justify-center w-10 h-8 sm:w-auto sm:h-auto">
+								<span className="hidden sm:inline mr-2">Següent</span>
+								<ChevronRight className="w-4 h-4" />
+							</Button>
+						) : (
+							<div className="w-10 h-8" />
+						)}
 					</div>
 				)}
 			</div>
