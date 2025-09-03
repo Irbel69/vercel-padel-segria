@@ -52,6 +52,8 @@ export interface Event {
 	status: "open" | "soon" | "closed";
 	prizes: string | null;
 	max_participants: number;
+	// New: whether joining requires a partner
+	pair_required: boolean;
 	registration_deadline: string;
 	created_at: string;
 	updated_at: string;
@@ -96,6 +98,8 @@ export interface CreateEventData {
 	longitude?: number;
 	prizes?: string;
 	max_participants: number;
+	// If omitted, backend defaults to true
+	pair_required?: boolean;
 	registration_deadline: string;
 	// Optional cover image url sent by client after upload. Set to null to remove.
 	image_url?: string | null;

@@ -129,6 +129,7 @@ export default function AdminEventsPage() {
     longitude: undefined,
     prizes: "",
     max_participants: 16,
+    pair_required: true,
     registration_deadline: "",
     image_url: undefined,
   });
@@ -276,6 +277,7 @@ export default function AdminEventsPage() {
       longitude: event.longitude || undefined,
       prizes: event.prizes || "",
       max_participants: event.max_participants,
+      pair_required: event.pair_required ?? true,
       registration_deadline: toDateInputValue(event.registration_deadline),
       image_url: event.image_url || undefined,
     });
@@ -695,6 +697,7 @@ export default function AdminEventsPage() {
         longitude: formData.longitude,
         prizes: formData.prizes,
         max_participants: formData.max_participants,
+        pair_required: formData.pair_required,
         registration_deadline: formData.registration_deadline,
       };
       // Only include image_url when it changed or on create flow with selected file uploaded later
@@ -1168,25 +1171,39 @@ export default function AdminEventsPage() {
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="max_participants" className="text-white">
-                    Màxim de participants *
-                  </Label>
-                  <Input
-                    id="max_participants"
-                    type="number"
-                    min="4"
-                    max="64"
-                    value={formData.max_participants}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        max_participants: parseInt(e.target.value),
-                      }))
-                    }
-                    className="bg-white/10 border-white/20 text-white"
-                    required
-                  />
+                <div className="flex flex-col gap-2">
+                  <div>
+                    <Label htmlFor="max_participants" className="text-white">
+                      Màxim de participants *
+                    </Label>
+                    <Input
+                      id="max_participants"
+                      type="number"
+                      min="4"
+                      max="64"
+                      value={formData.max_participants}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          max_participants: parseInt(e.target.value),
+                        }))
+                      }
+                      className="bg-white/10 border-white/20 text-white"
+                      required
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="text-white text-sm flex items-center gap-2" htmlFor="pair_required">
+                      <input
+                        id="pair_required"
+                        type="checkbox"
+                        checked={!!formData.pair_required}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, pair_required: e.target.checked }))}
+                        className="h-4 w-4 rounded border-white/30 bg-white/10"
+                      />
+                      Requereix inscriure's amb parella
+                    </label>
+                  </div>
                 </div>
 
                 <div className="md:col-span-2">

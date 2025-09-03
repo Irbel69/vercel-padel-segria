@@ -44,7 +44,7 @@ export function Actions({
               imageUrl ? "text-black" : "text-black"
             } hover:bg-padel-primary/90 font-bold px-6 py-3 md:px-4 md:py-2 shadow-lg shadow-padel-primary/20 hover:shadow-padel-primary/30 transform hover:scale-105 transition-all duration-200 rounded-lg`}
           >
-            Inscriure&apos;m
+            {event.pair_required ? "Inscriure'm amb parella" : "Inscriure'm"}
           </Button>
         )}
 

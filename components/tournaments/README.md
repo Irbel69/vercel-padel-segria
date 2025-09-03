@@ -74,6 +74,7 @@ Files
     - `onSubmitInvite: (generateOnly?: boolean) => void`
     - `onShare: (code: string) => void`
     - `onCopy: (text: string) => void`
+    - `pairRequired?: boolean` — if true, hides the "Unir-me sol" button and updates copy
   }
   - Notes: This component is purely presentational.
 

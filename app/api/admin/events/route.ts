@@ -133,13 +133,14 @@ export async function POST(request: NextRequest) {
 
 		const body: CreateEventData = await request.json();
 
-		console.debug("[POST /api/admin/events] incoming body", {
+			console.debug("[POST /api/admin/events] incoming body", {
 			// Only log non-sensitive fields
 			title: body.title,
 			date: body.date,
 			location: body.location,
 			max_participants: body.max_participants,
 			registration_deadline: body.registration_deadline,
+				pair_required: Object.prototype.hasOwnProperty.call(body, "pair_required") ? body.pair_required : undefined,
 			image_url_present: Object.prototype.hasOwnProperty.call(body, "image_url"),
 			image_url: body.image_url ?? null,
 		});
@@ -197,7 +198,7 @@ export async function POST(request: NextRequest) {
 		}
 
 		// Crear el evento
-		const { data: newEvent, error: insertError } = await supabase
+			const { data: newEvent, error: insertError } = await supabase
 			.from("events")
 			.insert([
 				{
@@ -210,6 +211,7 @@ export async function POST(request: NextRequest) {
 					max_participants: body.max_participants,
 					registration_deadline: body.registration_deadline,
 					status,
+						pair_required: typeof body.pair_required === "boolean" ? body.pair_required : true,
 					image_url: body.image_url || null,
 				},
 			])

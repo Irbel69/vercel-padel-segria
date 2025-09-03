@@ -197,7 +197,10 @@ export async function PUT(
 		maybeAssign("latitude", body.latitude, true);
 		maybeAssign("longitude", body.longitude, true);
 		maybeAssign("prizes", body.prizes, true);
-		maybeAssign("max_participants", body.max_participants);
+			maybeAssign("max_participants", body.max_participants);
+			if (Object.prototype.hasOwnProperty.call(body, "pair_required")) {
+				updatePayload["pair_required"] = body.pair_required as boolean;
+			}
 		maybeAssign("registration_deadline", body.registration_deadline);
 		if (typeof newStatus !== "undefined") updatePayload["status"] = newStatus;
 		// image_url solo si viene (permite null explícito para borrar)
