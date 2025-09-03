@@ -41,6 +41,7 @@ import type { Event, EventsListResponse, CreateEventData } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { uploadEventCover } from "@/libs/supabase/storage";
+import { createClient as createSbBrowser } from "@/libs/supabase/client";
 
 export default function AdminEventsPage() {
   const { user, profile, isLoading: userLoading } = useUser();
@@ -472,11 +473,38 @@ export default function AdminEventsPage() {
             eventId: editingEvent.id,
             image_url: publicUrl,
           });
-          await fetch(`/api/admin/events/${editingEvent.id}`, {
+          // Include Authorization header for Safari/iOS which may drop cookies on fetch to API routes
+          const sb = createSbBrowser();
+          const { data: sessionData } = await sb.auth.getSession();
+          const accessToken = sessionData.session?.access_token;
+          let resp = await fetch(`/api/admin/events/${editingEvent.id}`, {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+            },
+            credentials: "include",
             body: JSON.stringify({ image_url: publicUrl }),
           });
+          if (resp.status === 401) {
+            // Try to refresh session and retry once
+            await sb.auth.getSession();
+            const { data: s2 } = await sb.auth.getSession();
+            const at2 = s2.session?.access_token;
+            resp = await fetch(`/api/admin/events/${editingEvent.id}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                ...(at2 ? { Authorization: `Bearer ${at2}` } : {}),
+              },
+              credentials: "include",
+              body: JSON.stringify({ image_url: publicUrl }),
+            });
+          }
+          if (!resp.ok) {
+            console.warn("[AdminEvents] PUT image_url failed", resp.status);
+            throw new Error(`PUT image_url failed: ${resp.status}`);
+          }
           console.debug("[AdminEvents] PUT image_url done");
           // Since we persisted, we can mark as not dirty (no need to resend on save)
           setImageDirty(false);
@@ -514,11 +542,36 @@ export default function AdminEventsPage() {
         console.debug("[AdminEvents] PUT image_url null immediately", {
           eventId: editingEvent.id,
         });
-        await fetch(`/api/admin/events/${editingEvent.id}`, {
+        const sb = createSbBrowser();
+        const { data: sessionData } = await sb.auth.getSession();
+        const accessToken = sessionData.session?.access_token;
+        let resp = await fetch(`/api/admin/events/${editingEvent.id}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          },
+          credentials: "include",
           body: JSON.stringify({ image_url: null }),
         });
+        if (resp.status === 401) {
+          await sb.auth.getSession();
+          const { data: s2 } = await sb.auth.getSession();
+          const at2 = s2.session?.access_token;
+          resp = await fetch(`/api/admin/events/${editingEvent.id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              ...(at2 ? { Authorization: `Bearer ${at2}` } : {}),
+            },
+            credentials: "include",
+            body: JSON.stringify({ image_url: null }),
+          });
+        }
+        if (!resp.ok) {
+          console.warn("[AdminEvents] PUT image_url null failed", resp.status);
+          throw new Error(`PUT image_url null failed: ${resp.status}`);
+        }
         console.debug("[AdminEvents] PUT image_url null done");
         setImageDirty(false);
       } catch (e) {
@@ -715,13 +768,32 @@ export default function AdminEventsPage() {
         keys: Object.keys(payload),
         image_url: payload.image_url ?? null,
       });
-      const response = await fetch(url, {
+      const sb = createSbBrowser();
+      const { data: sessionData } = await sb.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      let response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         },
+        credentials: "include",
         body: JSON.stringify(payload),
       });
+      if (response.status === 401) {
+        await sb.auth.getSession();
+        const { data: s2 } = await sb.auth.getSession();
+        const at2 = s2.session?.access_token;
+        response = await fetch(url, {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+            ...(at2 ? { Authorization: `Bearer ${at2}` } : {}),
+          },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        });
+      }
 
       const data = await response.json();
 
@@ -737,9 +809,15 @@ export default function AdminEventsPage() {
             selectedImageFile,
             data.data.id
           );
-          await fetch(`/api/admin/events/${data.data.id}`, {
+          const { data: sessionData2 } = await sb.auth.getSession();
+          const accessToken2 = sessionData2.session?.access_token;
+          let putResp = await fetch(`/api/admin/events/${data.data.id}`, {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              ...(accessToken2 ? { Authorization: `Bearer ${accessToken2}` } : {}),
+            },
+            credentials: "include",
             body: JSON.stringify({
               // send only image_url so other fields remain unchanged
               image_url: publicUrl,
@@ -750,6 +828,26 @@ export default function AdminEventsPage() {
               max_participants: data.data.max_participants,
             }),
           });
+          if (putResp.status === 401) {
+            await sb.auth.getSession();
+            const { data: s3 } = await sb.auth.getSession();
+            const at3 = s3.session?.access_token;
+            putResp = await fetch(`/api/admin/events/${data.data.id}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                ...(at3 ? { Authorization: `Bearer ${at3}` } : {}),
+              },
+              credentials: "include",
+              body: JSON.stringify({
+                image_url: publicUrl,
+                title: data.data.title,
+                date: data.data.date,
+                registration_deadline: data.data.registration_deadline,
+                max_participants: data.data.max_participants,
+              }),
+            });
+          }
         } catch (e) {
           console.warn("Unable to upload image post-create:", e);
         }
