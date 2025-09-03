@@ -22,9 +22,11 @@ const DEFAULT_LIMIT = 10;
 type RankingsSectionProps = {
 	/** Hide the Prev/Next buttons when false (landing page) */
 	showNavButtons?: boolean;
+	/** Hide the internal section header when the parent page provides its own header */
+	showHeader?: boolean;
 };
 
-export function RankingsSection({ showNavButtons = true }: RankingsSectionProps) {
+export function RankingsSection({ showNavButtons = true, showHeader = true }: RankingsSectionProps) {
 	const [page, setPage] = useState(1);
 	const { user } = useUser();
 	const userId = user?.id;
@@ -109,23 +111,25 @@ export function RankingsSection({ showNavButtons = true }: RankingsSectionProps)
 	return (
 		<section id="rankings">
 			<div className="container mx-auto px-3 sm:px-4 relative z-10">
-				{/* Header */}
-				<div className="text-left sm:text-center mb-6 md:mb-12">
-					<div className="flex items-center justify-center gap-3 mb-4">
-						<Trophy className="w-7 h-7 text-padel-primary" />
-						<h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-							Rankings
-						</h2>
-						<Trophy className="w-7 h-7 text-padel-primary" />
+				{/* Header (rendered only when showHeader=true) */}
+				{showHeader && (
+					<div className="text-left sm:text-center mb-6 md:mb-12">
+						<div className="flex items-center justify-center gap-3 mb-4">
+							<Trophy className="w-7 h-7 text-padel-primary" />
+							<h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+								Rankings
+							</h2>
+							<Trophy className="w-7 h-7 text-padel-primary" />
+						</div>
+						{pagination && (
+							<p className="text-center text-lg sm:text-sm text-gray-300">
+								<Badge className="bg-padel-primary/20 text-padel-primary border border-padel-primary/20 text-xs sm:text-sm">
+									{pagination.totalPlayers} jugadors
+								</Badge>
+							</p>
+							)}
 					</div>
-					{pagination && (
-						<p className="text-center text-lg sm:text-sm text-gray-300">
-							<Badge className="bg-padel-primary/20 text-padel-primary border border-padel-primary/20 text-xs sm:text-sm">
-								{pagination.totalPlayers} jugadors
-							</Badge>
-						</p>
-					)}
-				</div>
+				)}
 
 				{/* Rankings */}
 				<Card
