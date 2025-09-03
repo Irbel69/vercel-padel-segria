@@ -36,6 +36,7 @@ import {
   Gamepad2,
   Mail,
   Phone,
+  Plus,
   Edit3,
   type LucideIcon,
 } from "lucide-react";
@@ -175,10 +176,11 @@ export default function Dashboard() {
                   Les meves reserves
                 </h2>
                   <Link href="/dashboard/lessons" className="shrink-0">
-                    <Button className="bg-padel-primary rounded-full md:rounded-lg text-black hover:opacity-90 inline-flex items-center justify-center h-10 w-10 md:h-auto md:w-auto md:px-3 md:py-1">
+                    <Button className="bg-padel-primary rounded-full md:rounded-lg text-black hover:opacity-90 inline-flex items-center justify-center h-8 w-8 md:h-auto md:w-auto md:px-3 md:py-1">
                       <Calendar className="hidden md:block mr-1 h-4 w-4" aria-hidden="true" />
                       <span className="hidden md:block">Nova Reserva</span>
-                      <span className="block md:hidden">+</span>
+                      {/* Mobile: use an icon instead of plain '+' so sizing is consistent */}
+                      <Plus className="block md:hidden h-4 w-4" aria-hidden="true" />
                     </Button>
                   </Link>
               </div>
