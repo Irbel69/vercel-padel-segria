@@ -76,7 +76,10 @@ export function Hero({
   const status = effectiveStatus ?? (isFull ? "full" : isAlmostFull ? "almost_full" : "open");
 
   return (
-    <div className={`relative w-full aspect-video ${className ?? ""}`}>
+    // Mobile-first: keep aspect-video on small screens, but allow full height
+    // from `sm` upwards so the placeholder SVG fills when controls (cancel
+    // button) are visible and card height grows.
+    <div className={`relative w-full aspect-video sm:aspect-auto sm:h-full ${className ?? ""}`}>
       {/* If a future event image exists, render it; else vibrant gradient hero with padel court pattern */}
       {imageUrl ? (
         <Image src={imageUrl} alt={event.title} fill className="object-cover" />
@@ -87,10 +90,15 @@ export function Hero({
 
           {/* Padel court pattern overlay */}
           <div className="absolute inset-0 opacity-20">
+            {/* Ensure svg fills container fully. Use width/height 100% and
+                preserveAspectRatio slice to cover, but allow the parent to be
+                full-height on sm+. */}
             <svg
-              className="w-full h-full"
+              className="w-full h-full block"
               viewBox="0 0 400 225"
               preserveAspectRatio="xMidYMid slice"
+              width="100%"
+              height="100%"
             >
               {/* Court outline */}
               <rect

@@ -130,7 +130,10 @@ export default function EventCard({
               occupied={occupied}
               isFull={effectiveIsFull}
               isAlmostFull={isAlmostFull}
-              className={imageUrl ? "md:h-full md:aspect-auto" : "md:h-48"}
+              // Ensure hero stretches to the full height of the card on md+ so
+              // the placeholder SVG matches the content column height when
+              // CTAs (like Cancel) increase the right column's height.
+              className={imageUrl ? "md:h-full md:aspect-auto" : "md:h-full md:aspect-auto"}
               // Pass derived status so child components can render CLOSED state and styles
               registrationClosed={registrationClosed}
               effectiveStatus={
