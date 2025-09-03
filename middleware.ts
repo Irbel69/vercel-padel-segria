@@ -123,8 +123,10 @@ export async function middleware(request: NextRequest) {
     if (process.env.NODE_ENV === "production") {
       supabaseResponse.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
     }
-    // Propagate nonce for potential downstream use
-    supabaseResponse.headers.set("x-nonce", nonce);
+    // Propagate nonce for potential downstream use (only in non-production to avoid leaking it)
+    if (process.env.NODE_ENV !== "production") {
+      supabaseResponse.headers.set("x-nonce", nonce);
+    }
     return supabaseResponse;
   }
 
@@ -152,7 +154,9 @@ export async function middleware(request: NextRequest) {
     response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
   }
   // Also expose nonce on the response for debugging
-  response.headers.set("x-nonce", nonce);
+  if (process.env.NODE_ENV !== "production") {
+    response.headers.set("x-nonce", nonce);
+  }
 
   return response;
 }
