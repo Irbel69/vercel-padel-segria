@@ -3,7 +3,7 @@
 import Image from "next/image";
 import React from "react";
 import Link from 'next/link';
-import { Calendar, MapPin, Clock, Trophy, User } from "lucide-react";
+import { Calendar, MapPin, Clock, Trophy } from "lucide-react";
 import { generateMapsUrl } from '@/lib/maps';
 import { shortLocation } from "./utils";
 import type { Event } from "@/types";
@@ -24,6 +24,12 @@ type ContentProps = {
  * Handles title, date, location, secondary info, and prizes
  */
 export function Content({ event, formatDate, formatDateTime, imageUrl, getRegistrationStatusBadge, effectiveStatus }: ContentProps) {
+  // derive partner initials for graceful fallback avatar
+  const partnerFullName = event.partner ? [event.partner.name, event.partner.surname].filter(Boolean).join(' ') : '';
+  const partnerInitials = partnerFullName
+    ? partnerFullName.split(' ').map(n => n.charAt(0)).filter(Boolean).slice(0, 2).join('').toUpperCase()
+    : 'P';
+
   return (
     <div className={`p-4 md:p-5 border-white/10 ${imageUrl ? 'text-white' : ''}`}>
       {/* Header with title and date */}
@@ -76,27 +82,37 @@ export function Content({ event, formatDate, formatDateTime, imageUrl, getRegist
           </div>
         )}
 
+        {/* Partner info: render below the registration deadline for better hierarchy */}
         {event.user_registration_status === "confirmed" && event.partner && (
-          <div className={`flex items-center gap-1 ${imageUrl ? 'text-emerald-200' : 'text-emerald-300'}`}>
-            {event.partner.avatar_url ? (
-              <div className="flex items-center justify-center flex-shrink-0">
-                <Image
-                  src={event.partner.avatar_url}
-                  alt={`${event.partner.name} ${event.partner.surname}`}
-                  width={28}
-                  height={28}
-                  className="block rounded-full object-cover md:ring-0 md:bg-amber-400/10 md:shadow-none"
-                />
+          <div className="w-full mt-2">
+            <div className={`flex items-center gap-3 ${imageUrl ? 'text-emerald-200' : 'text-emerald-300'}`}>
+              {/* Avatar with modern ring + subtle shadow. Use gradient fallback bg when no avatar image */}
+              <div className="flex-shrink-0 rounded-full overflow-hidden w-11 h-11 ring-2 ring-white/12 shadow-sm bg-slate-700">
+                {event.partner.avatar_url ? (
+                  <Image
+                    src={event.partner.avatar_url}
+                    alt={partnerFullName || 'Perfil'}
+                    width={44}
+                    height={44}
+                    className="object-cover w-full h-full"
+                  />
+                ) : (
+                  <div
+                    role="img"
+                    aria-label={partnerFullName ? `Avatar de ${partnerFullName}` : 'Avatar per defecte'}
+                    title={partnerFullName || 'Perfil'}
+                    className="w-full h-full flex items-center justify-center bg-gradient-to-br from-emerald-400 to-emerald-600 text-white font-semibold text-sm"
+                  >
+                    {partnerInitials}
+                  </div>
+                )}
               </div>
-            ) : (
-              // On md+ show a yellow circular bg and remove border for the people/assistance icon per request
-              <div className="h-7 w-7 rounded-full flex items-center justify-center bg-emerald-0 md:bg-amber-400 md:text-yellow-900 md:shadow-none flex-shrink-0">
-                <User className="h-4 w-4 md:h-4 md:w-4" />
+
+              <div className="min-w-0">
+                <div className="text-sm font-medium leading-tight truncate">{[event.partner.name, event.partner.surname].filter(Boolean).join(' ') || 'Nom no disponible'}</div>
+                <div className="text-xs text-gray-400">Parella</div>
               </div>
-            )}
-            <span className={`text-sm ${imageUrl ? 'text-gray-100' : ''} leading-none min-w-0 truncate`}> 
-              {[event.partner.name, event.partner.surname].filter(Boolean).join(" ") || "Nom no disponible"}
-            </span>
+            </div>
           </div>
         )}
       </div>
