@@ -11,7 +11,7 @@ type QualitiesListProps = {
 
 export default function QualitiesList({ userQualities, getQualityIcon }: QualitiesListProps) {
   return (
-    <div className="p-4">
+    <div className="p-4 px-0">
       <h3 className="text-sm font-semibold text-white flex items-center gap-2 mb-3">
         <Star className="w-4 h-4 text-padel-primary" />
         Qualitats Destacades

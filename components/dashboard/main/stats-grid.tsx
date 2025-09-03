@@ -24,7 +24,7 @@ export default function StatsGrid({
     <>
       {/* Mobile Header */}
       <div className="block md:hidden space-y-4">
-        <div className="p-4">
+        <div className="p-4 px-0">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-padel-primary/20 rounded-full flex items-center justify-center">
               <User className="h-6 w-6 text-padel-primary" />
