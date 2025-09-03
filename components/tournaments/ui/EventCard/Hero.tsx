@@ -170,24 +170,25 @@ export function Hero({
         </div>
       )}
 
-      {/* Enhanced diagonal sheen with yellow tint */}
-      <div className="absolute inset-0 opacity-40 [background:linear-gradient(120deg,transparent,rgba(229,240,0,0.15),transparent)]" />
+      {/* Enhanced diagonal sheen with yellow tint (reduced to be subtle) */}
+      <div className="absolute inset-0 opacity-20 [background:linear-gradient(120deg,transparent,rgba(229,240,0,0.08),transparent)]" />
 
-      {/* Additional depth layer */}
-      <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 via-transparent to-transparent" />
+      {/* Additional depth layer (lighter so images remain visible) */}
+      <div className="absolute inset-0 bg-gradient-to-t from-gray-900/20 via-transparent to-transparent" />
 
-      {/* If an external image is present, add a stronger dark overlay to ensure contrast
-          and switch text/buttons to lighter colors. */}
+      {/* If an external image is present, add a subtle dark overlay to ensure contrast
+          but keep the photo clearly visible. */}
       {imageUrl && (
         <div
           aria-hidden
-          className="absolute inset-0 bg-black/45 backdrop-blur-sm"
+          className="absolute inset-0 bg-black/18 backdrop-blur-[1px]"
         />
       )}
 
-      {/* When event is full/closed, add a subtle gray overlay to communicate completion */}
+      {/* When event is full/closed, use a softer overlay to communicate completion
+          without fully obscuring the image. */}
       {(isFull || registrationClosed) && (
-        <div aria-hidden className="absolute inset-0 bg-slate-800/60" />
+        <div aria-hidden className="absolute inset-0 bg-slate-800/30" />
       )}
 
       {/* Overlays: status and capacity */}
@@ -214,9 +215,9 @@ export function Hero({
         )}
         {/* When registration is closed, make the capacity pill red to indicate closure */}
         <span
-          className={`px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-sm  ${
+          className={`px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-sm ${
             registrationClosed || effectiveStatus === 'closed'
-              ? 'bg-red-500/20 text-red-400'
+              ? 'bg-red-600/25 text-red-200 ring-1 ring-red-400/50 drop-shadow-[0_0_0.45rem_rgba(239,68,68,0.45)]'
               : capacityPillColor
           }`}
         >
