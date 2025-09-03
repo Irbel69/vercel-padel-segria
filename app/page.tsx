@@ -19,7 +19,7 @@ export default function Page() {
         <div className="container px-4 mx-auto">
         <HeroSection />
           <TopPlayersSection /> {/* This section causes an hydration error */}
-          <RankingsSection /> {/* This section causes an hydration error */}
+          <RankingsSection showNavButtons={false} /> {/* This section causes an hydration error */}
           <EventsSectionErrorBoundary>
             <EventsSection />
           </EventsSectionErrorBoundary>

@@ -19,7 +19,12 @@ import { useUser } from "@/hooks/use-user";
 
 const DEFAULT_LIMIT = 10;
 
-export function RankingsSection() {
+type RankingsSectionProps = {
+	/** Hide the Prev/Next buttons when false (landing page) */
+	showNavButtons?: boolean;
+};
+
+export function RankingsSection({ showNavButtons = true }: RankingsSectionProps) {
 	const [page, setPage] = useState(1);
 	const { user } = useUser();
 	const userId = user?.id;
@@ -306,31 +311,43 @@ export function RankingsSection() {
 					// on sm+ screens show full buttons with labels.
 					<div className="flex items-center justify-between gap-3 w-full">
 						{/* Prev button: icon-only on mobile, label+icon on sm+ */}
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={handlePrev}
-							disabled={pagination.currentPage === 1}
-							className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex items-center justify-center w-10 h-8 sm:w-auto sm:h-auto">
-							<ChevronLeft className="w-4 h-4" />
-							<span className="hidden sm:inline ml-2">Anterior</span>
-						</Button>
+						{showNavButtons ? (
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={handlePrev}
+								disabled={pagination.currentPage === 1}
+								className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex items-center justify-center w-10 h-8 sm:w-auto sm:h-auto">
+								<ChevronLeft className="w-4 h-4" />
+								<span className="hidden sm:inline ml-2">Anterior</span>
+							</Button>
+						) : (
+							<div className="w-10 h-8" />
+						)}
 
-						{/* Page info centered */}
-						<p className="flex-1 text-white/70 text-xs sm:text-sm text-center mx-2">
-							Pàgina {pagination.currentPage} de {pagination.totalPages}
-						</p>
+						{/* Page info centered (hidden on landing when showNavButtons=false) */}
+						{showNavButtons ? (
+							<p className="flex-1 text-white/70 text-xs sm:text-sm text-center mx-2">
+								Pàgina {pagination.currentPage} de {pagination.totalPages}
+							</p>
+						) : (
+							<div className="flex-1" />
+						)}
 
 						{/* Next button: icon-only on mobile, label+icon on sm+ */}
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={handleNext}
-							disabled={!pagination.hasMore}
-							className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex items-center justify-center w-10 h-8 sm:w-auto sm:h-auto">
-							<span className="hidden sm:inline mr-2">Següent</span>
-							<ChevronRight className="w-4 h-4" />
-						</Button>
+						{showNavButtons ? (
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={handleNext}
+								disabled={!pagination.hasMore}
+								className="bg-white/10 border-white/20 text-white hover:bg-white/20 flex items-center justify-center w-10 h-8 sm:w-auto sm:h-auto">
+								<span className="hidden sm:inline mr-2">Següent</span>
+								<ChevronRight className="w-4 h-4" />
+							</Button>
+						) : (
+							<div className="w-10 h-8" />
+						)}
 					</div>
 				)}
 			</div>
