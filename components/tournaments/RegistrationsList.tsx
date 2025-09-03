@@ -3,7 +3,8 @@
 import React from "react";
 import { Calendar, MapPin, Users, Trophy, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { LocationMapButton } from "@/components/LocationMapButton";
+import { generateMapsUrl } from '@/lib/maps';
+import Link from 'next/link';
 import type { Registration } from "@/types";
 
 type Props = {
@@ -58,11 +59,16 @@ export default function RegistrationsList({ registrations, isLoading, processing
                   <div className="flex items-center gap-2 col-span-1 sm:col-span-2 lg:col-span-1">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <MapPin className="h-4 w-4 flex-shrink-0" />
-                      <span className="truncate">{registration.event.location}</span>
+                      <Link
+                        className="block flex-1 min-w-0 truncate border-b border-current pb-0.5 text-current leading-none"
+                        href={generateMapsUrl(registration.event.latitude!, registration.event.longitude!, registration.event.location)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Obre mapa per ${registration.event.location}`}
+                      >
+                        {registration.event.location}
+                      </Link>
                     </div>
-                    {registration.event.latitude && registration.event.longitude && (
-                      <LocationMapButton latitude={registration.event.latitude} longitude={registration.event.longitude} location={registration.event.location} />
-                    )}
                   </div>
                 )}
                 <div className="flex items-center gap-2">

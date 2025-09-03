@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import React from "react";
+import Link from 'next/link';
 import { Calendar, MapPin, Clock, Trophy, User } from "lucide-react";
-import { LocationMapButton } from "@/components/LocationMapButton";
+import { generateMapsUrl } from '@/lib/maps';
 import { shortLocation } from "./utils";
 import type { Event } from "@/types";
 
@@ -48,21 +49,19 @@ export function Content({ event, formatDate, formatDateTime, imageUrl, getRegist
 
       {/* Location below title */}
       {event.location && (
-        <div className={`flex items-center align-center gap-2 mt-2 ${imageUrl ? 'text-gray-200' : 'text-gray-400'} font-medium text-sm my-1`}>
+        <div className={`flex items-center gap-2 mt-2 ${imageUrl ? 'text-gray-200' : 'text-gray-400'} font-medium text-sm my-1`}>
           <div className="flex items-center gap-1 min-w-0">
             <MapPin className="h-4 w-4 flex-shrink-0" />
-            <span className="truncate">{shortLocation(event.location)}</span>
-          </div>
-
-          {/* Place button to the right of the location text. On small screens it stays inline; on very small screens we show a compact label. */}
-          <div className="ml-auto flex-shrink-0 md:ml-2">
-            <LocationMapButton
-              latitude={event.latitude!}
-              longitude={event.longitude!}
-              location={event.location}
-              ariaLabel={`Obre mapa per ${event.location}`}
-              className="px-3 py-1.5 text-sm"
-            />
+            {/* Make the location text an underlined link that opens the maps URL in a new tab */}
+            <Link
+              className="block flex-1 min-w-0 truncate border-b border-current pb-0.5 text-current leading-none"
+              href={generateMapsUrl(event.latitude!, event.longitude!, event.location)}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Obre mapa per ${event.location}`}
+            >
+              {shortLocation(event.location)}
+            </Link>
           </div>
         </div>
       )}

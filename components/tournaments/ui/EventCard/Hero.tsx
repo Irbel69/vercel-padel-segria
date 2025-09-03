@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 // React is available in scope for JSX
-import { LocationMapButton } from "@/components/LocationMapButton";
 import { Badge } from "@/components/ui/badge";
 import { motion, useReducedMotion } from "framer-motion";
 import { UserPlus } from "lucide-react";
