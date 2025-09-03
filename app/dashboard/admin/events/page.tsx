@@ -231,6 +231,17 @@ export default function AdminEventsPage() {
     });
   };
 
+  // Convert an ISO datetime (or any date string) to YYYY-MM-DD for <input type="date" />
+  const toDateInputValue = (iso?: string | null) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+
   const resetForm = () => {
     setFormData({
       title: "",
@@ -258,13 +269,14 @@ export default function AdminEventsPage() {
   const openEditModal = (event: Event) => {
     setFormData({
       title: event.title,
-      date: event.date,
+      // date inputs expect YYYY-MM-DD, ensure we pass that format
+      date: toDateInputValue(event.date),
       location: event.location || "",
       latitude: event.latitude || undefined,
       longitude: event.longitude || undefined,
       prizes: event.prizes || "",
       max_participants: event.max_participants,
-      registration_deadline: event.registration_deadline,
+      registration_deadline: toDateInputValue(event.registration_deadline),
       image_url: event.image_url || undefined,
     });
     setEditingEvent(event);
