@@ -186,7 +186,7 @@ export default function Login() {
 						// to the viewport so only this block scrolls internally on
 						// small devices and the page itself doesn't produce an outer scroll.
 						maxHeight: 'calc(100svh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
-						overflowY: 'auto',
+						overflowY: 'hidden',
 						boxSizing: 'border-box',
 						paddingBottom: 'env(safe-area-inset-bottom)'
 					}}>
