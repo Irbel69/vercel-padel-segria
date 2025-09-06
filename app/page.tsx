@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   HeroSection,
+  QuiSomSection,
   TopPlayersSection,
   ContactSection,
   RankingsSection,
@@ -18,6 +19,7 @@ export default function Page() {
       <main>
         <div className="container px-4 mx-auto">
         <HeroSection />
+          <QuiSomSection />
           <TopPlayersSection /> {/* This section causes an hydration error */}
           <RankingsSection showNavButtons={false} /> {/* This section causes an hydration error */}
           <EventsSectionErrorBoundary>

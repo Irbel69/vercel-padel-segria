@@ -278,7 +278,7 @@ export function EventsSection() {
           style={{ transitionDelay: "600ms" }}
         >
           <div className="space-y-4">
-            <p className="text-gray-300 text-lg">
+            <p className="text-gray-300 text-lg mb-4">
               Vols veure tots els nostres tornejos i esdeveniments?
             </p>
             <Link href="/dashboard/tournaments">

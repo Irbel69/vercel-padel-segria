@@ -1299,7 +1299,7 @@ export default function AdminEventsPage() {
                         onChange={(e) => setFormData((prev) => ({ ...prev, pair_required: e.target.checked }))}
                         className="h-4 w-4 rounded border-white/30 bg-white/10"
                       />
-                      Requereix inscriure's amb parella
+                      Requereix inscriure&apos;s amb parella
                     </label>
                   </div>
                 </div>

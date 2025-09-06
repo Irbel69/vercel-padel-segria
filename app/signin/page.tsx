@@ -186,7 +186,7 @@ export default function Login() {
 						// to the viewport so only this block scrolls internally on
 						// small devices and the page itself doesn't produce an outer scroll.
 						maxHeight: 'calc(100svh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
-						overflowY: 'auto',
+						overflowY: 'hidden',
 						boxSizing: 'border-box',
 						paddingBottom: 'env(safe-area-inset-bottom)'
 					}}>
@@ -287,11 +287,13 @@ export default function Login() {
 						<div className="relative my-6">
 							<div className="absolute inset-0 flex items-center">
 								<div className="w-full border-t border-white/10" />
-							</div>
-							<div className="relative flex justify-center">
-								<span className="px-4 text-xs text-white/40 bg-black/30 backdrop-blur-sm">
+								<span className="flex-1 px-4 text-xs text-white/40 text-nowrap">
 									O CONTINUA AMB
 								</span>
+								<div className="w-full border-t border-white/10" />
+							</div>
+							<div className="relative flex justify-center">
+								
 							</div>
 						</div>
 

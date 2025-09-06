@@ -255,6 +255,13 @@ Once approved, automatically launch the required specialized agents:
 2. **Quality Assurance**
    - Run TypeScript compilation checks
    - Execute relevant test suites
+
+### Playwright MCP requirement (mandatory)
+
+- Before starting any UI implementation: run the Playwright MCP to capture the current styling and UI state. This ensures you have a visual baseline of the application prior to changes.
+- After completing the implementation: run the Playwright MCP again to validate that the styling and layout changes are correct and no regressions were introduced.
+- The Playwright MCP checks are compulsory for any change that affects UI, styling, layout, or responsive behavior.
+- The application server for Playwright checks is always running at http://172.25.192.1:3000 — use this URL when pointing Playwright to the live app during MCP runs.
    - Perform security validation
    - Conduct Playwright tests for frontend changes
 
