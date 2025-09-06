@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, useLayoutEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -60,6 +60,8 @@ const HeaderContent = ({ transparent = false }: HeaderProps) => {
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [hasScrolled, setHasScrolled] = useState<boolean>(false);
+  const headerRef = useRef<HTMLElement | null>(null);
+  const [headerHeight, setHeaderHeight] = useState<number>(0);
   const path = searchParams.toString();
   const isHomePage = path === "";
 
@@ -91,21 +93,28 @@ const HeaderContent = ({ transparent = false }: HeaderProps) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Measure header height and update on resize so we can insert a spacer when header is fixed
+  useLayoutEffect(() => {
+    const measure = () => {
+      const h = headerRef.current?.offsetHeight ?? 0;
+      setHeaderHeight(h);
+    };
+
+    measure();
+    window.addEventListener("resize", measure, { passive: true });
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
   return (
     <>
       <header
+        ref={headerRef as any}
         className={`${
+          // For homepage or when transparent is requested we want a fixed header so it's always visible
           isHomePage || transparent
-            ? "sticky top-0 backdrop-blur-sm transition-all duration-300"
-            : "sticky top-0 z-40 bg-base-200/95 backdrop-blur-md  md:bg-base-200 md:static"
-        } ${
-          // Add background on scroll or when not homepage
-          isHomePage || transparent
-            ? hasScrolled
-              ? "bg-black/80"
-              : "bg-transparent"
-            : ""
-        }`}
+            ? `fixed top-0 left-0 right-0 z-50 backdrop-blur-sm transition-all duration-300`
+            : `sticky top-0 z-40 bg-base-200/95 backdrop-blur-md md:bg-base-200 md:static`
+        } ${isHomePage || transparent ? (hasScrolled ? "bg-black/80" : "bg-transparent") : ""}`}
       >
         <nav
           className="container flex items-center justify-between px-8 py-4 mx-auto transition-all duration-300"
@@ -189,6 +198,11 @@ const HeaderContent = ({ transparent = false }: HeaderProps) => {
           </div>
         </nav>
       </header>
+
+        {/* Spacer to prevent content from being hidden under the fixed header on home/transparent variants */}
+        {(isHomePage || transparent) && (
+          <div aria-hidden style={{ height: headerHeight ? `${headerHeight}px` : "72px" }} />
+        )}
 
       {/* Mobile menu overlay sits UNDER the header to avoid layout shift */}
       <div className={`fixed inset-0 z-40 ${isOpen ? "" : "hidden"}`}>
