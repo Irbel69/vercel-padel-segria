@@ -42,7 +42,7 @@ interface RequestPayload {
 	allow_fill: boolean;
 	payment_method: string;
 	observations?: string;
-	participants: { name: string; is_primary?: boolean }[];
+	participants: { name: string; dni?: string; phone?: string }[]; // only additional (excluding auth user)
 	choices: number[];
 	direct_debit?: {
 		iban: string;
@@ -66,10 +66,16 @@ export default function SeasonEnrollmentPage() {
 		new Set()
 	);
 	const [groupSize, setGroupSize] = useState(1);
-	const [allowFill, setAllowFill] = useState(false);
+	const [allowFill, setAllowFill] = useState(true); // default marked
 	const [paymentMethod, setPaymentMethod] = useState("cash");
 	const [observations, setObservations] = useState("");
-	const [participants, setParticipants] = useState<string[]>([""]);
+	interface AdditionalParticipant {
+		name: string;
+		dni: string;
+		phone: string;
+	}
+	const [participants, setParticipants] = useState<AdditionalParticipant[]>([]); // additional only (group_size - 1)
+	const [currentStep, setCurrentStep] = useState<1 | 2>(1);
 	const [directDebit, setDirectDebit] = useState({
 		iban: "",
 		holder_name: "",
@@ -142,19 +148,54 @@ export default function SeasonEnrollmentPage() {
 		});
 	}
 
-	function updateParticipant(i: number, val: string) {
-		setParticipants((p) => {
+	function formatPhoneInput(raw: string) {
+		const digits = raw.replace(/\D/g, "");
+		let num = digits;
+		if (num.startsWith("34")) num = num.slice(2);
+		if (num.startsWith("0")) num = num.slice(1);
+		num = num.slice(0, 9);
+		const parts: string[] = [];
+		if (num.length > 0) parts.push(num.slice(0, 3));
+		if (num.length > 3) parts.push(num.slice(3, 6));
+		if (num.length > 6) parts.push(num.slice(6, 9));
+		return parts.join(" ");
+	}
+
+	function normalizePhone(raw: string) {
+		if (!raw) return undefined;
+		const digits = raw.replace(/\D/g, "");
+		let num = digits;
+		if (num.startsWith("34")) num = num.slice(2);
+		if (num.startsWith("0")) num = num.slice(1);
+		return "+34" + num.slice(0, 9);
+	}
+
+	function updateParticipant(
+		i: number,
+		field: "name" | "dni" | "phone",
+		val: string
+	) {
+		if (field === "phone") {
+			val = formatPhoneInput(val);
+		}
+		setParticipants((p: AdditionalParticipant[]) => {
 			const arr = [...p];
-			arr[i] = val;
+			arr[i] = { ...arr[i], [field]: val };
 			return arr;
 		});
 	}
 
 	useEffect(() => {
-		if (groupSize > participants.length) {
-			setParticipants((p) => [...p, ...Array(groupSize - p.length).fill("")]);
-		} else if (groupSize < participants.length) {
-			setParticipants((p) => p.slice(0, groupSize));
+		const needed = Math.max(0, groupSize - 1); // exclude auth user
+		if (needed > participants.length) {
+			setParticipants((p: AdditionalParticipant[]) => [
+				...p,
+				...Array(needed - p.length)
+					.fill(0)
+					.map(() => ({ name: "", dni: "", phone: "" })),
+			]);
+		} else if (needed < participants.length) {
+			setParticipants((p: AdditionalParticipant[]) => p.slice(0, needed));
 		}
 	}, [groupSize]);
 
@@ -172,10 +213,13 @@ export default function SeasonEnrollmentPage() {
 				allow_fill: allowFill,
 				payment_method: paymentMethod,
 				observations: observations || undefined,
-				participants: participants.map((n, i) => ({
-					name: n || `Participant ${i + 1}`,
-					is_primary: i === 0,
-				})),
+				participants: participants.map(
+					(p: AdditionalParticipant, i: number) => ({
+						name: p.name || `Participant ${i + 2}`,
+						dni: p.dni || undefined,
+						phone: normalizePhone(p.phone),
+					})
+				),
 				choices: Array.from(selectedEntries),
 				direct_debit:
 					paymentMethod === "direct_debit" ? directDebit : undefined,
@@ -260,191 +304,269 @@ export default function SeasonEnrollmentPage() {
 			<div className="space-y-1">
 				<h1 className="text-2xl font-semibold tracking-tight">{season.name}</h1>
 				<p className="text-sm text-muted-foreground">
-					Selecciona les classes potencials i envia la teva sol·licitud.
+					{currentStep === 1
+						? "Selecciona les classes potencials."
+						: "Introdueix les dades del grup i finalitza la sol·licitud."}
 				</p>
 			</div>
-			<div className="grid md:grid-cols-3 gap-6">
-				<Card className="md:col-span-2">
-					<CardHeader>
-						<CardTitle>Horari Setmanal</CardTitle>
-						<CardDescription>
-							Marca totes les franges en les que podries assistir.
-						</CardDescription>
-					</CardHeader>
-					<CardContent>
-						<div className="grid grid-cols-7 gap-2 mb-2 text-[11px] font-medium text-muted-foreground">
-							{dayNames.map((d) => (
-								<div key={d} className="text-center">
-									{d}
-								</div>
-							))}
-						</div>
-						<div className="grid grid-cols-7 gap-2 min-h-[320px]">
-							{Array.from({ length: 7 }).map((_, day) => (
-								<div key={day} className="space-y-2">
-									{entries
-										.filter((e) => e.day_of_week === day && e.kind === "class")
-										.map((e) => {
-											const active = selectedEntries.has(e.id);
-											return (
-												<button
-													key={e.id}
-													onClick={() => toggleEntry(e.id)}
-													className={cn(
-														"w-full text-left rounded-md border px-2 py-1.5 text-xs transition shadow-sm",
-														active
-															? "bg-padel-primary/80 text-black border-padel-primary"
-															: "bg-white/5 hover:bg-white/10 border-white/10",
-														"flex flex-col gap-0.5"
-													)}>
-													<span className="font-medium flex items-center gap-1">
-														<Clock className="h-3 w-3" />
-														{e.start_time.slice(0, 5)}-{e.end_time.slice(0, 5)}
-													</span>
-													<span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-														<Users className="h-3 w-3" />
-														Cap: {e.capacity}
-													</span>
-													{typeof e.remaining_capacity === "number" && (
-														<span className="text-[10px] text-muted-foreground">
-															Disp: {e.remaining_capacity}
+			{/* Steps indicator */}
+			<div className="flex items-center gap-2 text-xs">
+				<div
+					className={cn(
+						"flex-1 h-1 rounded",
+						currentStep >= 1 ? "bg-padel-primary" : "bg-white/10"
+					)}
+				/>
+				<div
+					className={cn(
+						"flex-1 h-1 rounded",
+						currentStep >= 2 ? "bg-padel-primary" : "bg-white/10"
+					)}
+				/>
+			</div>
+			{currentStep === 1 && (
+				<div className="space-y-6">
+					<Card>
+						<CardHeader>
+							<CardTitle>Horari Setmanal</CardTitle>
+							<CardDescription>
+								Marca totes les franges en les que podries assistir.
+							</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<div className="grid grid-cols-7 gap-2 mb-2 text-[11px] font-medium text-muted-foreground">
+								{dayNames.map((d) => (
+									<div key={d} className="text-center">
+										{d}
+									</div>
+								))}
+							</div>
+							<div className="grid grid-cols-7 gap-2 min-h-[320px]">
+								{Array.from({ length: 7 }).map((_, day) => (
+									<div key={day} className="space-y-2">
+										{entries
+											.filter(
+												(e) => e.day_of_week === day && e.kind === "class"
+											)
+											.map((e) => {
+												const active = selectedEntries.has(e.id);
+												return (
+													<button
+														key={e.id}
+														onClick={() => toggleEntry(e.id)}
+														className={cn(
+															"w-full text-left rounded-md border px-2 py-1.5 text-xs transition shadow-sm",
+															active
+																? "bg-padel-primary/80 text-black border-padel-primary"
+																: "bg-white/5 hover:bg-white/10 border-white/10",
+															"flex flex-col gap-0.5"
+														)}>
+														<span className="font-medium flex items-center gap-1">
+															<Clock className="h-3 w-3" />
+															{e.start_time.slice(0, 5)}-
+															{e.end_time.slice(0, 5)}
 														</span>
-													)}
-												</button>
-											);
-										})}
+														<span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+															<Users className="h-3 w-3" />
+															Cap: {e.capacity}
+														</span>
+														{typeof e.remaining_capacity === "number" && (
+															<span className="text-[10px] text-muted-foreground">
+																Disp: {e.remaining_capacity}
+															</span>
+														)}
+													</button>
+												);
+											})}
+									</div>
+								))}
+							</div>
+							<div className="mt-4 flex justify-end">
+								<Button
+									variant="secondary"
+									disabled={!selectedEntries.size}
+									onClick={() => setCurrentStep(2)}>
+									Continuar
+								</Button>
+							</div>
+						</CardContent>
+					</Card>
+				</div>
+			)}
+			{currentStep === 2 && (
+				<div className="space-y-6">
+					<Card>
+						<CardHeader>
+							<CardTitle>Dades del Grup</CardTitle>
+							<CardDescription>
+								Introdueix la informació necessària.
+							</CardDescription>
+						</CardHeader>
+						<CardContent className="space-y-4">
+							<div className="grid md:grid-cols-4 gap-4">
+								<div className="md:col-span-2">
+									<label className="text-xs font-medium">Mida del grup</label>
+									<Input
+										type="number"
+										min={1}
+										max={4}
+										value={groupSize}
+										onChange={(e) => setGroupSize(Number(e.target.value) || 1)}
+									/>
 								</div>
-							))}
-						</div>
-					</CardContent>
-				</Card>
-				<Card>
-					<CardHeader>
-						<CardTitle>Sol·licitud</CardTitle>
-						<CardDescription>Dades necessàries</CardDescription>
-					</CardHeader>
-					<CardContent className="space-y-4">
-						<div>
-							<label className="text-xs font-medium">Mida del grup</label>
-							<Input
-								type="number"
-								min={1}
-								max={4}
-								value={groupSize}
-								onChange={(e) => setGroupSize(Number(e.target.value) || 1)}
-							/>
-						</div>
-						{participants.map((p, i) => (
-							<div key={i}>
+								<div className="flex items-center space-x-2 md:col-span-2 pt-6">
+									<Checkbox
+										id="allow_fill"
+										checked={allowFill}
+										onCheckedChange={(v) => setAllowFill(!!v)}
+									/>
+									<label htmlFor="allow_fill" className="text-xs">
+										Permetre omplenar la classe amb altres persones
+									</label>
+								</div>
+							</div>
+							<div className="space-y-3">
+								{participants.map((p: AdditionalParticipant, i: number) => (
+									<div
+										key={i}
+										className="grid grid-cols-1 sm:grid-cols-7 gap-2 items-end">
+										<div className="sm:col-span-3">
+											<label className="text-xs font-medium">
+												Participant {i + 2}
+											</label>
+											<Input
+												value={p.name}
+												onChange={(e) =>
+													updateParticipant(i, "name", e.target.value)
+												}
+												placeholder="Nom"
+											/>
+										</div>
+										<div>
+											<label className="text-xs font-medium">DNI</label>
+											<Input
+												value={p.dni}
+												onChange={(e) =>
+													updateParticipant(i, "dni", e.target.value)
+												}
+												placeholder="DNI"
+											/>
+										</div>
+										<div className="sm:col-span-2">
+											<label className="text-xs font-medium">
+												Telèfon (+34)
+											</label>
+											<Input
+												value={p.phone}
+												onChange={(e) =>
+													updateParticipant(i, "phone", e.target.value)
+												}
+												placeholder="600 000 000"
+											/>
+										</div>
+									</div>
+								))}
+							</div>
+							<div>
 								<label className="text-xs font-medium">
-									Participant {i + 1}
+									Mètode de pagament
 								</label>
-								<Input
-									value={p}
-									onChange={(e) => updateParticipant(i, e.target.value)}
-									placeholder={i === 0 ? "Nom principal" : "Nom addicional"}
+								<select
+									className="mt-1 w-full rounded-md bg-background border px-2 py-1.5 text-sm"
+									value={paymentMethod}
+									onChange={(e) => setPaymentMethod(e.target.value)}>
+									<option value="cash">Efectiu</option>
+									<option value="bizum">Bizum</option>
+									<option value="direct_debit">Rebut bancari</option>
+								</select>
+							</div>
+							{paymentMethod === "direct_debit" && (
+								<div className="space-y-2 border rounded-md p-3">
+									<div>
+										<label className="text-[11px] font-medium">IBAN</label>
+										<Input
+											value={directDebit.iban}
+											onChange={(e) =>
+												setDirectDebit({ ...directDebit, iban: e.target.value })
+											}
+											placeholder="ES.."
+										/>
+									</div>
+									<div>
+										<label className="text-[11px] font-medium">Titular</label>
+										<Input
+											value={directDebit.holder_name}
+											onChange={(e) =>
+												setDirectDebit({
+													...directDebit,
+													holder_name: e.target.value,
+												})
+											}
+										/>
+									</div>
+									<div>
+										<label className="text-[11px] font-medium">Adreça</label>
+										<Input
+											value={directDebit.holder_address}
+											onChange={(e) =>
+												setDirectDebit({
+													...directDebit,
+													holder_address: e.target.value,
+												})
+											}
+										/>
+									</div>
+									<div>
+										<label className="text-[11px] font-medium">DNI</label>
+										<Input
+											value={directDebit.holder_dni}
+											onChange={(e) =>
+												setDirectDebit({
+													...directDebit,
+													holder_dni: e.target.value,
+												})
+											}
+										/>
+									</div>
+									<div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+										<Checkbox checked onCheckedChange={() => {}} /> Autoritzo la
+										domiciliació bancària
+									</div>
+								</div>
+							)}
+							<div>
+								<label className="text-xs font-medium">Observacions</label>
+								<Textarea
+									value={observations}
+									onChange={(e) => setObservations(e.target.value)}
+									rows={3}
 								/>
 							</div>
-						))}
-						<div className="flex items-center space-x-2">
-							<Checkbox
-								id="allow_fill"
-								checked={allowFill}
-								onCheckedChange={(v) => setAllowFill(!!v)}
-							/>
-							<label htmlFor="allow_fill" className="text-xs">
-								Permetre omplenar la classe amb altres persones
-							</label>
-						</div>
-						<div>
-							<label className="text-xs font-medium">Mètode de pagament</label>
-							<select
-								className="mt-1 w-full rounded-md bg-background border px-2 py-1.5 text-sm"
-								value={paymentMethod}
-								onChange={(e) => setPaymentMethod(e.target.value)}>
-								<option value="cash">Efectiu</option>
-								<option value="bizum">Bizum</option>
-								<option value="direct_debit">Rebut bancari</option>
-							</select>
-						</div>
-						{paymentMethod === "direct_debit" && (
-							<div className="space-y-2 border rounded-md p-3">
-								<div>
-									<label className="text-[11px] font-medium">IBAN</label>
-									<Input
-										value={directDebit.iban}
-										onChange={(e) =>
-											setDirectDebit({ ...directDebit, iban: e.target.value })
-										}
-										placeholder="ES.."
-									/>
-								</div>
-								<div>
-									<label className="text-[11px] font-medium">Titular</label>
-									<Input
-										value={directDebit.holder_name}
-										onChange={(e) =>
-											setDirectDebit({
-												...directDebit,
-												holder_name: e.target.value,
-											})
-										}
-									/>
-								</div>
-								<div>
-									<label className="text-[11px] font-medium">Adreça</label>
-									<Input
-										value={directDebit.holder_address}
-										onChange={(e) =>
-											setDirectDebit({
-												...directDebit,
-												holder_address: e.target.value,
-											})
-										}
-									/>
-								</div>
-								<div>
-									<label className="text-[11px] font-medium">DNI</label>
-									<Input
-										value={directDebit.holder_dni}
-										onChange={(e) =>
-											setDirectDebit({
-												...directDebit,
-												holder_dni: e.target.value,
-											})
-										}
-									/>
-								</div>
-								<div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-									<Checkbox checked onCheckedChange={() => {}} /> Autoritzo la
-									domiciliació bancària
-								</div>
-							</div>
-						)}
-						<div>
-							<label className="text-xs font-medium">Observacions</label>
-							<Textarea
-								value={observations}
-								onChange={(e) => setObservations(e.target.value)}
-								rows={3}
-							/>
-						</div>
-						{message && (
-							<div className="text-xs text-muted-foreground">{message}</div>
-						)}
-						<Button
-							disabled={requesting}
-							className="w-full"
-							onClick={submitRequest}>
-							{requesting ? (
-								<Loader2 className="h-4 w-4 animate-spin" />
-							) : (
-								"Enviar sol·licitud"
+							{message && (
+								<div className="text-xs text-muted-foreground">{message}</div>
 							)}
-						</Button>
-					</CardContent>
-				</Card>
-			</div>
+							<div className="flex gap-2 pt-2">
+								<Button
+									variant="outline"
+									onClick={() => setCurrentStep(1)}
+									disabled={requesting}>
+									Enrere
+								</Button>
+								<Button
+									className="flex-1"
+									disabled={requesting}
+									onClick={submitRequest}>
+									{requesting ? (
+										<Loader2 className="h-4 w-4 animate-spin" />
+									) : (
+										"Enviar sol·licitud"
+									)}
+								</Button>
+							</div>
+						</CardContent>
+					</Card>
+				</div>
+			)}
 		</div>
 	);
 }

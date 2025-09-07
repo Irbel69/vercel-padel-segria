@@ -11,13 +11,14 @@ export async function POST(req: Request) {
 			return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
 
 		const body = await req.json();
+		console.log("[SEASONS ENROLL] body:", JSON.stringify(body));
 		const {
 			season_id,
 			group_size,
 			allow_fill,
 			payment_method,
 			observations,
-			participants = [],
+			participants = [], // additional participants only: { name, dni, phone }
 			choices = [],
 			direct_debit,
 		} = body;
@@ -48,13 +49,33 @@ export async function POST(req: Request) {
 			.single();
 		if (reqErr) throw reqErr;
 
-		// Participants
+		// Participants (additional only - primary user is the authenticated user)
 		if (participants.length) {
+			console.log(
+				"[SEASONS ENROLL] participants payload:",
+				JSON.stringify(participants)
+			);
+			// expected participants length should be group_size - 1
+			if (group_size - 1 !== participants.length) {
+				return NextResponse.json(
+					{
+						error:
+							"Participants count mismatch (expected group_size - 1 additional participants)",
+					},
+					{ status: 400 }
+				);
+			}
+
 			const partRows = participants.map((p: any, i: number) => ({
 				request_id: request.id,
-				name: p.name || `Participant ${i + 1}`,
-				is_primary: !!p.is_primary,
+				name: p.name || `Participant ${i + 2}`,
+				dni: p.dni || null,
+				phone: p.phone || null,
 			}));
+			console.log(
+				"[SEASONS ENROLL] partRows to insert:",
+				JSON.stringify(partRows)
+			);
 			const { error: partErr } = await supabase
 				.from("season_request_participants")
 				.insert(partRows);
@@ -85,7 +106,13 @@ export async function POST(req: Request) {
 			if (ddErr) throw ddErr;
 		}
 
-		return NextResponse.json({ request });
+		// Fetch stored participants to return for verification
+		const { data: storedParts } = await supabase
+			.from("season_request_participants")
+			.select("id, request_id, name, dni, phone")
+			.eq("request_id", request.id);
+
+		return NextResponse.json({ request, participants: storedParts || [] });
 	} catch (e: any) {
 		console.error(e);
 		return NextResponse.json(
