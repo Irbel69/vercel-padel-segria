@@ -1,16 +1,93 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/libs/supabase/client";
+import { useUser } from "@/hooks/use-user";
+import {
+	Card,
+	CardHeader,
+	CardTitle,
+	CardDescription,
+	CardContent,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ArrowLeft, RefreshCw } from "lucide-react";
-import React from "react";
-
+import {
+	Loader2,
+	Users,
+	Clock,
+	ChevronDown,
+	ChevronRight,
+	ArrowLeft,
+	RefreshCw,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 import SeasonsPattern from "@/components/seasons/SeasonsPattern";
 import EntryDialog from "@/components/seasons/EntryDialog";
-import { dayNames } from "@/components/seasons/utils";
 import type { Season, Entry } from "@/components/seasons/types";
+
+interface SeasonEntryLoad {
+	id: number;
+	day_of_week: number;
+	start_time: string;
+	end_time: string;
+	capacity: number | null;
+	location: string;
+	kind?: string;
+	remaining_capacity?: number | null;
+}
+
+interface RequestRow {
+	id: number;
+	user_id: string;
+	group_size: number;
+	allow_fill: boolean;
+	payment_method: string;
+	observations?: string | null;
+	status: string;
+	user?: {
+		id: string;
+		name: string | null;
+		surname: string | null;
+		email: string;
+		phone?: string | null;
+	};
+	participants?: {
+		id: number;
+		name: string;
+		dni?: string | null;
+		phone?: string | null;
+	}[];
+	choices?: { entry_id: number }[];
+	created_at: string;
+}
+
+interface AssignmentRow {
+	id: number;
+	entry_id: number;
+	request_id: number;
+	user_id: string;
+	group_size: number;
+	allow_fill: boolean;
+	status: string;
+	entry?: {
+		id: number;
+		day_of_week: number;
+		start_time: string;
+		end_time: string;
+		location: string;
+		capacity: number | null;
+	};
+	user?: {
+		id: string;
+		name: string | null;
+		surname: string | null;
+		email: string;
+		phone?: string | null;
+	};
+}
+
+const dayNames = ["Dg", "Dl", "Dt", "Dc", "Dj", "Dv", "Ds"]; // short Catalan
 
 export default function SeasonDetailPage() {
 	const params = useParams();
@@ -22,6 +99,14 @@ export default function SeasonDetailPage() {
 	const [loading, setLoading] = useState(true);
 	const [tab, setTab] = useState("pattern");
 	const [message, setMessage] = useState<string | null>(null);
+
+	// Assignments state
+	const [requests, setRequests] = useState<RequestRow[]>([]);
+	const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
+	const [entryLoad, setEntryLoad] = useState<SeasonEntryLoad[]>([]);
+	const [expanded, setExpanded] = useState<Set<number>>(new Set());
+	const [selectingFor, setSelectingFor] = useState<RequestRow | null>(null);
+	const [creating, setCreating] = useState(false);
 	const [entryDialog, setEntryDialog] = useState<{
 		open: boolean;
 		day?: number;
@@ -43,9 +128,68 @@ export default function SeasonDetailPage() {
 	});
 	const [building, setBuilding] = useState(false);
 
-	useEffect(() => {
-		if (!isNaN(id)) load();
+	const { profile } = useUser();
+
+	// moved below definition of loadAssignments
+
+	// Load assignments data
+	const loadAssignments = useCallback(async () => {
+		if (!id) return;
+		try {
+			const res = await fetch(`/api/seasons/${id}/assignments`);
+			const json = await res.json();
+			if (!res.ok) throw new Error(json.error || "Error assignments");
+			setRequests(json.requests || []);
+			setAssignments(json.assignments || []);
+			setEntryLoad(json.entries || []);
+		} catch (e: any) {
+			console.error(e);
+		}
 	}, [id]);
+
+	// Initial load
+	useEffect(() => {
+		if (!isNaN(id)) {
+			load();
+			loadAssignments();
+		}
+	}, [id, loadAssignments]);
+
+	// Permission redirect
+	useEffect(() => {
+		if (profile && !profile.is_admin) router.push("/dashboard");
+	}, [profile, router]);
+
+	// Realtime subscriptions for assignments
+	useEffect(() => {
+		if (!id) return;
+		const channel = supabase
+			.channel(`season-admin-${id}`)
+			.on(
+				"postgres_changes",
+				{
+					event: "*",
+					schema: "public",
+					table: "season_assignments",
+					filter: `season_id=eq.${id}`,
+				},
+				() => loadAssignments()
+			)
+			.on(
+				"postgres_changes",
+				{
+					event: "*",
+					schema: "public",
+					table: "season_enrollment_requests",
+					filter: `season_id=eq.${id}`,
+				},
+				() => loadAssignments()
+			)
+			.subscribe();
+		return () => {
+			supabase.removeChannel(channel);
+		};
+	}, [id, supabase, loadAssignments]);
 
 	async function load() {
 		setLoading(true);
@@ -159,6 +303,47 @@ export default function SeasonDetailPage() {
 		return Array.from(s).sort();
 	}, [entries]);
 
+	function toggleExpand(idReq: number) {
+		setExpanded((prev) => {
+			const n = new Set(prev);
+			if (n.has(idReq)) n.delete(idReq);
+			else n.add(idReq);
+			return n;
+		});
+	}
+	function remainingForEntry(entry: SeasonEntryLoad) {
+		if (typeof entry.remaining_capacity === "number")
+			return entry.remaining_capacity;
+		if (entry.capacity == null) return null;
+		const used = assignments
+			.filter((a) => a.entry_id === entry.id)
+			.reduce((s, a) => s + a.group_size, 0);
+		return entry.capacity - used;
+	}
+	async function assignToEntry(entryId: number) {
+		if (!selectingFor) return;
+		setCreating(true);
+		try {
+			const res = await fetch(`/api/seasons/${id}/assignments`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					request_id: selectingFor.id,
+					entry_id: entryId,
+				}),
+			});
+			const json = await res.json();
+			if (!res.ok) throw new Error(json.error || "Error");
+			setSelectingFor(null);
+			// Optimistic handled via realtime shortly; still patch state
+			setAssignments((a) => [...a, json.assignment]);
+			setRequests((r) => r.filter((rr) => rr.id !== selectingFor.id));
+		} catch (e: any) {
+			alert(e.message);
+		}
+		setCreating(false);
+	}
+
 	return (
 		<div className="p-4 md:p-6 space-y-6">
 			<div className="flex items-center gap-3">
@@ -195,7 +380,12 @@ export default function SeasonDetailPage() {
 			{message && <p className="text-xs text-red-500">{message}</p>}
 			{loading && <p className="text-sm">Carregant...</p>}
 			{!loading && season && (
-				<Tabs value={tab} onValueChange={setTab}>
+				<Tabs
+					value={tab}
+					onValueChange={(v) => {
+						setTab(v);
+						if (v === "assignments") loadAssignments();
+					}}>
 					<TabsList className="mb-4">
 						<TabsTrigger value="pattern">Patró setmanal</TabsTrigger>
 						<TabsTrigger value="assignments">Assignacions</TabsTrigger>
@@ -214,10 +404,254 @@ export default function SeasonDetailPage() {
 							deleteEntry={deleteEntry}
 						/>
 					</TabsContent>
-					<TabsContent value="assignments">
-						<p className="text-xs text-muted-foreground">
-							Gestor d'assignacions pendent (migrar lògica existent si cal).
-						</p>
+					<TabsContent value="assignments" className="space-y-6">
+						<div className="flex items-center gap-2">
+							<h2 className="font-semibold">Assignacions</h2>
+							{!requests.length && !assignments.length && (
+								<span className="text-xs text-muted-foreground">
+									Sense dades encara.
+								</span>
+							)}
+							<Button variant="outline" size="sm" onClick={loadAssignments}>
+								<RefreshCw className="h-3 w-3" />
+							</Button>
+						</div>
+						<div className="grid lg:grid-cols-2 gap-6">
+							<Card className="overflow-hidden">
+								<CardHeader>
+									<CardTitle className="text-base">Sol·licituds</CardTitle>
+									<CardDescription className="text-xs">
+										Pendents / aprovades sense classe.
+									</CardDescription>
+								</CardHeader>
+								<CardContent className="space-y-2">
+									{requests.length === 0 && (
+										<div className="text-xs text-muted-foreground">
+											Cap sol·licitud.
+										</div>
+									)}
+									<ul className="divide-y divide-white/10">
+										{requests.map((r) => {
+											const isOpen = expanded.has(r.id);
+											return (
+												<li key={r.id} className="py-2 text-xs">
+													<div className="flex items-center gap-2">
+														<button
+															onClick={() => toggleExpand(r.id)}
+															className="p-1 rounded hover:bg-white/10">
+															{isOpen ? (
+																<ChevronDown className="h-4 w-4" />
+															) : (
+																<ChevronRight className="h-4 w-4" />
+															)}
+														</button>
+														<div className="flex-1 flex flex-col md:flex-row md:items-center md:gap-3">
+															<span className="font-medium">
+																{r.user?.name || "Sense nom"} {r.user?.surname}
+															</span>
+															<span className="text-muted-foreground">
+																Grup: {r.group_size}
+															</span>
+															<span
+																className={cn(
+																	"px-1.5 py-0.5 rounded text-[10px] w-fit",
+																	r.allow_fill
+																		? "bg-green-500/20 text-green-400"
+																		: "bg-yellow-500/20 text-yellow-400"
+																)}>
+																{r.allow_fill ? "allow_fill" : "no fill"}
+															</span>
+															<span className="hidden md:inline text-muted-foreground">
+																{new Date(r.created_at).toLocaleDateString()}
+															</span>
+														</div>
+														<Button
+															size="sm"
+															variant="secondary"
+															onClick={() => setSelectingFor(r)}>
+															Assignar
+														</Button>
+													</div>
+													{isOpen && (
+														<div className="mt-2 ml-8 space-y-2">
+															{r.observations && (
+																<div>
+																	<span className="font-medium">Obs:</span>{" "}
+																	{r.observations}
+																</div>
+															)}
+															{r.participants && r.participants.length > 0 && (
+																<div>
+																	<div className="font-medium mb-1">
+																		Participants
+																	</div>
+																	<div className="grid gap-1">
+																		{r.participants.map((p) => (
+																			<div
+																				key={p.id}
+																				className="flex flex-wrap gap-2 text-[11px] bg-white/5 rounded px-2 py-1">
+																				<span>{p.name}</span>
+																				{p.dni && (
+																					<span className="text-muted-foreground">
+																						DNI: {p.dni}
+																					</span>
+																				)}
+																				{p.phone && (
+																					<span className="text-muted-foreground">
+																						Tel: {p.phone}
+																					</span>
+																				)}
+																			</div>
+																		))}
+																	</div>
+																</div>
+															)}
+															{r.choices && r.choices.length > 0 && (
+																<div className="text-[11px] text-muted-foreground">
+																	Preferències:{" "}
+																	{r.choices.map((c) => c.entry_id).join(", ")}
+																</div>
+															)}
+														</div>
+													)}
+												</li>
+											);
+										})}
+									</ul>
+								</CardContent>
+							</Card>
+							<Card className="overflow-hidden">
+								<CardHeader>
+									<CardTitle className="text-base">Assignacions</CardTitle>
+									<CardDescription className="text-xs">
+										Classes actives.
+									</CardDescription>
+								</CardHeader>
+								<CardContent className="space-y-2">
+									{assignments.length === 0 && (
+										<div className="text-xs text-muted-foreground">
+											Sense assignacions.
+										</div>
+									)}
+									<ul className="divide-y divide-white/10">
+										{assignments.map((a) => (
+											<li
+												key={a.id}
+												className="py-2 text-xs flex items-center gap-3">
+												<div className="flex-1 flex flex-col md:flex-row md:items-center md:gap-3">
+													<span className="font-medium">
+														{a.user?.name || "Sense nom"} {a.user?.surname}
+													</span>
+													{a.entry && (
+														<span className="flex items-center gap-1 text-muted-foreground">
+															<Clock className="h-3 w-3" />
+															{a.entry.start_time.slice(0, 5)}-
+															{a.entry.end_time.slice(0, 5)} (
+															{dayNames[a.entry.day_of_week]})
+														</span>
+													)}
+													<span className="text-muted-foreground">
+														Grup: {a.group_size}
+													</span>
+													<span
+														className={cn(
+															"px-1.5 py-0.5 rounded text-[10px] w-fit",
+															a.allow_fill
+																? "bg-green-500/20 text-green-400"
+																: "bg-yellow-500/20 text-yellow-400"
+														)}>
+														{a.allow_fill ? "allow_fill" : "no fill"}
+													</span>
+												</div>
+											</li>
+										))}
+									</ul>
+								</CardContent>
+							</Card>
+						</div>
+
+						{selectingFor && (
+							<div className="fixed inset-0 z-50 flex items-end md:items-center md:justify-center">
+								<div
+									className="absolute inset-0 bg-black/60"
+									onClick={() => !creating && setSelectingFor(null)}
+								/>
+								<div className="relative bg-background w-full md:max-w-xl max-h-[90vh] overflow-hidden rounded-t-lg md:rounded-lg shadow-lg flex flex-col">
+									<div className="p-4 border-b flex items-center justify-between">
+										<div className="space-y-0.5">
+											<h2 className="text-sm font-semibold">
+												Assignar sol·licitud #{selectingFor.id}
+											</h2>
+											<p className="text-[11px] text-muted-foreground">
+												Selecciona una classe amb capacitat
+											</p>
+										</div>
+										<Button
+											size="icon"
+											variant="ghost"
+											onClick={() => setSelectingFor(null)}>
+											✕
+										</Button>
+									</div>
+									<div className="p-4 space-y-3 overflow-auto">
+										<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+											{entryLoad
+												.filter(
+													(e) =>
+														(e as any).kind === "class" ||
+														(e as any).kind === undefined
+												)
+												.map((e) => {
+													const remaining = remainingForEntry(e);
+													const disabled =
+														remaining != null &&
+														remaining < selectingFor.group_size;
+													return (
+														<button
+															key={e.id}
+															disabled={disabled || creating}
+															onClick={() => assignToEntry(e.id)}
+															className={cn(
+																"border rounded-md p-2 text-left text-xs flex flex-col gap-1 shadow-sm transition",
+																disabled
+																	? "opacity-40 cursor-not-allowed"
+																	: "hover:bg-white/5",
+																"bg-white/5"
+															)}>
+															<span className="font-medium flex items-center gap-1">
+																<Clock className="h-3 w-3" />
+																{e.start_time.slice(0, 5)}-
+																{e.end_time.slice(0, 5)}{" "}
+																<span className="text-muted-foreground">
+																	{dayNames[e.day_of_week]}
+																</span>
+															</span>
+															<span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+																<Users className="h-3 w-3" />
+																Cap: {e.capacity ?? "—"}
+																{remaining != null && (
+																	<span className="ml-1">
+																		Disp: {remaining}
+																	</span>
+																)}
+															</span>
+														</button>
+													);
+												})}
+										</div>
+									</div>
+									<div className="p-4 border-t flex justify-end">
+										<Button
+											variant="outline"
+											size="sm"
+											disabled={creating}
+											onClick={() => setSelectingFor(null)}>
+											Tancar
+										</Button>
+									</div>
+								</div>
+							</div>
+						)}
 					</TabsContent>
 				</Tabs>
 			)}
