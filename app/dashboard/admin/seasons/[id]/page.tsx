@@ -22,10 +22,25 @@ export default function SeasonDetailPage() {
 	const [loading, setLoading] = useState(true);
 	const [tab, setTab] = useState("pattern");
 	const [message, setMessage] = useState<string | null>(null);
-	const [entryDialog, setEntryDialog] = useState<{ open: boolean; day?: number }>({ open: false });
-	const [entryForm, setEntryForm] = useState({ kind: "class" as "class" | "break", start_time: "17:00", end_time: "18:00", capacity: 4, location: "Soses", day: undefined });
+	const [entryDialog, setEntryDialog] = useState<{
+		open: boolean;
+		day?: number;
+	}>({ open: false });
+	const [entryForm, setEntryForm] = useState({
+		kind: "class" as "class" | "break",
+		start_time: "17:00",
+		end_time: "18:00",
+		capacity: 4,
+		location: "Soses",
+		day: undefined,
+	});
 	const [builderOpen, setBuilderOpen] = useState(false);
-	const [builder, setBuilder] = useState({ days: [] as number[], base_start: "17:00", blocks: [{ kind: "class" as const, duration: 60, capacity: 4 }], location: "Soses" });
+	const [builder, setBuilder] = useState({
+		days: [] as number[],
+		base_start: "17:00",
+		blocks: [{ kind: "class" as const, duration: 60, capacity: 4 }],
+		location: "Soses",
+	});
 	const [building, setBuilding] = useState(false);
 
 	useEffect(() => {
@@ -212,10 +227,14 @@ export default function SeasonDetailPage() {
 
 			<EntryDialog
 				open={entryDialog.open}
-				onOpenChange={(o) => setEntryDialog((d) => ({ open: o, day: o ? d.day : undefined }))}
+				onOpenChange={(o) =>
+					setEntryDialog((d) => ({ open: o, day: o ? d.day : undefined }))
+				}
 				entryForm={entryForm}
 				setEntryForm={setEntryForm}
-				onSave={() => entryDialog.day !== undefined && addEntry(entryDialog.day)}
+				onSave={() =>
+					entryDialog.day !== undefined && addEntry(entryDialog.day)
+				}
 			/>
 		</div>
 	);
