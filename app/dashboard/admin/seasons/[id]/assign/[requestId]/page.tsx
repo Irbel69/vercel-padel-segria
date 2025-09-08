@@ -1,0 +1,167 @@
+"use client";
+import { useEffect, useState, useMemo, useCallback } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { createClient } from "@/libs/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Clock, Users, ArrowLeft, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface Entry {
+  id: number; day_of_week: number; kind: string; start_time: string; end_time: string; capacity: number | null; location: string; remaining_capacity?: number | null;
+}
+interface RequestRow { id: number; group_size: number; allow_fill: boolean; user_id: string; observations?: string | null; participants?: { id:number; name:string; dni?:string|null; phone?:string|null }[]; choices?: { entry_id:number }[]; user?: { name:string|null; surname:string|null; email:string; phone?:string|null }; }
+interface Assignment { id:number; entry_id:number; group_size:number; }
+
+const dayNames = ["Dg","Dl","Dt","Dc","Dj","Dv","Ds"];
+const dayOrder = [1,2,3,4,5,6,0];
+
+export default function AssignRequestPage(){
+  const params = useParams();
+  const seasonId = Number(params?.id);
+  const requestId = Number(params?.requestId);
+  const router = useRouter();
+  const supabase = createClient();
+  const [request,setRequest]=useState<RequestRow|null>(null);
+  const [entries,setEntries]=useState<Entry[]>([]);
+  const [assignments,setAssignments]=useState<Assignment[]>([]);
+  const [loading,setLoading]=useState(true);
+  const [assigning,setAssigning]=useState(false);
+  const [message,setMessage]=useState<string|null>(null);
+
+  const choiceSet = useMemo(()=> new Set((request?.choices||[]).map(c=>c.entry_id)),[request]);
+
+  const load = useCallback(async ()=>{
+    if(!seasonId||!requestId) return; setLoading(true); setMessage(null);
+    try {
+      // reuse API for bulk data
+      const res = await fetch(`/api/seasons/${seasonId}/assignments`);
+      const json = await res.json();
+      if(res.ok){
+        setEntries((json.entries||[]).filter((e:Entry)=> e.kind==='class' || !e.kind));
+        setAssignments(json.assignments||[]);
+        // find specific request (may not be in list if already assigned) -> fetch directly
+        const req = (json.requests||[]).find((r:RequestRow)=> r.id===requestId);
+        if(req){
+          setRequest(req);
+        }else{
+          // fallback direct fetch
+          const single = await supabase.from('season_enrollment_requests').select('id,group_size,allow_fill,observations,user:users(name,surname,email,phone),participants:season_request_participants(id,name,dni,phone),choices:season_request_choices(entry_id)').eq('id',requestId).maybeSingle();
+          if(single.data) setRequest(single.data as any);
+        }
+      }else{
+        setMessage(json.error||'Error carregant');
+      }
+    }catch(e:any){
+      setMessage(e.message);
+    }
+    setLoading(false);
+  },[seasonId,requestId,supabase]);
+
+  useEffect(()=>{ load(); },[load]);
+
+  function capacityInfo(entry:Entry){
+    const used = assignments.filter(a=> a.entry_id===entry.id).reduce((s,a)=> s+a.group_size,0);
+    return { used, total: entry.capacity, remaining: entry.capacity!=null? entry.capacity - used : null };
+  }
+
+  async function assign(entry:Entry){
+    if(!request) return; if(entry.capacity!=null){ const {used,remaining} = capacityInfo(entry); if(remaining!=null && remaining < request.group_size){ return; } }
+    setAssigning(true); setMessage(null);
+    try{
+      const res = await fetch(`/api/seasons/${seasonId}/assignments`,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ request_id: request.id, entry_id: entry.id })});
+      const json = await res.json();
+      if(!res.ok) throw new Error(json.error||'Error creant assignació');
+      router.push(`/dashboard/admin/seasons/${seasonId}?tab=assignments`);
+    }catch(e:any){ setMessage(e.message); }
+    setAssigning(false);
+  }
+
+  const startTimes = useMemo(()=>{ const set = new Set(entries.map(e=> e.start_time.slice(0,5))); return Array.from(set).sort(); },[entries]);
+
+  return (
+    <div className="p-4 md:p-6 space-y-6">
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="sm" onClick={()=>router.back()}><ArrowLeft className="h-4 w-4"/></Button>
+        <h1 className="text-xl font-semibold">Assignar sol·licitud #{requestId}</h1>
+        <div className="ml-auto flex gap-2">
+          <Button variant="outline" size="sm" onClick={load}>Refrescar</Button>
+        </div>
+      </div>
+      {message && <div className="text-xs text-red-500">{message}</div>}
+      {request && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Detalls sol·licitud</CardTitle>
+            <CardDescription className="text-xs">Grup {request.group_size} · {request.allow_fill? 'allow_fill':'no fill'}</CardDescription>
+          </CardHeader>
+          <CardContent className="text-xs space-y-2">
+            {request.observations && <div><span className="font-medium">Obs:</span> {request.observations}</div>}
+            {request.participants && request.participants.length>0 && (
+              <div>
+                <div className="font-medium mb-1">Participants</div>
+                <div className="flex flex-wrap gap-2">
+                  {request.participants.map(p=> <span key={p.id} className="bg-white/5 rounded px-2 py-1">{p.name}</span>)}
+                </div>
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400">Preferències: {request.choices?.length? request.choices.map(c=>c.entry_id).join(', '): '—'}</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      <Card className="overflow-x-auto">
+        <CardHeader>
+          <CardTitle className="text-base">Calendari</CardTitle>
+          <CardDescription className="text-xs">Fes click sobre una classe per assignar.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading && <div className="text-xs">Carregant...</div>}
+          {!loading && (
+            <div className="min-w-[840px]">
+              <div className="grid" style={{gridTemplateColumns: '80px repeat(7,1fr)'}}>
+                <div></div>
+                {dayOrder.map(d=> <div key={d} className="text-xs font-semibold text-center pb-2">{dayNames[d]}</div>)}
+                {startTimes.map(time => (
+                  <>
+                    <div key={'time-'+time} className="text-[10px] font-mono pr-2 py-1 text-muted-foreground">{time}</div>
+                    {dayOrder.map(dayIdx => {
+                      const entry = entries.find(e=> e.day_of_week===dayIdx && e.start_time.slice(0,5)===time);
+                      if(!entry) return <div key={dayIdx+time} className="p-1"/>;
+                      const capacity = capacityInfo(entry);
+                      const highlight = choiceSet.has(entry.id);
+                      const insufficient = capacity.remaining!=null && request && capacity.remaining < request.group_size;
+                      return (
+                        <button
+                          key={entry.id}
+                          disabled={assigning || insufficient}
+                          onClick={()=> assign(entry)}
+                          className={cn('relative rounded border p-2 text-[11px] text-left shadow-sm group w-full h-full transition',
+                            entry.kind==='class' ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-amber-500/10 border-amber-500/30',
+                            highlight && 'ring-2 ring-padel-primary',
+                            insufficient && 'opacity-40 cursor-not-allowed')}
+                        >
+                          <div className="flex justify-between mb-1">
+                            <span className="font-medium flex items-center gap-1"><Clock className="h-3 w-3"/>{entry.start_time.slice(0,5)}-{entry.end_time.slice(0,5)}</span>
+                            {highlight && <Check className="h-3 w-3 text-padel-primary"/>}
+                          </div>
+                          <div className="flex justify-between items-end">
+                            <span className="inline-flex items-center gap-1 text-muted-foreground"><Users className="h-3 w-3"/>{capacity.used}/{entry.capacity ?? '—'}</span>
+                            {capacity.remaining!=null && request && <span className="text-[10px] text-muted-foreground">Disp si assignes: {capacity.remaining - request.group_size}</span>}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </>
+                ))}
+                <div></div>
+                {dayOrder.map(d=> <div key={'footer-'+d}></div>)}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

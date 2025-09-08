@@ -105,8 +105,7 @@ export default function SeasonDetailPage() {
 	const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
 	const [entryLoad, setEntryLoad] = useState<SeasonEntryLoad[]>([]);
 	const [expanded, setExpanded] = useState<Set<number>>(new Set());
-	const [selectingFor, setSelectingFor] = useState<RequestRow | null>(null);
-	const [creating, setCreating] = useState(false);
+	// selection modal removed (now separate calendar page per request)
 	const [entryDialog, setEntryDialog] = useState<{
 		open: boolean;
 		day?: number;
@@ -312,36 +311,10 @@ export default function SeasonDetailPage() {
 		});
 	}
 	function remainingForEntry(entry: SeasonEntryLoad) {
-		if (typeof entry.remaining_capacity === "number")
-			return entry.remaining_capacity;
+		if (typeof entry.remaining_capacity === "number") return entry.remaining_capacity;
 		if (entry.capacity == null) return null;
-		const used = assignments
-			.filter((a) => a.entry_id === entry.id)
-			.reduce((s, a) => s + a.group_size, 0);
+		const used = assignments.filter(a => a.entry_id === entry.id).reduce((s,a)=> s + a.group_size,0);
 		return entry.capacity - used;
-	}
-	async function assignToEntry(entryId: number) {
-		if (!selectingFor) return;
-		setCreating(true);
-		try {
-			const res = await fetch(`/api/seasons/${id}/assignments`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					request_id: selectingFor.id,
-					entry_id: entryId,
-				}),
-			});
-			const json = await res.json();
-			if (!res.ok) throw new Error(json.error || "Error");
-			setSelectingFor(null);
-			// Optimistic handled via realtime shortly; still patch state
-			setAssignments((a) => [...a, json.assignment]);
-			setRequests((r) => r.filter((rr) => rr.id !== selectingFor.id));
-		} catch (e: any) {
-			alert(e.message);
-		}
-		setCreating(false);
 	}
 
 	return (
@@ -465,12 +438,7 @@ export default function SeasonDetailPage() {
 																{new Date(r.created_at).toLocaleDateString()}
 															</span>
 														</div>
-														<Button
-															size="sm"
-															variant="secondary"
-															onClick={() => setSelectingFor(r)}>
-															Assignar
-														</Button>
+														<Button size="sm" variant="secondary" onClick={() => router.push(`/dashboard/admin/seasons/${id}/assign/${r.id}`)}>Veure</Button>
 													</div>
 													{isOpen && (
 														<div className="mt-2 ml-8 space-y-2">
@@ -570,88 +538,7 @@ export default function SeasonDetailPage() {
 							</Card>
 						</div>
 
-						{selectingFor && (
-							<div className="fixed inset-0 z-50 flex items-end md:items-center md:justify-center">
-								<div
-									className="absolute inset-0 bg-black/60"
-									onClick={() => !creating && setSelectingFor(null)}
-								/>
-								<div className="relative bg-background w-full md:max-w-xl max-h-[90vh] overflow-hidden rounded-t-lg md:rounded-lg shadow-lg flex flex-col">
-									<div className="p-4 border-b flex items-center justify-between">
-										<div className="space-y-0.5">
-											<h2 className="text-sm font-semibold">
-												Assignar sol·licitud #{selectingFor.id}
-											</h2>
-											<p className="text-[11px] text-muted-foreground">
-												Selecciona una classe amb capacitat
-											</p>
-										</div>
-										<Button
-											size="icon"
-											variant="ghost"
-											onClick={() => setSelectingFor(null)}>
-											✕
-										</Button>
-									</div>
-									<div className="p-4 space-y-3 overflow-auto">
-										<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-											{entryLoad
-												.filter(
-													(e) =>
-														(e as any).kind === "class" ||
-														(e as any).kind === undefined
-												)
-												.map((e) => {
-													const remaining = remainingForEntry(e);
-													const disabled =
-														remaining != null &&
-														remaining < selectingFor.group_size;
-													return (
-														<button
-															key={e.id}
-															disabled={disabled || creating}
-															onClick={() => assignToEntry(e.id)}
-															className={cn(
-																"border rounded-md p-2 text-left text-xs flex flex-col gap-1 shadow-sm transition",
-																disabled
-																	? "opacity-40 cursor-not-allowed"
-																	: "hover:bg-white/5",
-																"bg-white/5"
-															)}>
-															<span className="font-medium flex items-center gap-1">
-																<Clock className="h-3 w-3" />
-																{e.start_time.slice(0, 5)}-
-																{e.end_time.slice(0, 5)}{" "}
-																<span className="text-muted-foreground">
-																	{dayNames[e.day_of_week]}
-																</span>
-															</span>
-															<span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-																<Users className="h-3 w-3" />
-																Cap: {e.capacity ?? "—"}
-																{remaining != null && (
-																	<span className="ml-1">
-																		Disp: {remaining}
-																	</span>
-																)}
-															</span>
-														</button>
-													);
-												})}
-										</div>
-									</div>
-									<div className="p-4 border-t flex justify-end">
-										<Button
-											variant="outline"
-											size="sm"
-											disabled={creating}
-											onClick={() => setSelectingFor(null)}>
-											Tancar
-										</Button>
-									</div>
-								</div>
-							</div>
-						)}
+						{/* Selection modal removed */}
 					</TabsContent>
 				</Tabs>
 			)}
