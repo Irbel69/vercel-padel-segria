@@ -42,6 +42,13 @@ interface RequestRow {
 		email: string;
 		phone?: string | null;
 	};
+	payment_method?: string | null;
+	direct_debit?: {
+		iban?: string | null;
+		holder_name?: string | null;
+		holder_address?: string | null;
+		holder_dni?: string | null;
+	} | null;
 }
 interface Assignment {
 	id: number;
@@ -90,17 +97,33 @@ export default function AssignRequestPage() {
 					(r: RequestRow) => r.id === requestId
 				);
 				if (req) {
+					// ensure we have direct debit details
 					setRequest(req);
+					try {
+						const { data: dd } = await supabase
+							.from("season_direct_debit_details")
+							.select("iban,holder_name,holder_address,holder_dni")
+							.eq("request_id", requestId)
+							.maybeSingle();
+						if (dd) setRequest((r) => (r ? { ...r, direct_debit: dd } : r));
+					} catch (e) {
+						// ignore
+					}
 				} else {
 					// fallback direct fetch
 					const single = await supabase
 						.from("season_enrollment_requests")
 						.select(
-							"id,group_size,allow_fill,observations,user:users(name,surname,email,phone),participants:season_request_participants(id,name,dni,phone),choices:season_request_choices(entry_id)"
+							"id,group_size,allow_fill,observations,payment_method,user:users(name,surname,email,phone),participants:season_request_participants(id,name,dni,phone),choices:season_request_choices(entry_id),direct_debit:season_direct_debit_details(iban,holder_name,holder_address,holder_dni)"
 						)
 						.eq("id", requestId)
 						.maybeSingle();
-					if (single.data) setRequest(single.data as any);
+					if (single.data) {
+						const d = single.data as any;
+						// normalize direct_debit property name if nested
+						if (d.direct_debit) d.direct_debit = d.direct_debit;
+						setRequest(d);
+					}
 				}
 			} else {
 				setMessage(json.error || "Error carregant");
@@ -181,24 +204,53 @@ export default function AssignRequestPage() {
 							{request.allow_fill ? "allow_fill" : "no fill"}
 						</CardDescription>
 					</CardHeader>
-					<CardContent className="text-xs space-y-2">
+					<CardContent className="text-xs space-y-3">
 						{request.observations && (
 							<div>
 								<span className="font-medium">Obs:</span> {request.observations}
 							</div>
 						)}
+
+						{/* Titular / Contact */}
+						<div>
+							<div className="font-medium">Titular</div>
+							<div className="text-muted-foreground text-[13px]">
+								{request.user?.name || "-"} {request.user?.surname || ""}
+							</div>
+							<div className="text-[12px] text-muted-foreground">
+								{request.user?.email}
+								{request.user?.phone && (
+									<span className="ml-4">Tel: {request.user.phone}</span>
+								)}
+							</div>
+							{request.direct_debit?.holder_dni && (
+								<div className="text-[12px] text-muted-foreground">
+									DNI: {request.direct_debit.holder_dni}
+								</div>
+							)}
+						</div>
+
+						{/* Participants detail */}
 						{request.participants && request.participants.length > 0 && (
 							<div>
 								<div className="font-medium mb-1">Participants</div>
-								<div className="flex flex-wrap gap-2">
+								<div className="grid gap-1">
 									{request.participants.map((p) => (
-										<span key={p.id} className="bg-white/5 rounded px-2 py-1">
-											{p.name}
-										</span>
+										<div
+											key={p.id}
+											className="flex flex-col sm:flex-row sm:items-center gap-2 bg-white/5 rounded px-2 py-1 text-[13px]">
+											<div className="font-medium">{p.name}</div>
+											<div className="text-muted-foreground">
+												{p.dni ? `DNI: ${p.dni}` : ""}{" "}
+												{p.phone ? ` · Tel: ${p.phone}` : ""}
+											</div>
+										</div>
 									))}
 								</div>
 							</div>
 						)}
+
+						{/* Preferences */}
 						<div className="flex flex-wrap gap-2">
 							<span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400">
 								Preferències:{" "}
@@ -206,6 +258,27 @@ export default function AssignRequestPage() {
 									? request.choices.map((c) => c.entry_id).join(", ")
 									: "—"}
 							</span>
+						</div>
+
+						{/* Payment info */}
+						<div>
+							<div className="font-medium">Pagament</div>
+							<div className="text-[13px] text-muted-foreground">
+								{request.payment_method || "-"}
+							</div>
+							{request.direct_debit && (
+								<div className="mt-1 text-[12px] text-muted-foreground">
+									<div>Domiciliació:</div>
+									<div>IBAN: {request.direct_debit.iban || "-"}</div>
+									<div>Titular: {request.direct_debit.holder_name || "-"}</div>
+									{request.direct_debit.holder_address && (
+										<div>Adreça: {request.direct_debit.holder_address}</div>
+									)}
+									{request.direct_debit.holder_dni && (
+										<div>DNI: {request.direct_debit.holder_dni}</div>
+									)}
+								</div>
+							)}
 						</div>
 					</CardContent>
 				</Card>
@@ -281,12 +354,6 @@ export default function AssignRequestPage() {
 															<Users className="h-3 w-3" />
 															{capacity.used}/{entry.capacity ?? "—"}
 														</span>
-														{capacity.remaining != null && request && (
-															<span className="text-[10px] text-muted-foreground">
-																Disp si assignes:{" "}
-																{capacity.remaining - request.group_size}
-															</span>
-														)}
 													</div>
 												</button>
 											);
