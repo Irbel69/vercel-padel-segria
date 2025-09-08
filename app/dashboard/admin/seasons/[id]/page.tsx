@@ -311,9 +311,12 @@ export default function SeasonDetailPage() {
 		});
 	}
 	function remainingForEntry(entry: SeasonEntryLoad) {
-		if (typeof entry.remaining_capacity === "number") return entry.remaining_capacity;
+		if (typeof entry.remaining_capacity === "number")
+			return entry.remaining_capacity;
 		if (entry.capacity == null) return null;
-		const used = assignments.filter(a => a.entry_id === entry.id).reduce((s,a)=> s + a.group_size,0);
+		const used = assignments
+			.filter((a) => a.entry_id === entry.id)
+			.reduce((s, a) => s + a.group_size, 0);
 		return entry.capacity - used;
 	}
 
@@ -438,7 +441,16 @@ export default function SeasonDetailPage() {
 																{new Date(r.created_at).toLocaleDateString()}
 															</span>
 														</div>
-														<Button size="sm" variant="secondary" onClick={() => router.push(`/dashboard/admin/seasons/${id}/assign/${r.id}`)}>Veure</Button>
+														<Button
+															size="sm"
+															variant="secondary"
+															onClick={() =>
+																router.push(
+																	`/dashboard/admin/seasons/${id}/assign/${r.id}`
+																)
+															}>
+															Veure
+														</Button>
 													</div>
 													{isOpen && (
 														<div className="mt-2 ml-8 space-y-2">
