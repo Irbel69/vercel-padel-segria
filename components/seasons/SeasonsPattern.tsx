@@ -360,35 +360,31 @@ export default function SeasonsPattern({
 																</div>
 															)}
 
-															{req.participants &&
-																req.participants.length > 0 && (
-																	<div className="mt-2">
-																		<div className="font-medium">
-																			Participants
+															{(req.user || (req.participants && req.participants.length > 0)) && (
+																<div className="mt-2">
+																	<div className="font-medium">Participants</div>
+																	<div className="grid gap-1 mt-1">
+																		{/* Titular (request holder) */}
+																		{req.user && (
+																			<div key={`titular-${req.id}`} className="flex gap-2 items-center text-xs">
+																				<div className="font-medium">{req.user?.name} {req.user?.surname}</div>
+																				{(req.direct_debit?.holder_dni || req.user?.dni) && (
+																					<div className="text-muted-foreground">DNI: {req.direct_debit?.holder_dni || req.user?.dni}</div>
+																				)}
+																				{req.user?.phone && <div className="text-muted-foreground">Tel: {req.user?.phone}</div>}
 																		</div>
-																		<div className="grid gap-1 mt-1">
-																			{req.participants.map((p: any) => (
-																				<div
-																					key={p.id}
-																					className="flex gap-2 items-center text-xs">
-																					<div className="font-medium">
-																						{p.name}
-																					</div>
-																					{p.dni && (
-																						<div className="text-muted-foreground">
-																							DNI: {p.dni}
-																						</div>
-																					)}
-																					{p.phone && (
-																						<div className="text-muted-foreground">
-																							Tel: {p.phone}
-																						</div>
-																					)}
-																				</div>
-																			))}
-																		</div>
+																	)}
+																		{/* Other participants */}
+																		{req.participants && req.participants.length > 0 && req.participants.map((p: any) => (
+																			<div key={p.id ?? `p-${p.name}-${p.phone}`} className="flex gap-2 items-center text-xs">
+																				<div className="font-medium">{p.name}</div>
+																				{p.dni && <div className="text-muted-foreground">DNI: {p.dni}</div>}
+																				{p.phone && <div className="text-muted-foreground">Tel: {p.phone}</div>}
+																			</div>
+																		))}
 																	</div>
-																)}
+																	</div>
+															)}
 														</div>
 													)}
 												</div>
