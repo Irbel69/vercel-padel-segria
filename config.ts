@@ -7,7 +7,7 @@ const config = {
 	appDescription:
 		"A modern SaaS application built with Next.js, Supabase, and Resend.",
 	// REQUIRED (no https://, not trialing slash at the end, just the naked domain)
-	domainName: "neuronixs.com",
+	domainName: "padelsegria.com",
 	crisp: {
 		// Crisp website ID. IF YOU DON'T USE CRISP: just remove this => Then add a support email in this config file (resend.supportEmail) otherwise customer support won't work.
 		id: "",
@@ -21,12 +21,12 @@ const config = {
 		cdn: "https://cdn-id.cloudfront.net/",
 	},
 	resend: {
-		// REQUIRED — Email 'From' field to be used when sending magic login links
-		fromNoReply: `Neuronixs <noreply@neuronixs.com>`,
-		// REQUIRED — Email 'From' field to be used when sending other emails, like notifications, updates etc..
-		fromAdmin: `Team at Neuronixs <team@neuronixs.com>`,
-		// Email shown to customer if need support. Leave empty if not needed => if empty, set up Crisp above, otherwise you won't be able to offer customer support."
-		supportEmail: "support@neuronixs.com",
+	// REQUIRED — Email 'From' field to be used when sending magic login links
+	fromNoReply: `Padelsegria <noreply@padelsegria.com>`,
+	// REQUIRED — Email 'From' field to be used when sending other emails, like notifications, updates etc..
+	fromAdmin: `Team at Padelsegria <team@padelsegria.com>`,
+	// Email shown to customer if need support. Leave empty if not needed => if empty, set up Crisp above, otherwise you won't be able to offer customer support."
+	supportEmail: "support@padelsegria.com"
 	},
 	colors: {
 		// REQUIRED — The DaisyUI theme to use (added to the main layout.js). Leave blank for default (light & dark mode). If you any other theme than light/dark, you need to add it in config.tailwind.js in daisyui.themes.
