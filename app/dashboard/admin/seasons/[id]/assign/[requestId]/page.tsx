@@ -54,6 +54,7 @@ interface Assignment {
 	id: number;
 	entry_id: number;
 	group_size: number;
+	allow_fill: boolean; // Added to evaluate fill compatibility
 }
 
 const dayNames = ["Dg", "Dl", "Dt", "Dc", "Dj", "Dv", "Ds"];
@@ -157,6 +158,28 @@ export default function AssignRequestPage() {
 				return;
 			}
 		}
+
+		// Determine fill compatibility warnings
+		const existingForEntry = assignments.filter((a) => a.entry_id === entry.id);
+		const existingHasNoFill = existingForEntry.some(
+			(a) => a.allow_fill === false
+		);
+		let proceed = true;
+		// Case 1: existing class has someone who requested no fill
+		if (existingHasNoFill) {
+			proceed = window.confirm(
+				"Atenció, les persones ja inscrites en aquesta classe han sol·licitat no omplir-la amb més gent. Estàs segur que vols continuar?"
+			);
+		} else if (
+			// Case 2: existing participants allow fill but incoming request wants exclusivity
+			request.allow_fill === false &&
+			existingForEntry.length > 0
+		) {
+			proceed = window.confirm(
+				"Atenció, les persones que estàs intentant inscriure han sol·licitat fer la classe soles. Estàs segur que vols afegir-les a una classe amb més participants?"
+			);
+		}
+		if (!proceed) return;
 		setAssigning(true);
 		setMessage(null);
 		try {

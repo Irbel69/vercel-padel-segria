@@ -134,11 +134,17 @@ export default function SeasonsPattern({
 											(a: any) => a.allow_fill === false
 										);
 										const highlightRed = isFull || hasRestrictiveAssignment;
+										const reason = hasRestrictiveAssignment
+											? "Classe amb participants que han sol·licitat no omplir (no fill)"
+											: isFull
+											? "Classe plena"
+											: "Classe oberta";
 
 										return (
 											<div key={entry.id}>
 												<div
 													onClick={() => setSelectedEntry(entry.id)}
+													title={reason}
 													className={`relative rounded border p-2 text-[11px] shadow-sm group cursor-pointer ${
 														highlightRed
 															? "bg-red-500/10 border-red-500/30"
@@ -183,7 +189,7 @@ export default function SeasonsPattern({
 																"Pausa"
 															)}
 														</span>
-														<span className="text-xs">
+														<span className="text-xs text-muted-foreground">
 															{durationMinutes(
 																entry.start_time,
 																entry.end_time
