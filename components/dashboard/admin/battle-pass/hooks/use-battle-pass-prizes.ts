@@ -38,7 +38,8 @@ interface PrizesParams {
 }
 
 // Fetch helper
-async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
+// Use globalThis.RequestInit to reference the DOM RequestInit type without relying on NodeJS/global types
+async function fetchJSON<T>(url: string, init?: globalThis.RequestInit): Promise<T> {
   const res = await fetch(url, init);
   const data = await res.json();
   if (!res.ok) {

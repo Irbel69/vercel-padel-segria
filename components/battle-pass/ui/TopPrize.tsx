@@ -1,12 +1,12 @@
 "use client";
-
+import {HTMLAttributes,PointerEvent,KeyboardEvent} from "react";
 import Image from "next/image";
 import { Gift, Lock, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { BattlePassPrizeProgress } from "../hooks/use-battle-pass-progress";
 
-interface TopPrizeProps extends React.HTMLAttributes<HTMLDivElement> {
+interface TopPrizeProps extends HTMLAttributes<HTMLDivElement> {
   prize: BattlePassPrizeProgress;
   index: number;
   canClaim: boolean;
@@ -18,14 +18,14 @@ export default function TopPrize({ prize, index, canClaim, isLocked, isClaimed, 
   // Tap detection: simple pointer-based threshold to distinguish taps from horizontal swipes
   let pointerDownInfo: { x: number; y: number; t: number } | null = null;
 
-  const onPointerDown = (e: React.PointerEvent) => {
+  const onPointerDown = (e: PointerEvent) => {
     // Only track primary pointer
     if (e.pointerType === 'touch' || e.pointerType === 'pen' || e.pointerType === 'mouse') {
       pointerDownInfo = { x: e.clientX, y: e.clientY, t: Date.now() };
     }
   };
 
-  const onPointerUp = (e: React.PointerEvent) => {
+  const onPointerUp = (e: PointerEvent) => {
     if (!pointerDownInfo) return;
     const dx = Math.abs(e.clientX - pointerDownInfo.x);
     const dy = Math.abs(e.clientY - pointerDownInfo.y);
@@ -38,7 +38,7 @@ export default function TopPrize({ prize, index, canClaim, isLocked, isClaimed, 
     }
   };
 
-  const onKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (allowPreview) onPreviewClick?.(); } };
+  const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (allowPreview) onPreviewClick?.(); } };
 
   return (
     <div className={cn("flex flex-col items-center relative group snap-center overflow-visible", className)} {...rest}>

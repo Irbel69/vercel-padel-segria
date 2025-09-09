@@ -1,11 +1,12 @@
 "use client";
-
+import { HTMLAttributes } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BattlePassPrizeProgress } from "../hooks/use-battle-pass-progress";
 
-interface BottomPrizeProps extends React.HTMLAttributes<HTMLDivElement> {
+interface BottomPrizeProps extends HTMLAttributes<HTMLDivElement> {
   prize: BattlePassPrizeProgress;
   index: number;
   canClaim: boolean;
@@ -34,7 +35,16 @@ export default function BottomPrize({ prize, index, canClaim, isLocked, isClaime
           onClick={(e) => {
             // prevent the click from bubbling up to parent container which opens the claimed-users list
             e.stopPropagation();
-            try { (e.nativeEvent as Event).stopImmediatePropagation?.(); } catch {}
+            // Defensive: older parsers/builders sometimes choke on the optional call operator (?.()),
+            // so call stopImmediatePropagation safely without using ?.()
+            try {
+              const ne = e.nativeEvent as any;
+              if (typeof ne?.stopImmediatePropagation === "function") {
+                ne.stopImmediatePropagation();
+              }
+            } catch (err) {
+              // ignore
+            }
             onInteraction?.();
             onClaim?.();
           }}

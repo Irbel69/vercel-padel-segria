@@ -140,7 +140,7 @@ export function Modals({ showCreateModal, setShowCreateModal, editingPrize, setE
               Confirmar Eliminació
             </AlertDialogTitle>
             <AlertDialogDescription className="text-white/60">
-              Estàs segur que vols eliminar el premi "{deletingPrize?.name}"?
+              Estàs segur que vols eliminar el premi &quot;{deletingPrize?.name}&quot;?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

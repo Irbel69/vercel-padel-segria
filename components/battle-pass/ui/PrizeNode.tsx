@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState,HTMLAttributes } from "react";
 import { BattlePassPrizeProgress } from "../hooks/use-battle-pass-progress";
 import TopPrize from "./TopPrize";
 import BottomPrize from "./BottomPrize";
@@ -10,7 +10,7 @@ import PrizePreviewModal from "./PrizePreviewModal";
 
 import { cn } from "@/lib/utils";
 
-interface PrizeNodeProps extends React.HTMLAttributes<HTMLDivElement> {
+interface PrizeNodeProps extends HTMLAttributes<HTMLDivElement> {
   prize: BattlePassPrizeProgress;
   index: number;
   totalPrizes?: number;

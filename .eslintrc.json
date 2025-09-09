@@ -5,6 +5,27 @@
     "node": true,
     "es6": true
   },
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "globalReturn": false
+    }
+  },
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx"],
+      "rules": {
+        // TypeScript already checks for undefined variables — disable ESLint's no-undef
+        "no-undef": "off"
+      },
+      "env": {
+        "browser": true,
+        "node": true,
+        "es2022": true
+      }
+    }
+  ],
   "rules": {
     // Your specific rules.
     "no-unused-vars": "warn"

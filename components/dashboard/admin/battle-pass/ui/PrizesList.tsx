@@ -91,7 +91,9 @@ export function PrizesList() {
   const [togglingPrizeId, setTogglingPrizeId] = useState<number | null>(null);
   
   // Debounced search
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  // Use ReturnType<typeof setTimeout> to avoid referencing NodeJS global types which may not be
+  // defined in the linting environment.
+  const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
   
   // Query params
   const queryParams = useMemo(() => ({
@@ -240,8 +242,9 @@ export function PrizesList() {
       const detail = (e as CustomEvent).detail;
       if (typeof detail === 'number') handlePageChange(detail);
     };
-    window.addEventListener('prizes:page-change', handler as EventListener);
-    return () => window.removeEventListener('prizes:page-change', handler as EventListener);
+    // Avoid casting to the global EventListener type which can trigger no-undef in some lint configs.
+    window.addEventListener('prizes:page-change', handler as unknown as EventListenerOrEventListenerObject);
+    return () => window.removeEventListener('prizes:page-change', handler as unknown as EventListenerOrEventListenerObject);
   }, []);
 
   // Active filters count

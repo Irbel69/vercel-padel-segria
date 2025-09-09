@@ -98,7 +98,7 @@ export function Filters({ filters, onSearchChange, onFilterChange, clearFilters,
           <Filter className="h-4 w-4 text-white/60" />
           <span className="text-sm text-white/60">{activeFiltersCount} filtre{activeFiltersCount !== 1 ? "s" : ""} actiu{activeFiltersCount !== 1 ? "s" : ""}</span>
           {filters.search && (
-            <Badge variant="secondary" className="bg-padel-primary/20 text-padel-primary">"{filters.search}"</Badge>
+            <Badge variant="secondary" className="bg-padel-primary/20 text-padel-primary">&quot;{filters.search}&quot;</Badge>
           )}
         </div>
       )}

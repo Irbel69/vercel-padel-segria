@@ -29,7 +29,7 @@ function BattlePassContent() {
 				<Alert className="border-red-500/50 bg-red-900/20">
 					<AlertTriangle className="h-4 w-4 text-red-400" />
 					<AlertDescription className="text-red-300">
-						No s'ha pogut carregar les dades del Battle Pass: {error.message}
+						No s&apos;ha pogut carregar les dades del Battle Pass: {error.message}
 						<button 
 							onClick={() => refetch()}
 							className="ml-2 underline hover:no-underline"
