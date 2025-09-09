@@ -18,7 +18,8 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Trash2, Users } from "lucide-react";
+import { Plus, Trash2, Users, X } from "lucide-react";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
 	dayOrder,
 	dayNames,
@@ -54,16 +55,37 @@ export default function SeasonsPattern({
 	deleteEntry,
 	assignments = [],
 }: Props) {
-	const [expanded, setExpanded] = React.useState<Set<number>>(new Set());
+	const [selectedEntry, setSelectedEntry] = React.useState<number | null>(null);
 
-	function toggleExpand(entryId: number) {
-		setExpanded((prev) => {
-			const n = new Set(prev);
-			if (n.has(entryId)) n.delete(entryId);
-			else n.add(entryId);
-			return n;
-		});
-	}
+	// small hook to detect mobile width for choosing sheet side
+	const [isMobile, setIsMobile] = React.useState(false);
+	React.useEffect(() => {
+		const mq = window.matchMedia("(max-width: 640px)");
+		const onChange = (e: MediaQueryListEvent | MediaQueryList) =>
+			setIsMobile(e.matches);
+		onChange(mq);
+		try {
+			mq.addEventListener("change", onChange as any);
+		} catch {
+			mq.addListener(onChange as any);
+		}
+		return () => {
+			try {
+				mq.removeEventListener("change", onChange as any);
+			} catch {
+				mq.removeListener(onChange as any);
+			}
+		};
+	}, []);
+
+	// selected entry and its assignments (computed for rendering the side panel)
+	const sel = selectedEntry
+		? entries.find((e) => e.id === selectedEntry) || null
+		: null;
+	const selAssignments = sel
+		? assignments.filter((a: any) => a.entry?.id === sel.id)
+		: [];
+
 	return (
 		<>
 			<div className="flex gap-2">
@@ -108,54 +130,6 @@ export default function SeasonsPattern({
 											</button>
 										);
 									})}
-								</div>
-							</div>
-							<div className="grid grid-cols-2 gap-3">
-								<div>
-									<label className="text-[11px] font-medium">Inici base</label>
-									<Input
-										type="time"
-										value={builder.base_start}
-										onChange={(e) =>
-											setBuilder((b: any) => ({
-												...b,
-												base_start: e.target.value,
-											}))
-										}
-									/>
-								</div>
-								<div>
-									<label className="text-[11px] font-medium">Ubicació</label>
-									<Input
-										value={builder.location}
-										onChange={(e) =>
-											setBuilder((b: any) => ({
-												...b,
-												location: e.target.value,
-											}))
-										}
-									/>
-								</div>
-							</div>
-							<div className="space-y-2">
-								<div className="flex items-center justify-between">
-									<span className="text-[11px] font-medium uppercase tracking-wide">
-										Blocs
-									</span>
-									<Button
-										variant="outline"
-										size="sm"
-										onClick={() =>
-											setBuilder((b: any) => ({
-												...b,
-												blocks: [
-													...b.blocks,
-													{ kind: "class", duration: 60, capacity: 4 },
-												],
-											}))
-										}>
-										Afegir bloc
-									</Button>
 								</div>
 								<div className="space-y-2">
 									{builder.blocks.map((blk: any, idx: number) => {
@@ -290,10 +264,11 @@ export default function SeasonsPattern({
 										);
 										if (!entry)
 											return <div key={dayIdx + time} className="p-1" />;
-										const isExpanded = expanded.has(entry.id);
+
 										const entryAssignments = assignments.filter(
 											(a: any) => a.entry?.id === entry.id
 										);
+
 										// compute used/remaining
 										const total = entry.capacity ?? null;
 										let remaining: number | null = null;
@@ -315,13 +290,14 @@ export default function SeasonsPattern({
 										const hasRestrictiveAssignment = entryAssignments.some(
 											(a: any) => a.allow_fill === false
 										);
-										const highlightOrange = isFull || hasRestrictiveAssignment;
+										const highlightRed = isFull || hasRestrictiveAssignment;
+
 										return (
 											<div key={entry.id}>
 												<div
-													onClick={() => toggleExpand(entry.id)}
+													onClick={() => setSelectedEntry(entry.id)}
 													className={`relative rounded border p-2 text-[11px] shadow-sm group cursor-pointer ${
-														highlightOrange
+														highlightRed
 															? "bg-red-500/10 border-red-500/30"
 															: entry.kind === "class"
 															? "bg-emerald-500/10 border-emerald-500/30"
@@ -343,6 +319,7 @@ export default function SeasonsPattern({
 															<Trash2 className="h-3 w-3" />
 														</Button>
 													</div>
+
 													<div className="flex justify-between items-center">
 														<span>
 															{entry.kind === "class" ? (
@@ -350,7 +327,7 @@ export default function SeasonsPattern({
 																	<Users className="h-4 w-4" />
 																	<span
 																		className={
-																			highlightOrange
+																			highlightRed
 																				? "text-red-400 font-medium"
 																				: "font-medium"
 																		}>
@@ -372,50 +349,6 @@ export default function SeasonsPattern({
 														</span>
 													</div>
 												</div>
-
-												{isExpanded && (
-													<div className="mt-2 ml-1 mr-1 mb-2 text-[12px]">
-														<div className="font-medium mb-1">Assignacions</div>
-														{entryAssignments.length === 0 ? (
-															<div className="text-xs text-muted-foreground">
-																Cap assignació.
-															</div>
-														) : (
-															<div className="grid gap-2">
-																{entryAssignments.map((a: any) => (
-																	<div
-																		key={a.id}
-																		className="p-2 rounded border bg-background/50 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-																		<div>
-																			<div className="font-medium">
-																				{a.user?.name || "Sense nom"}{" "}
-																				{a.user?.surname}
-																			</div>
-																			<div className="text-xs text-muted-foreground">
-																				Email: {a.user?.email}
-																			</div>
-																		</div>
-																		<div className="text-xs text-muted-foreground flex gap-3 items-center">
-																			<div>Grup: {a.group_size}</div>
-																			<div>Pago: {a.payment_method || "—"}</div>
-																			<div
-																				className={
-																					"px-1.5 py-0.5 rounded " +
-																					(a.allow_fill
-																						? "bg-green-500/20 text-green-400"
-																						: "bg-yellow-500/20 text-yellow-400")
-																				}>
-																				{a.allow_fill
-																					? "allow_fill"
-																					: "no fill"}
-																			</div>
-																		</div>
-																	</div>
-																))}
-															</div>
-														)}
-													</div>
-												)}
 											</div>
 										);
 									})}
@@ -430,7 +363,7 @@ export default function SeasonsPattern({
 									<Button
 										variant="ghost"
 										size="icon"
-										aria-label={`Afegir entrada ${dayNames[dayIdx]}`}
+										aria-label={"Afegir entrada " + dayNames[dayIdx]}
 										onClick={() => setEntryDialog({ open: true, day: dayIdx })}>
 										<Plus className="h-4 w-4" />
 									</Button>
@@ -440,6 +373,102 @@ export default function SeasonsPattern({
 					</div>
 				</CardContent>
 			</Card>
+
+			<Sheet
+				open={!!sel}
+				onOpenChange={(open) => {
+					if (!open) setSelectedEntry(null);
+				}}>
+				<SheetContent
+					side={isMobile ? "bottom" : "right"}
+					className={isMobile ? "h-[70vh]" : "w-96"}>
+					<div className="flex items-start justify-between">
+						<div>
+							<div className="text-sm text-muted-foreground">Entrada</div>
+							<div className="font-semibold">
+								{sel
+									? `${dayNames[sel.day_of_week]} ${sel.start_time.slice(
+											0,
+											5
+									  )}-${sel.end_time.slice(0, 5)}`
+									: ""}
+							</div>
+						</div>
+						{/* SheetContent already includes a close button in the top-right; no need for a duplicate here */}
+					</div>
+
+					{sel && (
+						<>
+							<div className="mt-4">
+								<div className="text-xs text-muted-foreground">Duració</div>
+								<div className="font-medium">
+									{durationMinutes(sel.start_time, sel.end_time)}'
+								</div>
+							</div>
+
+							<div className="mt-4">
+								<div className="text-xs text-muted-foreground">Capacitat</div>
+								<div className="font-medium">
+									{(() => {
+										const total = sel.capacity ?? null;
+										let remaining: number | null = null;
+										if (typeof sel.remaining_capacity === "number")
+											remaining = sel.remaining_capacity;
+										else if (total !== null) {
+											const usedFromAssignments = selAssignments.reduce(
+												(s: number, a: any) => s + (a.group_size || 0),
+												0
+											);
+											remaining = Math.max(total - usedFromAssignments, 0);
+										}
+										const used =
+											total !== null && remaining !== null
+												? total - remaining
+												: null;
+										return used !== null ? `${used}/${total}` : total ?? "-";
+									})()}
+								</div>
+							</div>
+
+							<div className="mt-4">
+								<div className="font-medium mb-2">Assignacions</div>
+								{selAssignments.length === 0 ? (
+									<div className="text-xs text-muted-foreground">
+										Cap assignació.
+									</div>
+								) : (
+									<div className="space-y-2">
+										{selAssignments.map((a: any) => (
+											<div
+												key={a.id}
+												className="p-2 rounded border bg-background/50">
+												<div className="font-medium">
+													{a.user?.name} {a.user?.surname}
+												</div>
+												<div className="text-xs text-muted-foreground">
+													Email: {a.user?.email}
+												</div>
+												<div className="text-xs mt-2 flex gap-3">
+													<div>Grup: {a.group_size}</div>
+													<div>Pago: {a.payment_method || "—"}</div>
+													<div
+														className={
+															a.allow_fill
+																? "bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded"
+																: "bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded"
+														}>
+														{a.allow_fill ? "allow_fill" : "no fill"}
+													</div>
+												</div>
+											</div>
+										))}
+									</div>
+								)}
+							</div>
+						</>
+					)}
+				</SheetContent>
+			</Sheet>
 		</>
 	);
 }
