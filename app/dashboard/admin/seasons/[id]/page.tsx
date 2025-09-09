@@ -60,6 +60,13 @@ interface RequestRow {
 		dni?: string | null;
 		phone?: string | null;
 	}[];
+	// direct debit details when payment_method === 'direct_debit'
+	direct_debit?: {
+		iban?: string | null;
+		holder_name?: string | null;
+		holder_address?: string | null;
+		holder_dni?: string | null;
+	} | null;
 	choices?: { entry_id: number }[];
 	created_at: string;
 }

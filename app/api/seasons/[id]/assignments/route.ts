@@ -34,9 +34,10 @@ export async function GET(
 			.from("season_enrollment_requests")
 			.select(
 				`id, season_id, user_id, group_size, allow_fill, payment_method, observations, status, created_at,
-         user:users(id,name,surname,email,phone),
-         participants:season_request_participants(id,name,dni,phone),
-         choices:season_request_choices(entry_id)`
+		 user:users(id,name,surname,email,phone),
+		 participants:season_request_participants(id,name,dni,phone),
+		 choices:season_request_choices(entry_id),
+		 direct_debit:season_direct_debit_details(iban,holder_name,holder_address,holder_dni)`
 			)
 			.eq("season_id", seasonId)
 			.in("status", ["pending", "approved"])
