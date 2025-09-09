@@ -388,6 +388,7 @@ export default function SeasonDetailPage() {
 							setEntryDialog={setEntryDialog}
 							deleteEntry={deleteEntry}
 							assignments={assignments}
+							requests={requests}
 						/>
 					</TabsContent>
 					<TabsContent value="assignments" className="space-y-6">

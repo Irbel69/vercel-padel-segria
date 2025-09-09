@@ -15,6 +15,7 @@ interface SeasonPatternTabProps {
 	setEntryDialog: Dispatch<SetStateAction<{ open: boolean; day?: number }>>;
 	deleteEntry: (entryId: number) => Promise<void>;
 	assignments: any[];
+	requests?: any[];
 }
 
 export default function SeasonPatternTab({
@@ -29,6 +30,9 @@ export default function SeasonPatternTab({
 	setEntryDialog,
 	deleteEntry,
 	assignments,
+	// forward requests so the pattern sheet can show detailed info
+	// (provided by the parent admin page)
+	requests,
 }: SeasonPatternTabProps) {
 	return (
 		<SeasonsPattern
@@ -43,6 +47,7 @@ export default function SeasonPatternTab({
 			setEntryDialog={setEntryDialog}
 			deleteEntry={deleteEntry}
 			assignments={assignments}
+			requests={requests}
 		/>
 	);
 }

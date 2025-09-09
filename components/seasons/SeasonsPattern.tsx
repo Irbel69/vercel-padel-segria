@@ -4,28 +4,13 @@ import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
-	CardDescription,
 	CardHeader,
 	CardTitle,
+	CardDescription,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
-import { Plus, Trash2, Users, X } from "lucide-react";
+import { Plus, Trash2, Users } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import {
-	dayOrder,
-	dayNames,
-	computeBlockStart,
-	durationMinutes,
-} from "./utils";
+import { dayOrder, dayNames, durationMinutes } from "./utils";
 import type { Entry } from "./types";
 
 interface Props {
@@ -40,6 +25,7 @@ interface Props {
 	setEntryDialog: (d: { open: boolean; day?: number }) => void;
 	deleteEntry: (id: number) => Promise<void>;
 	assignments?: any[];
+	requests?: any[]; // enrollment requests so sheet can show details
 }
 
 export default function SeasonsPattern({
@@ -54,15 +40,15 @@ export default function SeasonsPattern({
 	setEntryDialog,
 	deleteEntry,
 	assignments = [],
+	requests = [],
 }: Props) {
 	const [selectedEntry, setSelectedEntry] = React.useState<number | null>(null);
-
-	// small hook to detect mobile width for choosing sheet side
 	const [isMobile, setIsMobile] = React.useState(false);
+
 	React.useEffect(() => {
 		const mq = window.matchMedia("(max-width: 640px)");
 		const onChange = (e: MediaQueryListEvent | MediaQueryList) =>
-			setIsMobile(e.matches);
+			setIsMobile((e as any).matches);
 		onChange(mq);
 		try {
 			mq.addEventListener("change", onChange as any);
@@ -78,160 +64,19 @@ export default function SeasonsPattern({
 		};
 	}, []);
 
-	// selected entry and its assignments (computed for rendering the side panel)
 	const sel = selectedEntry
 		? entries.find((e) => e.id === selectedEntry) || null
 		: null;
 	const selAssignments = sel
-		? assignments.filter((a: any) => a.entry?.id === sel.id)
+		? (assignments || []).filter((a: any) => a.entry?.id === sel.id)
 		: [];
 
 	return (
 		<>
 			<div className="flex gap-2">
-				<Dialog open={builderOpen} onOpenChange={setBuilderOpen}>
-					<DialogTrigger asChild>
-						<Button size="sm">
-							<Plus className="h-4 w-4 mr-1" />
-							Afegir Patró
-						</Button>
-					</DialogTrigger>
-					<DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
-						<DialogHeader>
-							<DialogTitle>Patró setmanal</DialogTitle>
-							<DialogDescription>
-								Crea múltiples entrades per diversos dies.
-							</DialogDescription>
-						</DialogHeader>
-						<div className="space-y-4 text-sm">
-							<div>
-								<label className="text-[11px] font-medium">Dies</label>
-								<div className="flex flex-wrap gap-1 mt-1">
-									{dayOrder.map((d) => {
-										const active = builder.days.includes(d);
-										return (
-											<button
-												key={d}
-												type="button"
-												onClick={() =>
-													setBuilder((b: any) => ({
-														...b,
-														days: active
-															? b.days.filter((x: number) => x !== d)
-															: [...b.days, d],
-													}))
-												}
-												className={`px-2 py-1 rounded border text-[11px] ${
-													active
-														? "bg-primary text-primary-foreground"
-														: "bg-background"
-												}`}>
-												{dayNames[d]}
-											</button>
-										);
-									})}
-								</div>
-								<div className="space-y-2">
-									{builder.blocks.map((blk: any, idx: number) => {
-										const start = computeBlockStart(
-											builder.base_start,
-											builder.blocks,
-											idx
-										);
-										return (
-											<div key={idx} className="p-2 rounded border space-y-2">
-												<div className="flex items-center justify-between text-xs">
-													<span className="font-mono text-muted-foreground">
-														{start}
-													</span>
-													<div className="flex items-center gap-2">
-														<select
-															className="border rounded px-1 py-0.5 text-xs bg-background"
-															value={blk.kind}
-															onChange={(e) =>
-																setBuilder((b: any) => ({
-																	...b,
-																	blocks: b.blocks.map((o: any, i: number) =>
-																		i === idx
-																			? { ...o, kind: e.target.value }
-																			: o
-																	),
-																}))
-															}>
-															<option value="class">Classe</option>
-															<option value="break">Pausa</option>
-														</select>
-														<Input
-															className="w-16 h-7 text-xs"
-															type="number"
-															min={5}
-															max={300}
-															value={blk.duration}
-															onChange={(e) =>
-																setBuilder((b: any) => ({
-																	...b,
-																	blocks: b.blocks.map((o: any, i: number) =>
-																		i === idx
-																			? {
-																					...o,
-																					duration: Number(e.target.value),
-																			  }
-																			: o
-																	),
-																}))
-															}
-														/>
-														{blk.kind === "class" && (
-															<Input
-																className="w-14 h-7 text-xs"
-																type="number"
-																min={1}
-																max={32}
-																value={blk.capacity}
-																onChange={(e) =>
-																	setBuilder((b: any) => ({
-																		...b,
-																		blocks: b.blocks.map((o: any, i: number) =>
-																			i === idx
-																				? {
-																						...o,
-																						capacity: Number(e.target.value),
-																				  }
-																				: o
-																		),
-																	}))
-																}
-															/>
-														)}
-														<Button
-															variant="ghost"
-															size="icon"
-															className="h-6 w-6"
-															onClick={() =>
-																setBuilder((b: any) => ({
-																	...b,
-																	blocks: b.blocks.filter(
-																		(_: any, i: number) => i !== idx
-																	),
-																}))
-															}>
-															<Trash2 className="h-3 w-3" />
-														</Button>
-													</div>
-												</div>
-											</div>
-										);
-									})}
-								</div>
-							</div>
-						</div>
-						<DialogFooter>
-							<Button disabled={building} onClick={buildPattern}>
-								{building ? "Creant..." : "Crear"}
-							</Button>
-						</DialogFooter>
-					</DialogContent>
-				</Dialog>
+				<Button size="sm" onClick={() => setBuilderOpen(true)}>
+					<Plus className="h-4 w-4 mr-1" /> Afegir Patró
+				</Button>
 			</div>
 
 			<Card>
@@ -244,7 +89,7 @@ export default function SeasonsPattern({
 						<div
 							className="grid"
 							style={{ gridTemplateColumns: `80px repeat(7, 1fr)` }}>
-							<div></div>
+							<div />
 							{dayOrder.map((d) => (
 								<div key={d} className="text-xs font-semibold text-center pb-2">
 									{dayNames[d]}
@@ -265,15 +110,13 @@ export default function SeasonsPattern({
 										if (!entry)
 											return <div key={dayIdx + time} className="p-1" />;
 
-										const entryAssignments = assignments.filter(
+										const entryAssignments = (assignments || []).filter(
 											(a: any) => a.entry?.id === entry.id
 										);
-
-										// compute used/remaining
 										const total = entry.capacity ?? null;
 										let remaining: number | null = null;
-										if (typeof entry.remaining_capacity === "number") {
-											remaining = entry.remaining_capacity;
+										if (typeof (entry as any).remaining_capacity === "number") {
+											remaining = (entry as any).remaining_capacity;
 										} else if (total !== null) {
 											const usedFromAssignments = entryAssignments.reduce(
 												(s: number, a: any) => s + (a.group_size || 0),
@@ -355,7 +198,7 @@ export default function SeasonsPattern({
 								</React.Fragment>
 							))}
 
-							<div></div>
+							<div />
 							{dayOrder.map((dayIdx) => (
 								<div
 									key={"plus-" + dayIdx}
@@ -394,7 +237,6 @@ export default function SeasonsPattern({
 									: ""}
 							</div>
 						</div>
-						{/* SheetContent already includes a close button in the top-right; no need for a duplicate here */}
 					</div>
 
 					{sel && (
@@ -412,8 +254,8 @@ export default function SeasonsPattern({
 									{(() => {
 										const total = sel.capacity ?? null;
 										let remaining: number | null = null;
-										if (typeof sel.remaining_capacity === "number")
-											remaining = sel.remaining_capacity;
+										if (typeof (sel as any).remaining_capacity === "number")
+											remaining = (sel as any).remaining_capacity;
 										else if (total !== null) {
 											const usedFromAssignments = selAssignments.reduce(
 												(s: number, a: any) => s + (a.group_size || 0),
@@ -438,30 +280,114 @@ export default function SeasonsPattern({
 									</div>
 								) : (
 									<div className="space-y-2">
-										{selAssignments.map((a: any) => (
-											<div
-												key={a.id}
-												className="p-2 rounded border bg-background/50">
-												<div className="font-medium">
-													{a.user?.name} {a.user?.surname}
-												</div>
-												<div className="text-xs text-muted-foreground">
-													Email: {a.user?.email}
-												</div>
-												<div className="text-xs mt-2 flex gap-3">
-													<div>Grup: {a.group_size}</div>
-													<div>Pago: {a.payment_method || "—"}</div>
-													<div
-														className={
-															a.allow_fill
-																? "bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded"
-																: "bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded"
-														}>
-														{a.allow_fill ? "allow_fill" : "no fill"}
+										{selAssignments.map((a: any) => {
+											const req =
+												(requests || []).find(
+													(r: any) => r.id === a.request_id
+												) || null;
+											return (
+												<div
+													key={a.id}
+													className="p-2 rounded border bg-background/50">
+													<div className="font-medium">
+														{a.user?.name} {a.user?.surname}
 													</div>
+													<div className="text-xs text-muted-foreground">
+														Email: {a.user?.email}
+													</div>
+													<div className="text-xs mt-2 flex gap-3">
+														<div>Grup: {a.group_size}</div>
+														<div>Pago: {a.payment_method || "—"}</div>
+														<div
+															className={
+																a.allow_fill
+																	? "bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded"
+																	: "bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded"
+															}>
+															{a.allow_fill ? "allow_fill" : "no fill"}
+														</div>
+													</div>
+
+													{req && (
+														<div className="mt-2 text-[13px]">
+															<div className="font-medium">
+																Request #{req.id}
+															</div>
+															<div className="text-xs text-muted-foreground">
+																Titular: {req.user?.name || "-"}{" "}
+																{req.user?.surname || ""}
+															</div>
+															<div className="text-xs text-muted-foreground">
+																DNI:{" "}
+																{req.direct_debit?.holder_dni ||
+																	req.participants?.[0]?.dni ||
+																	"-"}
+															</div>
+															<div className="text-xs text-muted-foreground">
+																Tel:{" "}
+																{req.user?.phone ||
+																	req.participants?.[0]?.phone ||
+																	"-"}
+															</div>
+															<div className="mt-1 text-xs text-muted-foreground">
+																Mètode de pagament: {req.payment_method || "-"}
+															</div>
+															{req.direct_debit && (
+																<div className="mt-1 text-xs text-muted-foreground">
+																	<div>
+																		IBAN: {req.direct_debit.iban || "-"}
+																	</div>
+																	<div>
+																		Titular:{" "}
+																		{req.direct_debit.holder_name || "-"}
+																	</div>
+																	{req.direct_debit.holder_address && (
+																		<div>
+																			Adreça: {req.direct_debit.holder_address}
+																		</div>
+																	)}
+																	{req.direct_debit.holder_dni && (
+																		<div>
+																			DNI: {req.direct_debit.holder_dni}
+																		</div>
+																	)}
+																</div>
+															)}
+
+															{req.participants &&
+																req.participants.length > 0 && (
+																	<div className="mt-2">
+																		<div className="font-medium">
+																			Participants
+																		</div>
+																		<div className="grid gap-1 mt-1">
+																			{req.participants.map((p: any) => (
+																				<div
+																					key={p.id}
+																					className="flex gap-2 items-center text-xs">
+																					<div className="font-medium">
+																						{p.name}
+																					</div>
+																					{p.dni && (
+																						<div className="text-muted-foreground">
+																							DNI: {p.dni}
+																						</div>
+																					)}
+																					{p.phone && (
+																						<div className="text-muted-foreground">
+																							Tel: {p.phone}
+																						</div>
+																					)}
+																				</div>
+																			))}
+																		</div>
+																	</div>
+																)}
+														</div>
+													)}
 												</div>
-											</div>
-										))}
+											);
+										})}
 									</div>
 								)}
 							</div>
