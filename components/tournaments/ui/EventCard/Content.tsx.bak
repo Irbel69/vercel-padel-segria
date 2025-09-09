@@ -25,11 +25,9 @@ type ContentProps = {
  */
 function autoList(prizes: string | null | undefined): string[] {
   if (!prizes) return [];
-  // Replace common bullets with a pipe separator, remove CR, then split on
-  // meaningful separators. The previous regex could match an empty alternation
-  // and caused splitting into single characters; keep this robust and explicit.
+  // Replace common bullets with a pipe separator, remove CR, then split.
   const normalized = prizes.replace(/[•\u2022\u2023\u25E6\u2024]/g, "|").replace(/\r/g, "");
-  const parts = normalized.split(/(?:\n|;|\||·)/).map((p) => p.trim());
+  const parts = normalized.split(/\n|;|\||/).map((p) => p.trim());
   return parts.filter((p) => p.length > 0);
 }
 
@@ -57,10 +55,7 @@ export function Content({
         .toUpperCase()
     : "P";
 
-  // Keep autoList available for future use, but render prizes as plain text
-  // per design request (no bullet list). Use the raw event.prizes string and
-  // ensure wrapping and no truncation.
-  const prizesText = event.prizes ?? "";
+  const prizeItems = autoList(event.prizes as string | null | undefined);
 
   return (
     <div className={`p-4 md:p-5 border-white/10 ${imageUrl ? "text-white" : ""}`}>
@@ -146,12 +141,22 @@ export function Content({
         )}
       </div>
 
-      {prizesText && (
+      {prizeItems.length > 0 && (
         <div className={`mt-2 text-sm ${imageUrl ? "text-yellow-300" : "text-yellow-500"}`} aria-label="Premis del torneig">
           <div className="flex items-start gap-2">
             <Trophy className="h-4 w-4 text-current mt-0.5" />
             <div className="min-w-0">
-              <div className="whitespace-normal break-words">{prizesText}</div>
+              {prizeItems.length === 1 ? (
+                <div className="whitespace-normal break-words">{prizeItems[0]}</div>
+              ) : (
+                <ul className="list-disc ml-5 space-y-1">
+                  {prizeItems.map((p, i) => (
+                    <li key={i} className="break-words">
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         </div>
