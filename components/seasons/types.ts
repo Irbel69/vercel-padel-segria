@@ -14,5 +14,7 @@ export interface Entry {
 	start_time: string;
 	end_time: string;
 	capacity: number | null;
+	// remaining_capacity is provided by the season_entry_load view when available
+	remaining_capacity?: number | null;
 	location: string;
 }

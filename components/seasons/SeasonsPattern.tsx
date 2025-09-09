@@ -38,6 +38,7 @@ interface Props {
 	buildPattern: () => Promise<void>;
 	setEntryDialog: (d: { open: boolean; day?: number }) => void;
 	deleteEntry: (id: number) => Promise<void>;
+	assignments?: any[];
 }
 
 export default function SeasonsPattern({
@@ -51,7 +52,18 @@ export default function SeasonsPattern({
 	buildPattern,
 	setEntryDialog,
 	deleteEntry,
+	assignments = [],
 }: Props) {
+	const [expanded, setExpanded] = React.useState<Set<number>>(new Set());
+
+	function toggleExpand(entryId: number) {
+		setExpanded((prev) => {
+			const n = new Set(prev);
+			if (n.has(entryId)) n.delete(entryId);
+			else n.add(entryId);
+			return n;
+		});
+	}
 	return (
 		<>
 			<div className="flex gap-2">
@@ -278,42 +290,132 @@ export default function SeasonsPattern({
 										);
 										if (!entry)
 											return <div key={dayIdx + time} className="p-1" />;
+										const isExpanded = expanded.has(entry.id);
+										const entryAssignments = assignments.filter(
+											(a: any) => a.entry?.id === entry.id
+										);
+										// compute used/remaining
+										const total = entry.capacity ?? null;
+										let remaining: number | null = null;
+										if (typeof entry.remaining_capacity === "number") {
+											remaining = entry.remaining_capacity;
+										} else if (total !== null) {
+											const usedFromAssignments = entryAssignments.reduce(
+												(s: number, a: any) => s + (a.group_size || 0),
+												0
+											);
+											remaining = Math.max(total - usedFromAssignments, 0);
+										}
+										const used =
+											total !== null && remaining !== null
+												? total - remaining
+												: null;
+										const isFull =
+											total !== null && remaining !== null && remaining <= 0;
+										const hasRestrictiveAssignment = entryAssignments.some(
+											(a: any) => a.allow_fill === false
+										);
+										const highlightOrange = isFull || hasRestrictiveAssignment;
 										return (
-											<div
-												key={entry.id}
-												className={`relative rounded border p-2 text-[11px] shadow-sm group ${
-													entry.kind === "class"
-														? "bg-emerald-500/10 border-emerald-500/30"
-														: "bg-amber-500/10 border-amber-500/30"
-												}`}>
-												<div className="flex justify-between items-center mb-1">
-													<span className="font-medium">
-														{entry.start_time.slice(0, 5)}-
-														{entry.end_time.slice(0, 5)}
-													</span>
-													<Button
-														variant="ghost"
-														size="icon"
-														className="h-5 w-5 opacity-0 group-hover:opacity-100"
-														onClick={() => deleteEntry(entry.id)}>
-														<Trash2 className="h-3 w-3" />
-													</Button>
+											<div key={entry.id}>
+												<div
+													onClick={() => toggleExpand(entry.id)}
+													className={`relative rounded border p-2 text-[11px] shadow-sm group cursor-pointer ${
+														highlightOrange
+															? "bg-red-500/10 border-red-500/30"
+															: entry.kind === "class"
+															? "bg-emerald-500/10 border-emerald-500/30"
+															: "bg-amber-500/10 border-amber-500/30"
+													}`}>
+													<div className="flex justify-between items-center mb-1">
+														<span className="font-medium">
+															{entry.start_time.slice(0, 5)}-
+															{entry.end_time.slice(0, 5)}
+														</span>
+														<Button
+															variant="ghost"
+															size="icon"
+															className="h-5 w-5 opacity-0 group-hover:opacity-100"
+															onClick={(e) => {
+																e.stopPropagation();
+																deleteEntry(entry.id);
+															}}>
+															<Trash2 className="h-3 w-3" />
+														</Button>
+													</div>
+													<div className="flex justify-between items-center">
+														<span>
+															{entry.kind === "class" ? (
+																<span className="inline-flex items-center gap-2">
+																	<Users className="h-4 w-4" />
+																	<span
+																		className={
+																			highlightOrange
+																				? "text-red-400 font-medium"
+																				: "font-medium"
+																		}>
+																		{used !== null
+																			? `${used}/${total}`
+																			: total ?? "-"}
+																	</span>
+																</span>
+															) : (
+																"Pausa"
+															)}
+														</span>
+														<span className="text-xs">
+															{durationMinutes(
+																entry.start_time,
+																entry.end_time
+															)}
+															'
+														</span>
+													</div>
 												</div>
-												<div className="flex justify-between">
-													<span>
-														{entry.kind === "class" ? (
-															<span className="inline-flex items-center gap-1">
-																<Users className="h-4 w-4" />
-																{entry.capacity ?? "-"}
-															</span>
+
+												{isExpanded && (
+													<div className="mt-2 ml-1 mr-1 mb-2 text-[12px]">
+														<div className="font-medium mb-1">Assignacions</div>
+														{entryAssignments.length === 0 ? (
+															<div className="text-xs text-muted-foreground">
+																Cap assignació.
+															</div>
 														) : (
-															"Pausa"
+															<div className="grid gap-2">
+																{entryAssignments.map((a: any) => (
+																	<div
+																		key={a.id}
+																		className="p-2 rounded border bg-background/50 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+																		<div>
+																			<div className="font-medium">
+																				{a.user?.name || "Sense nom"}{" "}
+																				{a.user?.surname}
+																			</div>
+																			<div className="text-xs text-muted-foreground">
+																				Email: {a.user?.email}
+																			</div>
+																		</div>
+																		<div className="text-xs text-muted-foreground flex gap-3 items-center">
+																			<div>Grup: {a.group_size}</div>
+																			<div>Pago: {a.payment_method || "—"}</div>
+																			<div
+																				className={
+																					"px-1.5 py-0.5 rounded " +
+																					(a.allow_fill
+																						? "bg-green-500/20 text-green-400"
+																						: "bg-yellow-500/20 text-yellow-400")
+																				}>
+																				{a.allow_fill
+																					? "allow_fill"
+																					: "no fill"}
+																			</div>
+																		</div>
+																	</div>
+																))}
+															</div>
 														)}
-													</span>
-													<span>
-														{durationMinutes(entry.start_time, entry.end_time)}'
-													</span>
-												</div>
+													</div>
+												)}
 											</div>
 										);
 									})}
