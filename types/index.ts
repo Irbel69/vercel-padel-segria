@@ -13,6 +13,7 @@ export interface UserProfile {
 	trend: "up" | "down" | "same";
 	image_rights_accepted: boolean;
 	privacy_policy_accepted: boolean;
+	score: number;
 	created_at: string;
 	updated_at: string;
 }
@@ -170,4 +171,68 @@ export interface PairInvite {
 	expires_at: string | null;
 	accepted_at?: string | null;
 	declined_at?: string | null;
+}
+
+// Battle Pass system types
+export interface BattlePassPrize {
+	id: number;
+	title: string;
+	description: string | null;
+	points_required: number;
+	image_url: string | null;
+	original_image_url?: string | null; // full-size original image to allow future re-crops
+	is_active: boolean;
+	display_order: number;
+	created_by: string | null;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface BattlePassProgress {
+	prize_id: number;
+	title: string;
+	description: string | null;
+	points_required: number;
+	image_url: string | null;
+	display_order: number;
+	user_points: number;
+	can_claim: boolean;
+	progress_percentage: number;
+}
+
+export interface BattlePassProgressResponse {
+	prizes: BattlePassProgress[];
+	user_total_points: number;
+}
+
+// Battle Pass API request/response types
+export interface CreateBattlePassPrizeData {
+	title: string;
+	description?: string;
+	points_required: number;
+	image_url?: string;
+	original_image_url?: string; // optional original asset
+	is_active?: boolean;
+	display_order?: number;
+}
+
+export interface UpdateBattlePassPrizeData {
+	title?: string;
+	description?: string | null;
+	points_required?: number;
+	image_url?: string | null;
+	original_image_url?: string | null;
+	is_active?: boolean;
+	display_order?: number;
+}
+
+export interface BattlePassPrizesListResponse {
+	prizes: BattlePassPrize[];
+	pagination: {
+		currentPage: number;
+		totalPages: number;
+		totalPrizes: number;
+		hasMore: boolean;
+		limit: number;
+	};
 }

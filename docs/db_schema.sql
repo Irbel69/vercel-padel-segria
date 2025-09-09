@@ -1,6 +1,20 @@
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
+CREATE TABLE public.battle_pass_prizes (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  title text NOT NULL,
+  description text,
+  points_required integer NOT NULL CHECK (points_required >= 0),
+  image_url text,
+  is_active boolean NOT NULL DEFAULT true,
+  display_order integer NOT NULL DEFAULT 0,
+  created_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT battle_pass_prizes_pkey PRIMARY KEY (id),
+  CONSTRAINT battle_pass_prizes_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
+);
 CREATE TABLE public.direct_debit_details (
   id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   booking_id bigint NOT NULL UNIQUE,
@@ -28,6 +42,7 @@ CREATE TABLE public.events (
   latitude double precision,
   longitude double precision,
   image_url text,
+  pair_required boolean NOT NULL DEFAULT true,
   CONSTRAINT events_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.lesson_booking_participants (
@@ -116,8 +131,8 @@ CREATE TABLE public.pair_invites (
   accepted_at timestamp with time zone,
   declined_at timestamp with time zone,
   CONSTRAINT pair_invites_pkey PRIMARY KEY (id),
-  CONSTRAINT pair_invites_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id),
   CONSTRAINT pair_invites_inviter_id_fkey FOREIGN KEY (inviter_id) REFERENCES public.users(id),
+  CONSTRAINT pair_invites_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id),
   CONSTRAINT pair_invites_invitee_id_fkey FOREIGN KEY (invitee_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.qualities (
@@ -137,6 +152,98 @@ CREATE TABLE public.registrations (
   CONSTRAINT registrations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
   CONSTRAINT registrations_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id)
 );
+CREATE TABLE public.season_assignments (
+  id bigint NOT NULL DEFAULT nextval('season_assignments_id_seq'::regclass),
+  season_id bigint NOT NULL,
+  entry_id bigint NOT NULL,
+  request_id bigint NOT NULL,
+  user_id uuid NOT NULL,
+  group_size integer NOT NULL CHECK (group_size >= 1 AND group_size <= 4),
+  allow_fill boolean NOT NULL DEFAULT false,
+  payment_method USER-DEFINED NOT NULL,
+  status USER-DEFINED NOT NULL DEFAULT 'active'::weekly_assignment_status,
+  assigned_at timestamp with time zone NOT NULL DEFAULT now(),
+  unassigned_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT season_assignments_pkey PRIMARY KEY (id),
+  CONSTRAINT season_assignments_season_id_fkey FOREIGN KEY (season_id) REFERENCES public.seasons(id),
+  CONSTRAINT season_assignments_entry_id_fkey FOREIGN KEY (entry_id) REFERENCES public.season_week_entries(id),
+  CONSTRAINT season_assignments_request_id_fkey FOREIGN KEY (request_id) REFERENCES public.season_enrollment_requests(id),
+  CONSTRAINT season_assignments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.season_direct_debit_details (
+  id bigint NOT NULL DEFAULT nextval('season_direct_debit_details_id_seq'::regclass),
+  request_id bigint NOT NULL UNIQUE,
+  iban text,
+  holder_name text,
+  holder_address text,
+  holder_dni text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT season_direct_debit_details_pkey PRIMARY KEY (id),
+  CONSTRAINT season_direct_debit_details_request_id_fkey FOREIGN KEY (request_id) REFERENCES public.season_enrollment_requests(id)
+);
+CREATE TABLE public.season_enrollment_requests (
+  id bigint NOT NULL DEFAULT nextval('season_enrollment_requests_id_seq'::regclass),
+  season_id bigint NOT NULL,
+  user_id uuid NOT NULL,
+  group_size integer NOT NULL CHECK (group_size >= 1 AND group_size <= 4),
+  allow_fill boolean NOT NULL DEFAULT false,
+  payment_method USER-DEFINED NOT NULL,
+  observations text,
+  status USER-DEFINED NOT NULL DEFAULT 'pending'::weekly_request_status,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT season_enrollment_requests_pkey PRIMARY KEY (id),
+  CONSTRAINT season_enrollment_requests_season_id_fkey FOREIGN KEY (season_id) REFERENCES public.seasons(id),
+  CONSTRAINT season_enrollment_requests_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.season_request_choices (
+  id bigint NOT NULL DEFAULT nextval('season_request_choices_id_seq'::regclass),
+  request_id bigint NOT NULL,
+  entry_id bigint NOT NULL,
+  preference smallint,
+  CONSTRAINT season_request_choices_pkey PRIMARY KEY (id),
+  CONSTRAINT season_request_choices_entry_id_fkey FOREIGN KEY (entry_id) REFERENCES public.season_week_entries(id),
+  CONSTRAINT season_request_choices_request_id_fkey FOREIGN KEY (request_id) REFERENCES public.season_enrollment_requests(id)
+);
+CREATE TABLE public.season_request_participants (
+  id bigint NOT NULL DEFAULT nextval('season_request_participants_id_seq'::regclass),
+  request_id bigint NOT NULL,
+  name text NOT NULL,
+  phone text,
+  dni text,
+  CONSTRAINT season_request_participants_pkey PRIMARY KEY (id),
+  CONSTRAINT season_request_participants_request_id_fkey FOREIGN KEY (request_id) REFERENCES public.season_enrollment_requests(id)
+);
+CREATE TABLE public.season_week_entries (
+  id bigint NOT NULL DEFAULT nextval('season_week_entries_id_seq'::regclass),
+  season_id bigint NOT NULL,
+  day_of_week smallint NOT NULL CHECK (day_of_week >= 0 AND day_of_week <= 6),
+  kind USER-DEFINED NOT NULL,
+  location text NOT NULL DEFAULT 'Soses'::text,
+  start_time time without time zone NOT NULL,
+  end_time time without time zone NOT NULL,
+  capacity integer,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT season_week_entries_pkey PRIMARY KEY (id),
+  CONSTRAINT season_week_entries_season_id_fkey FOREIGN KEY (season_id) REFERENCES public.seasons(id)
+);
+CREATE TABLE public.seasons (
+  id bigint NOT NULL DEFAULT nextval('seasons_id_seq'::regclass),
+  name text NOT NULL UNIQUE,
+  date_start date NOT NULL,
+  date_end date NOT NULL,
+  enrollments_open boolean NOT NULL DEFAULT false,
+  timezone text NOT NULL DEFAULT 'Europe/Madrid'::text,
+  created_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT seasons_pkey PRIMARY KEY (id),
+  CONSTRAINT seasons_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
+);
 CREATE TABLE public.user_matches (
   id integer NOT NULL DEFAULT nextval('user_matches_id_seq'::regclass),
   match_id integer NOT NULL,
@@ -153,8 +260,8 @@ CREATE TABLE public.user_qualities (
   quality_id integer NOT NULL,
   assigned_at timestamp with time zone DEFAULT now(),
   CONSTRAINT user_qualities_pkey PRIMARY KEY (id),
-  CONSTRAINT user_qualities_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT user_qualities_quality_id_fkey FOREIGN KEY (quality_id) REFERENCES public.qualities(id)
+  CONSTRAINT user_qualities_quality_id_fkey FOREIGN KEY (quality_id) REFERENCES public.qualities(id),
+  CONSTRAINT user_qualities_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.users (
   id uuid NOT NULL DEFAULT auth.uid(),

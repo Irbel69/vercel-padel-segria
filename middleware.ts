@@ -35,6 +35,10 @@ export async function middleware(request: NextRequest) {
       "'self'",
       `'nonce-${nonce}'`,
       isDev ? "'unsafe-eval'" : null, // ONLY in dev
+      // During development allow unsafe-inline to avoid blocking dev-only inlined scripts
+      isDev ? "'unsafe-inline'" : null,
+      // Allow Vercel analytics script origin (used in dev/debug) as an explicit host
+      "https://va.vercel-scripts.com",
     ].filter(Boolean).join(" ");
 
     const styleSrc = [
@@ -48,6 +52,10 @@ export async function middleware(request: NextRequest) {
       `'nonce-${nonce}'`,
       // Allow a known small inline bootstrap script by hash (Next.js may inline minimal boot code)
       "'sha256-L48vfNqEGvfFx/QBzIwyw4BwkFQlmhv4qUdPeVuAdOc='",
+      // Allow Vercel analytics script element
+      "https://va.vercel-scripts.com",
+      // During development, allow inline scripts to avoid blocking dev-only inlined tooling
+      isDev ? "'unsafe-inline'" : null,
     ].join(" ");
 
     const imgSrc = [

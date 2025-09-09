@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@/hooks/use-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,7 @@ interface UserDetailResponse {
 export default function UserDetailPage() {
 	const { id } = useParams();
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const { profile, isLoading: userLoading } = useUser();
 
 	const [user, setUser] = useState<UserDetailResponse["user"] | null>(null);
@@ -86,6 +87,47 @@ export default function UserDetailPage() {
 			router.push("/dashboard");
 		}
 	}, [profile, userLoading, router]);
+
+	// Go back helper with safer fallback
+	const goBack = () => {
+		const fromParam = searchParams?.get?.("from") || null;
+
+		if (fromParam) {
+			// Navigate back to the originating page
+			router.push(fromParam);
+			return;
+		}
+		// If running in SSR, just push to users
+		if (typeof window === "undefined") {
+			router.push("/dashboard/users");
+			return;
+		}
+
+		// If browser history has entries, go back
+		try {
+			if (window.history.length > 1) {
+				router.back();
+				return;
+			}
+		} catch (e) {
+			// ignore and fallback below
+		}
+
+		// If a referrer from our site exists, try to navigate there
+		try {
+			const ref = document.referrer;
+			if (ref && ref.includes(window.location.origin)) {
+				// Use native location replace to ensure navigation when router.back isn't appropriate
+				window.location.href = ref;
+				return;
+			}
+		} catch (e) {
+			// ignore
+		}
+
+		// Fallback: push to users list
+		router.push("/dashboard/users");
+	};
 
 	// Fetch user data
 	useEffect(() => {
@@ -231,7 +273,7 @@ export default function UserDetailPage() {
 					<Button
 						variant="outline"
 						size="sm"
-						onClick={() => router.push("/dashboard/users")}
+						onClick={goBack}
 						className="bg-white/10 border-white/20 text-white hover:bg-white/20">
 						<ArrowLeft className="h-4 w-4 mr-2" />
 						Tornar
@@ -261,7 +303,7 @@ export default function UserDetailPage() {
 					<Button
 						variant="outline"
 						size="sm"
-						onClick={() => router.push("/dashboard/users")}
+						onClick={goBack}
 						className="bg-white/10 border-white/20 text-white hover:bg-white/20">
 						<ArrowLeft className="h-4 w-4 mr-2" />
 						Tornar
@@ -281,13 +323,13 @@ export default function UserDetailPage() {
 					</div>
 				</div>
 
-				<Button
-					onClick={handleSave}
-					disabled={isSaving}
-					className="bg-padel-primary text-black hover:bg-padel-primary/90">
-					<Save className="h-4 w-4 mr-2" />
-					{isSaving ? "Guardant..." : "Guardar Canvis"}
-				</Button>
+					<Button
+						onClick={handleSave}
+						disabled={isSaving}
+						className="bg-padel-primary text-black hover:bg-padel-primary/90">
+						<Save className="h-4 w-4 mr-2" />
+						{isSaving ? "Guardant..." : "Guardar Canvis"}
+					</Button>
 			</div>
 
 			{/* Error Message */}

@@ -15,9 +15,11 @@ type UserProfile = {
 export default function StatsHeader({
 	userProfile,
 	userScore,
+	animate,
 }: {
 	userProfile: UserProfile;
 	userScore: number;
+	animate?: boolean;
 }) {
 	return (
 		<Card className="border-0 relative overflow-hidden rounded-xl bg-white/5 ring-1 ring-white/15">
@@ -44,7 +46,11 @@ export default function StatsHeader({
 					</div>
 					<div className="text-right">
 						<div className="text-2xl md:text-3xl font-bold text-white">
-							<CountUp end={userScore} duration={2.0} delay={0.3} />
+							{typeof animate === 'undefined' || animate ? (
+								<CountUp start={0} end={userScore} duration={2.0} delay={0.3} key={String(userScore)} />
+							) : (
+								<span>{userScore}</span>
+							)}
 						</div>
 						<div className="text-xs md:text-sm text-white/60">Punts</div>
 					</div>
