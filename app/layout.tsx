@@ -29,12 +29,46 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 	const nonce = getNonce();
 
 	return (
-		<html
-			lang="en"
-			data-theme="dark"
-			className={`${font.className} dark h-full`}
-			suppressHydrationWarning>
+	    <html
+		    lang="en"
+		    translate="no"
+		    data-theme="dark"
+		    className={`${font.className} dark h-full`}
+		    suppressHydrationWarning>
 			<head>
+				{/* Charset: explicit for older user agents */}
+				<meta charSet="utf-8" />
+				{/* Description + author (fall back to config) */}
+				<meta name="description" content={metadata?.description ?? config.appDescription ?? ''} />
+				<meta name="author" content={config?.resend?.fromAdmin ?? config.appName} />
+				{/* Robots / indexing */}
+				<meta name="robots" content={'index,follow'} />
+				{/* Canonical URL */}
+				{((metadata as any)?.url || config.domainName) ? (
+					<link rel="canonical" href={(metadata as any)?.url ?? `https://${config.domainName}`} />
+				) : null}
+				{/* Open Graph */}
+				<meta property="og:site_name" content={config.appName} />
+				<meta property="og:title" content={(metadata as any)?.title ?? config.appName} />
+				<meta property="og:description" content={(metadata as any)?.description ?? config.appDescription} />
+				<meta property="og:type" content={(metadata as any)?.type ?? 'website'} />
+				<meta property="og:url" content={(metadata as any)?.url ?? `https://${config.domainName}`} />
+				{(metadata as any)?.openGraph?.images ? (
+					<meta property="og:image" content={(metadata as any).openGraph.images[0]} />
+				) : (
+					<meta property="og:image" content={`https://${config.domainName}/opengraph-image.png`} />
+				)}
+				{/* Twitter Card */}
+				<meta name="twitter:card" content={(metadata as any)?.twitter?.card ?? 'summary_large_image'} />
+				<meta name="twitter:title" content={(metadata as any)?.title ?? config.appName} />
+				<meta name="twitter:description" content={(metadata as any)?.description ?? config.appDescription} />
+				<meta name="twitter:site" content={''} />
+				<meta name="twitter:image" content={(metadata as any)?.openGraph?.images?.[0] ?? `https://${config.domainName}/opengraph-image.png`} />
+				{/* Microsoft Tiles */}
+				<meta name="msapplication-TileColor" content={config.colors?.main ?? '#000000'} />
+				<link rel="mask-icon" href="/icons/icon-192x192.png" color={config.colors?.main ?? '#000000'} />
+				{/* Preconnect to fonts/cdn for performance */}
+				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 				{/* CSP nonce is handled by middleware, but if you need inline scripts, use the nonce */}
 				{nonce && <meta name="csp-nonce" content={nonce} />}
 				{/* Support for iOS safe areas and proper viewport handling */}
@@ -52,6 +86,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
 				{/* PWA Manifest */}
 				<link rel="manifest" href="/manifest.json" />
+				{/* Prevent automatic translation (Google Translate / iOS) */}
+				<meta name="google" content="notranslate" />
 
 				{/* Apple Touch Icons */}
 				<link rel="apple-touch-icon" href="/icons/icon-192x192.png" />

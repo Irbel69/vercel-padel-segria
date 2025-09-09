@@ -266,10 +266,66 @@ progress::-webkit-progress-value {
 	animation: btnShimmer 2.8s linear infinite;
 }
 
+/* Battle Pass Gaming Animations */
+@keyframes shimmer {
+	0% { background-position: -200% 0; }
+	100% { background-position: 200% 0; }
+}
+
+@keyframes battlePassGlow {
+	0%, 100% { 
+		box-shadow: 0 0 5px rgba(229, 240, 0, 0.3), 0 0 10px rgba(229, 240, 0, 0.2); 
+	}
+	50% { 
+		box-shadow: 0 0 10px rgba(229, 240, 0, 0.5), 0 0 20px rgba(229, 240, 0, 0.3); 
+	}
+}
+
+@keyframes prizeFloat {
+	0%, 100% { transform: translateY(0px); }
+	50% { transform: translateY(-3px); }
+}
+
+@keyframes sparkleRotate {
+	0% { transform: rotate(0deg) scale(1); opacity: 0.7; }
+	50% { transform: rotate(180deg) scale(1.1); opacity: 1; }
+	100% { transform: rotate(360deg) scale(1); opacity: 0.7; }
+}
+
+.animate-shimmer {
+	animation: shimmer 2s infinite linear;
+}
+
+.animate-battle-pass-glow {
+	animation: battlePassGlow 2s ease-in-out infinite;
+}
+
+.animate-prize-float {
+	animation: prizeFloat 3s ease-in-out infinite;
+}
+
+.animate-sparkle-rotate {
+	animation: sparkleRotate 4s ease-in-out infinite;
+}
+
+/* Hide scrollbars for Battle Pass track */
+.scrollbar-hide {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+	display: none;
+}
+
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
 	.animate-btn-float,
-	.animate-btn-shimmer {
+	.animate-btn-shimmer,
+	.animate-shimmer,
+	.animate-battle-pass-glow,
+	.animate-prize-float,
+	.animate-sparkle-rotate {
 		animation: none !important;
 	}
 }

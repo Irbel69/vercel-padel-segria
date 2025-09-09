@@ -19,9 +19,9 @@ Notes:
 
 ## 2) Supabase Storage bucket
 
-Create a bucket named `event-images` to store the files.
+Create a bucket named `images` to store the files.
 
-- In Storage → Create bucket → Name: `event-images` → Public bucket: enabled
+- In Storage → Create bucket → Name: `images` → Public bucket: enabled
 - Optional: Define simple folder structure, e.g. `covers/<eventId>/<uuid>.<ext>` (this is what the code uses)
 
 If you prefer to keep the bucket private, you can leave it private and rely on signed URLs. The current implementation uses public URLs for simplicity and performance with `next/image`.
@@ -30,23 +30,23 @@ If you prefer to keep the bucket private, you can leave it private and rely on s
 
 ```sql
 -- Allow public read for just this bucket
-create policy if not exists "Public read for event-images"
+create policy if not exists "Public read for images"
   on storage.objects for select
-  using (bucket_id = 'event-images');
+  using (bucket_id = 'images');
 
 -- Allow admins to write (insert/update/delete) in this bucket
-create policy if not exists "Admins write event-images"
+create policy if not exists "Admins write images"
   on storage.objects for all
   to authenticated
   using (
-    bucket_id = 'event-images'
+    bucket_id = 'images'
     and exists (
       select 1 from public.users u
       where u.id = auth.uid() and u.is_admin = true
     )
   )
   with check (
-    bucket_id = 'event-images'
+    bucket_id = 'images'
     and exists (
       select 1 from public.users u
       where u.id = auth.uid() and u.is_admin = true

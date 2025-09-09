@@ -33,6 +33,7 @@ import {
   Target,
   User,
   Award,
+  Gamepad2,
 } from "lucide-react";
 import { useUser } from "@/hooks/use-user";
 
@@ -42,6 +43,12 @@ const menuItems = [
     url: "/dashboard",
     icon: Home,
     description: "Pàgina principal",
+  },
+  {
+    title: "Battle Pass",
+    url: "/dashboard/battle-pass",
+    icon: Gamepad2,
+    description: "Desbloqueja premis",
   },
   {
     title: "Classes",
@@ -75,6 +82,12 @@ const adminItems = [
     url: "/dashboard/admin/lessons",
     icon: Calendar,
     description: "Gestió de classes",
+  },
+  {
+    title: "Battle Pass",
+    url: "/dashboard/admin/battle-pass",
+    icon: Gamepad2,
+    description: "Gestió de premis",
   },
   {
     title: "Usuaris",

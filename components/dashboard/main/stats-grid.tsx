@@ -19,7 +19,8 @@ export default function StatsGrid({
   matchesWon,
   winPercentage,
   userScore,
-}: StatsGridProps) {
+  animate = true,
+}: StatsGridProps & { animate?: boolean }) {
   return (
     <>
       {/* Mobile Header */}
@@ -44,7 +45,11 @@ export default function StatsGrid({
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold text-white">
-                <CountUp end={userScore} duration={2.5} delay={0.5} />
+                {animate ? (
+                  <CountUp start={0} end={userScore} duration={2.5} delay={0.5} key={String(userScore)} />
+                ) : (
+                  <span>{userScore}</span>
+                )}
               </div>
               <div className="text-xs text-white/60">Punts</div>
             </div>
@@ -56,7 +61,11 @@ export default function StatsGrid({
           <div className="p-3 text-center rounded-xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
             <Trophy className="w-6 h-6 text-green-400 mx-auto mb-2" />
             <div className="text-xl font-bold text-white">
-              <CountUp end={matchesWon} duration={2.5} delay={0.7} />
+              {animate ? (
+                <CountUp start={0} end={matchesWon} duration={2.5} delay={0.7} key={String(matchesWon)} />
+              ) : (
+                <span>{matchesWon}</span>
+              )}
             </div>
             <div className="text-xs text-white/60">Guanyats</div>
           </div>
@@ -64,7 +73,11 @@ export default function StatsGrid({
           <div className="p-3 text-center rounded-xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
             <Activity className="w-6 h-6 text-blue-400 mx-auto mb-2" />
             <div className="text-xl font-bold text-white">
-              <CountUp end={matchesPlayed} duration={2.5} delay={0.9} />
+              {animate ? (
+                <CountUp start={0} end={matchesPlayed} duration={2.5} delay={0.9} key={String(matchesPlayed)} />
+              ) : (
+                <span>{matchesPlayed}</span>
+              )}
             </div>
             <div className="text-xs text-white/60">Jugats</div>
           </div>
@@ -72,7 +85,11 @@ export default function StatsGrid({
           <div className="p-3 text-center rounded-xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
             <BarChart3 className="w-6 h-6 text-purple-400 mx-auto mb-2" />
             <div className="text-xl font-bold text-white">
-              <CountUp end={winPercentage} duration={2.5} delay={1.1} suffix="%" />
+              {animate ? (
+                <CountUp start={0} end={winPercentage} duration={2.5} delay={1.1} suffix="%" key={String(winPercentage)} />
+              ) : (
+                <span>{winPercentage}%</span>
+              )}
             </div>
             <div className="text-xs text-white/60">Victòries</div>
           </div>
@@ -111,7 +128,11 @@ export default function StatsGrid({
               <div className="text-center p-4 rounded-xl" style={{ background: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
                 <Trophy className="w-8 h-8 text-green-400 mx-auto mb-2" />
                 <div className="text-2xl font-bold text-white">
-                  <CountUp end={matchesWon} duration={2.5} delay={0.7} />
+                  {animate ? (
+                    <CountUp start={0} end={matchesWon} duration={2.5} delay={0.7} key={String(matchesWon)} />
+                  ) : (
+                    <span>{matchesWon}</span>
+                  )}
                 </div>
                 <div className="text-sm text-white/60">Partits Guanyats</div>
               </div>
@@ -119,7 +140,11 @@ export default function StatsGrid({
               <div className="text-center p-4 rounded-xl" style={{ background: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
                 <Activity className="w-8 h-8 text-blue-400 mx-auto mb-2" />
                 <div className="text-2xl font-bold text-white">
-                  <CountUp end={matchesPlayed} duration={2.5} delay={0.9} />
+                  {animate ? (
+                    <CountUp start={0} end={matchesPlayed} duration={2.5} delay={0.9} key={String(matchesPlayed)} />
+                  ) : (
+                    <span>{matchesPlayed}</span>
+                  )}
                 </div>
                 <div className="text-sm text-white/60">Partits Jugats</div>
               </div>
@@ -127,7 +152,11 @@ export default function StatsGrid({
               <div className="text-center p-4 rounded-xl" style={{ background: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
                 <BarChart3 className="w-8 h-8 text-purple-400 mx-auto mb-2" />
                 <div className="text-2xl font-bold text-white">
-                  <CountUp end={winPercentage} duration={2.5} delay={1.1} suffix="%" />
+                  {animate ? (
+                    <CountUp start={0} end={winPercentage} duration={2.5} delay={1.1} suffix="%" key={String(winPercentage)} />
+                  ) : (
+                    <span>{winPercentage}%</span>
+                  )}
                 </div>
                 <div className="text-sm text-white/60">% Victòries</div>
               </div>
