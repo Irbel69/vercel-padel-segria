@@ -234,7 +234,7 @@ export default function PrizeClaimersModal({ prizeId, open, onOpenChange }: Priz
                   </SelectTrigger>
                   <SelectContent className="bg-black/90 border-white/20 text-white">
                     <SelectItem value="all">Tots els estats</SelectItem>
-                    <SelectItem value="pending_delivery">Pendent d'entrega</SelectItem>
+                    <SelectItem value="pending_delivery">{"Pendent d'entrega"}</SelectItem>
                     <SelectItem value="delivered">Entregat</SelectItem>
                     <SelectItem value="delivery_failed">Entrega fallida</SelectItem>
                   </SelectContent>
@@ -347,7 +347,7 @@ export default function PrizeClaimersModal({ prizeId, open, onOpenChange }: Priz
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="bg-black/90 border-white/20 text-white">
-                            <SelectItem value="pending_delivery">Pendent d'entrega</SelectItem>
+                            <SelectItem value="pending_delivery">{"Pendent d'entrega"}</SelectItem>
                             <SelectItem value="delivered">Entregat</SelectItem>
                             <SelectItem value="delivery_failed">Entrega fallida</SelectItem>
                           </SelectContent>
@@ -383,23 +383,23 @@ export default function PrizeClaimersModal({ prizeId, open, onOpenChange }: Priz
       {/* Status Update Confirmation Dialog */}
       <AlertDialog open={!!statusUpdate} onOpenChange={() => setStatusUpdate(null)}>
         <AlertDialogContent className="bg-black/90 border-white/20 text-white">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar canvi d'estat</AlertDialogTitle>
+            <AlertDialogHeader>
+            <AlertDialogTitle>{"Confirmar canvi d'estat"}</AlertDialogTitle>
             <AlertDialogDescription className="text-white/70">
               {statusUpdate && (
                 <>
-                  Estàs segur que vols canviar l'estat d'entrega de{" "}
+                  Estàs segur que vols canviar l&apos;estat d&apos;entrega de{" "}
                   <span className="font-medium">
-                    "{getStatusLabel(statusUpdate.currentStatus)}"
+                    &quot;{getStatusLabel(statusUpdate.currentStatus)}&quot;
                   </span>{" "}
                   a{" "}
                   <span className="font-medium">
-                    "{getStatusLabel(statusUpdate.newStatus)}"
+                    &quot;{getStatusLabel(statusUpdate.newStatus)}&quot;
                   </span>
                   ?
                   {statusUpdate.newStatus === "delivered" && (
                     <div className="mt-2 text-green-400">
-                      S'establirà automàticament la data d'entrega actual.
+                      {"S'establirà automàticament la data d'entrega actual."}
                     </div>
                   )}
                 </>
