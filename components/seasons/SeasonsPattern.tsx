@@ -225,9 +225,7 @@ export default function SeasonsPattern({
 
 			<Sheet
 				open={!!sel}
-				onOpenChange={(open) => {
-					if (!open) setSelectedEntry(null);
-				}}>
+				onOpenChange={(open) => !open && setSelectedEntry(null)}>
 				<SheetContent
 					side={isMobile ? "bottom" : "right"}
 					className={isMobile ? "h-[70vh]" : "w-96"}>
@@ -246,7 +244,7 @@ export default function SeasonsPattern({
 					</div>
 
 					{sel && (
-						<>
+						<div>
 							<div className="mt-4">
 								<div className="text-xs text-muted-foreground">Duració</div>
 								<div className="font-medium">
@@ -338,6 +336,7 @@ export default function SeasonsPattern({
 															<div className="mt-1 text-xs text-muted-foreground">
 																Mètode de pagament: {req.payment_method || "-"}
 															</div>
+
 															{req.direct_debit && (
 																<div className="mt-1 text-xs text-muted-foreground">
 																	<div>
@@ -363,56 +362,69 @@ export default function SeasonsPattern({
 															{(req.user ||
 																(req.participants &&
 																	req.participants.length > 0)) && (
-																<div className="mt-2">
-																	<div className="font-medium">
+																<div className="mt-3">
+																	<div className="font-medium mb-2">
 																		Participants
 																	</div>
-																	<div className="grid gap-1 mt-1">
-																		{/* Titular (request holder) */}
+																	<div className="space-y-2">
 																		{req.user && (
 																			<div
 																				key={`titular-${req.id}`}
-																				className="flex gap-2 items-center text-xs">
-																				<div className="font-medium">
-																					{req.user?.name} {req.user?.surname}
+																				className="p-2 rounded border bg-background/50">
+																				<div className="text-xs text-muted-foreground">
+																					Titular
 																				</div>
-																				{(req.direct_debit?.holder_dni ||
-																					req.user?.dni) && (
-																					<div className="text-muted-foreground">
-																						DNI:{" "}
-																						{req.direct_debit?.holder_dni ||
-																							req.user?.dni}
+																				<div className="flex items-center justify-between">
+																					<div className="font-medium">
+																						{req.user?.name} {req.user?.surname}
 																					</div>
-																				)}
-																				{req.user?.phone && (
-																					<div className="text-muted-foreground">
-																						Tel: {req.user?.phone}
+																					<div className="flex items-center gap-2">
+																						{(req.direct_debit?.holder_dni ||
+																							req.user?.dni) && (
+																							<span className="text-[11px] text-muted-foreground bg-muted/10 px-2 py-0.5 rounded">
+																								DNI:{" "}
+																								{req.direct_debit?.holder_dni ||
+																									req.user?.dni}
+																							</span>
+																						)}
+																						{req.user?.phone && (
+																							<span className="text-[11px] text-muted-foreground bg-muted/10 px-2 py-0.5 rounded">
+																								Tel: {req.user?.phone}
+																							</span>
+																						)}
 																					</div>
-																				)}
+																				</div>
 																			</div>
 																		)}
-																		{/* Other participants */}
+
 																		{req.participants &&
-																			req.participants.length > 0 &&
-																			req.participants.map((p: any) => (
-																				<div
-																					key={p.id ?? `p-${p.name}-${p.phone}`}
-																					className="flex gap-2 items-center text-xs">
-																					<div className="font-medium">
-																						{p.name}
-																					</div>
-																					{p.dni && (
-																						<div className="text-muted-foreground">
-																							DNI: {p.dni}
+																			req.participants.length > 0 && (
+																				<div className="grid gap-2">
+																					{req.participants.map((p: any) => (
+																						<div
+																							key={
+																								p.id ?? `p-${p.name}-${p.phone}`
+																							}
+																							className="flex items-center justify-between p-2 rounded border bg-background/50 text-xs">
+																							<div className="font-medium">
+																								{p.name}
+																							</div>
+																							<div className="flex items-center gap-2">
+																								{p.dni && (
+																									<span className="text-[11px] text-muted-foreground bg-muted/10 px-2 py-0.5 rounded">
+																										DNI: {p.dni}
+																									</span>
+																								)}
+																								{p.phone && (
+																									<span className="text-[11px] text-muted-foreground bg-muted/10 px-2 py-0.5 rounded">
+																										Tel: {p.phone}
+																									</span>
+																								)}
+																							</div>
 																						</div>
-																					)}
-																					{p.phone && (
-																						<div className="text-muted-foreground">
-																							Tel: {p.phone}
-																						</div>
-																					)}
+																					))}
 																				</div>
-																			))}
+																			)}
 																	</div>
 																</div>
 															)}
@@ -424,7 +436,7 @@ export default function SeasonsPattern({
 									</div>
 								)}
 							</div>
-						</>
+						</div>
 					)}
 				</SheetContent>
 			</Sheet>
