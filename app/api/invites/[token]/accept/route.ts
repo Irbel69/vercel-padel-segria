@@ -6,19 +6,45 @@ export const dynamic = "force-dynamic";
 
 async function handler(request: NextRequest) {
   try {
+    console.log("🔍 [DEBUG] Starting invite accept handler");
+    console.log("🔍 [DEBUG] Request URL:", request.url);
+    console.log("🔍 [DEBUG] Request method:", request.method);
+    console.log("🔍 [DEBUG] Request headers:", Object.fromEntries(request.headers.entries()));
+    
+    // Check for cookies
+    const cookies = request.headers.get('cookie');
+    console.log("🔍 [DEBUG] Request cookies:", cookies ? cookies.substring(0, 200) + '...' : 'No cookies');
+    
     // First, verify user is authenticated using normal client
+    console.log("🔍 [DEBUG] Creating Supabase client...");
     const supabase = createClient();
-    const { data: auth } = await supabase.auth.getUser();
+    
+    console.log("🔍 [DEBUG] Getting user from Supabase...");
+    const { data: auth, error: authError } = await supabase.auth.getUser();
+    
+    console.log("🔍 [DEBUG] Auth result:", {
+      user: auth?.user ? { id: auth.user.id, email: auth.user.email } : null,
+      error: authError
+    });
+    
     const user = auth?.user;
     if (!user) {
+      console.log("❌ [DEBUG] No authenticated user found, returning 401");
       return NextResponse.json({ error: "No autoritzat" }, { status: 401 });
     }
+    
+    console.log("✅ [DEBUG] User authenticated:", user.id);
 
     const url = new URL(request.url);
     const segments = url.pathname.split("/").filter(Boolean);
+    console.log("🔍 [DEBUG] URL segments:", segments);
+    
     // Expect: ["api","invites","{token}","accept"]
     const token = segments[2];
+    console.log("🔍 [DEBUG] Extracted token:", token);
+    
     if (!token || token.length < 10) {
+      console.log("❌ [DEBUG] Invalid token length:", token?.length || 0);
       return NextResponse.json({ error: "Token no vàlid" }, { status: 400 });
     }
 
@@ -108,17 +134,31 @@ async function handler(request: NextRequest) {
     }
 
     // Use DB RPC to perform the accept atomically and with proper RLS bypass
-    // The RPC reads JWT claims injected by Supabase to know the caller.
-    const { data: rpcRes, error: rpcErr } = await supabase.rpc("accept_pair_invite", { token_text: token });
+    // Pass the user ID explicitly since JWT claims might not be available in server context
+    console.log("🔍 [DEBUG] Calling accept_pair_invite RPC with token:", token, "and user:", user.id);
+    const { data: rpcRes, error: rpcErr } = await supabase.rpc("accept_pair_invite", { 
+      token_text: token,
+      actor_user_id: user.id,
+      actor_email: user.email
+    });
+    
+    console.log("🔍 [DEBUG] RPC result:", { data: rpcRes, error: rpcErr });
+    
     if (rpcErr) {
-      console.error("RPC accept_pair_invite error", rpcErr);
+      console.error("❌ [DEBUG] RPC accept_pair_invite error", rpcErr);
       return NextResponse.json({ error: "Error intern del servidor" }, { status: 500 });
     }
 
     // rpcRes is expected to be jsonb { ok: true/false, message/error, pair_id }
+    console.log("🔍 [DEBUG] Raw RPC response:", JSON.stringify(rpcRes, null, 2));
+    
     const ok = rpcRes?.ok ?? false;
+    console.log("🔍 [DEBUG] RPC ok status:", ok);
+    
     if (!ok) {
       const errMsg = rpcRes?.error || "Error acceptant la invitació";
+      console.log("❌ [DEBUG] RPC returned error:", errMsg);
+      
       // Map DB errors to HTTP status codes conservatively
       const statusMap: Record<string, number> = {
         missing_auth: 401,
@@ -135,12 +175,14 @@ async function handler(request: NextRequest) {
         internal_error: 500,
       };
       const status = statusMap[errMsg] || 400;
+      console.log("🔍 [DEBUG] Mapped status code:", status, "for error:", errMsg);
       return NextResponse.json({ error: errMsg }, { status });
     }
 
+    console.log("✅ [DEBUG] Successfully processed invite acceptance");
     return NextResponse.json({ message: "Inscripció en parella confirmada", pair_id: rpcRes.pair_id });
   } catch (err) {
-    console.error("Error in POST /api/invites/[token]/accept", err);
+    console.error("❌ [DEBUG] Error in POST /api/invites/[token]/accept", err);
     return NextResponse.json({ error: "Error intern del servidor" }, { status: 500 });
   }
 }
