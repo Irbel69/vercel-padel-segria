@@ -48,10 +48,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: "Invalid prize id" }, { status: 400 });
     }
 
-    // Join battle_pass_user_prizes with users
+    // Join battle_pass_user_prizes with users (include shirt_size)
     const { data, error } = await supabase
       .from("battle_pass_user_prizes")
-      .select("user_id, claimed_at, users(id, email, name, surname)")
+      .select("user_id, claimed_at, users(id, email, name, surname, shirt_size)")
       .eq("prize_id", prizeId)
       .order("claimed_at", { ascending: true });
 
@@ -67,6 +67,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       email: row.users?.email || null,
       name: row.users?.name || null,
       surname: row.users?.surname || null,
+      shirt_size: row.users?.shirt_size || null,
     }));
 
     return NextResponse.json({ claimers: mapped });

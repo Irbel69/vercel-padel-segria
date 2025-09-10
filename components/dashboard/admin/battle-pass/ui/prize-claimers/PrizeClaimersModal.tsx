@@ -17,6 +17,7 @@ type Claimer = {
   email?: string | null;
   name?: string | null;
   surname?: string | null;
+  shirt_size?: string | null;
 };
 
 async function fetchClaimers(prizeId: number) {
@@ -59,6 +60,9 @@ export default function PrizeClaimersModal({ prizeId, open, onOpenChange }: { pr
                   <div className="flex-1">
                     <div className="text-sm font-medium text-white">{c.name} {c.surname}</div>
                     <div className="text-xs text-white/60">{c.email}</div>
+                    {c.shirt_size && (
+                      <div className="text-xs text-white/40">Talla: {c.shirt_size}</div>
+                    )}
                     <div className="text-xs text-white/40">Reclamat: {new Date(c.claimed_at).toLocaleString()}</div>
                   </div>
                   <div className="ml-4 flex-shrink-0">
