@@ -18,7 +18,7 @@ export function BattlePassTrack({ prizes, userPoints, isLoading = false }: Battl
 	// Build equal-spacing mapping so prizes never overlap while preserving relative progress within segments
 	const equalSpacing = useMemo(() => {
 		if (prizes.length === 0) {
-			return { toPercent: (_x: number) => 0, markerPercents: [] as number[] };
+			return { toPercent: (_x: number) => 0, markerPercents: [] as number[], requiredWidth: 960 };
 		}
 		const sorted = [...prizes].sort((a, b) => a.points_required - b.points_required);
 		const P = sorted.map(p => p.points_required);
@@ -44,7 +44,18 @@ export function BattlePassTrack({ prizes, userPoints, isLoading = false }: Battl
 			const pos = i * segment + localT * segment;
 			return pos * 100;
 		};
-		return { toPercent, markerPercents };
+
+		// Calculate required width to show all prizes properly
+		// Each prize card is ~256px wide (w-56 = 224px, md:w-64 = 256px)
+		// Plus padding on both sides (112px + 112px = 224px on mobile, 128px + 128px = 256px on desktop)
+		const cardWidth = 256; // Use desktop width for calculation
+		const padding = 256; // Desktop padding
+		// Ensure the width is always larger than typical desktop viewports to force scrolling
+		const minScrollableWidth = 1600; // Ensure scroll on most desktop viewports
+		const calculatedWidth = (n - 1) * (cardWidth * 0.8) + cardWidth + padding;
+		const requiredWidth = Math.max(960, calculatedWidth, minScrollableWidth);
+
+		return { toPercent, markerPercents, requiredWidth };
 	}, [prizes]);
 
 	// Auto-scroll to user's current progress position
@@ -117,9 +128,12 @@ export function BattlePassTrack({ prizes, userPoints, isLoading = false }: Battl
 					}
 				}}
 			>
-				{/* We render a wide relative area so nodes can be absolutely placed along a single track. min-w-full keeps it at least viewport width but allows scrolling if content overflows */}
+				{/* We render a wide relative area so nodes can be absolutely placed along a single track. Dynamic width ensures proper scrolling */}
 				{/* Ensure horizontal padding equals half the card width so centered cards never get clipped */}
-				<div className="relative w-full min-w-[960px] pl-[112px] pr-[112px] py-6 md:pl-[128px] md:pr-[128px] md:py-8">
+				<div 
+					className="relative pl-[112px] pr-[112px] py-6 md:pl-[128px] md:pr-[128px] md:py-8"
+					style={{ width: `${equalSpacing.requiredWidth}px` }}
+				>
 					{/* Full-width progress indicator using equal spacing mapping to align with cards */}
 					<ProgressIndicator prizes={prizes} userPoints={userPoints} useEqualSpacing />
 					

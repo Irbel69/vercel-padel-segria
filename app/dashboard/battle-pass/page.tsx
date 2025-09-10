@@ -46,7 +46,7 @@ function BattlePassContent() {
 	const completedPrizes = (data?.completed_prizes ?? data?.prizes.filter(p => p.is_claimed).length) || 0;
 
 	return (
-		<div className="space-y-6 w-[90vw] mx-auto">
+		<div className="space-y-6 max-w-[90vw] mx-auto">
 			{/* Header */}
 			<div className="text-center">
 				<h1 className="text-3xl font-bold text-white mb-2 flex items-center justify-center gap-3 transform transition-transform duration-300 hover:scale-105">
