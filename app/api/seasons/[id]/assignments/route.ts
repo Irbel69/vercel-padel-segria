@@ -97,6 +97,7 @@ interface PostBody {
 	request_id: number;
 	entry_id: number;
 	edit?: boolean;
+	override_choice?: boolean;
 }
 
 // POST: create new assignment from request -> entry (admin only)
@@ -155,6 +156,41 @@ export async function POST(
 				{ error: "Entry is not a class" },
 				{ status: 400 }
 			);
+		}
+
+		// Validate/prepare request choices vs selected entry
+		const { data: reqChoices, error: chErr } = await supabase
+			.from("season_request_choices")
+			.select("entry_id")
+			.eq("request_id", body.request_id);
+		if (chErr) throw chErr;
+		const choiceIds = (reqChoices || []).map((c: any) => c.entry_id);
+
+		// If the request specified choices and the selected entry is not among them,
+		// require explicit override from the client (`override_choice` true) to proceed.
+		if (
+			choiceIds.length > 0 &&
+			!choiceIds.includes(entryRow.id) &&
+			!body.override_choice
+		) {
+			return NextResponse.json(
+				{
+					error: `La entrada ${entryRow.id} no figura entre las elecciones del request ${body.request_id}`,
+				},
+				{ status: 400 }
+			);
+		}
+
+		// If override requested and the choice is missing, insert it so DB trigger allows the assignment
+		if (
+			choiceIds.length > 0 &&
+			!choiceIds.includes(entryRow.id) &&
+			body.override_choice
+		) {
+			const { error: insChoiceErr } = await supabase
+				.from("season_request_choices")
+				.insert({ request_id: body.request_id, entry_id: entryRow.id });
+			if (insChoiceErr) throw insChoiceErr;
 		}
 
 		// Check for existing active assignment for this request

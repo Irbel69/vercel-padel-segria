@@ -172,6 +172,17 @@ export default function AssignRequestPage() {
 
 	async function assign(entry: Entry) {
 		if (!request) return;
+
+		// Warn if the selected entry is not one of the request's preferred choices
+		const isNonPreferred = !choiceSet.has(entry.id);
+		let overrideChoice = false;
+		if (isNonPreferred) {
+			const ok = window.confirm(
+				"Atenció: aquest horari no és una de les opcions marcades per l'usuari. Vols continuar d'igual manera?"
+			);
+			if (!ok) return;
+			overrideChoice = true;
+		}
 		if (entry.capacity != null) {
 			const { used, remaining } = capacityInfo(entry);
 			if (remaining != null && remaining < request.group_size) {
@@ -210,6 +221,7 @@ export default function AssignRequestPage() {
 					request_id: request.id,
 					entry_id: entry.id,
 					edit: isEdit,
+					override_choice: overrideChoice,
 				}),
 			});
 			const json = await res.json();
