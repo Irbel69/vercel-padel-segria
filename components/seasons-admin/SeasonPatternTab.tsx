@@ -41,6 +41,23 @@ export default function SeasonPatternTab({
 	// (provided by the parent admin page)
 	requests,
 }: SeasonPatternTabProps) {
+	function computeStartTime(idx: number) {
+		const base = builder?.base_start as string | undefined;
+		if (!base || !/^\d{2}:\d{2}$/.test(base)) return "";
+		const [hStr, mStr] = base.split(":");
+		let minutes = parseInt(hStr, 10) * 60 + parseInt(mStr, 10);
+		const blocks = builder?.blocks || [];
+		for (let i = 0; i < idx; i++) {
+			const d = Number(blocks[i]?.duration || 0);
+			if (!Number.isNaN(d)) minutes += d;
+		}
+		minutes = ((minutes % (24 * 60)) + 24 * 60) % (24 * 60);
+		const hh = Math.floor(minutes / 60)
+			.toString()
+			.padStart(2, "0");
+		const mm = (minutes % 60).toString().padStart(2, "0");
+		return `${hh}:${mm}`;
+	}
 	function toggleDay(d: number) {
 		const days: number[] = builder.days || [];
 		const s = new Set(days);
@@ -125,6 +142,9 @@ export default function SeasonPatternTab({
 									<div
 										key={idx}
 										className="p-2 rounded border flex items-center gap-2">
+										<div className="w-16 text-sm font-mono text-muted-foreground">
+											{computeStartTime(idx)}
+										</div>
 										<div className="flex-1">
 											<div className="text-xs text-muted-foreground">Tipus</div>
 											<div className="font-medium">
@@ -158,20 +178,6 @@ export default function SeasonPatternTab({
 											</div>
 										)}
 										<div className="ml-auto flex gap-2">
-											<Button
-												variant="ghost"
-												size="icon"
-												onClick={() => {
-													const blocks = [...(builder.blocks || [])];
-													if (idx > 0) {
-														const tmp = blocks[idx - 1];
-														blocks[idx - 1] = blocks[idx];
-														blocks[idx] = tmp;
-														setBuilder({ ...builder, blocks });
-													}
-												}}>
-												<Plus className="w-4 h-4 rotate-90" />
-											</Button>
 											<Button
 												variant="ghost"
 												size="icon"
