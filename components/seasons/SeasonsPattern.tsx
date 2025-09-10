@@ -71,6 +71,23 @@ export default function SeasonsPattern({
 		? (assignments || []).filter((a: any) => a.entry?.id === sel.id)
 		: [];
 
+	function paymentMethodLabel(pm?: string | null) {
+		switch (pm) {
+			case "direct_debit":
+				return "Domiciliació";
+			case "cash":
+				return "Efectiu";
+			case "bizum":
+				return "Bizum";
+			default:
+				return pm || "—";
+		}
+	}
+
+	function allowFillLabel(allow: boolean) {
+		return allow ? "Admet omplir" : "No admet omplir";
+	}
+
 	return (
 		<>
 			<div className="flex gap-2">
@@ -301,14 +318,13 @@ export default function SeasonsPattern({
 													</div>
 													<div className="text-xs mt-2 flex gap-3">
 														<div>Grup: {a.group_size}</div>
-														<div>Pago: {a.payment_method || "—"}</div>
 														<div
 															className={
 																a.allow_fill
 																	? "bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded"
 																	: "bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded"
 															}>
-															{a.allow_fill ? "allow_fill" : "no fill"}
+															{allowFillLabel(a.allow_fill)}
 														</div>
 													</div>
 
@@ -333,8 +349,17 @@ export default function SeasonsPattern({
 																	req.participants?.[0]?.phone ||
 																	"-"}
 															</div>
-															<div className="mt-1 text-xs text-muted-foreground">
-																Mètode de pagament: {req.payment_method || "-"}
+															<hr className="mt-2 mb-1"></hr>
+															<div className="mt-1 text-xs gap-2 flex items-center">
+																Mètode de pagament:{" "}
+																<div
+																	className={
+																		a.allow_fill
+																			? "bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded"
+																			: "bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded"
+																	}>
+																	{paymentMethodLabel(req.payment_method)}
+																</div>
 															</div>
 
 															{req.direct_debit && (

@@ -81,6 +81,23 @@ export default function AssignRequestPage() {
 		[request]
 	);
 
+	function paymentMethodLabel(pm?: string | null) {
+		switch (pm) {
+			case "direct_debit":
+				return "Domiciliació";
+			case "cash":
+				return "Efectiu";
+			case "bizum":
+				return "Bizum";
+			default:
+				return pm || "-";
+		}
+	}
+
+	function allowFillLabel(allow: boolean) {
+		return allow ? "Admet omplir" : "No admet omplir";
+	}
+
 	const load = useCallback(async () => {
 		if (!seasonId || !requestId) return;
 		setLoading(true);
@@ -230,8 +247,7 @@ export default function AssignRequestPage() {
 					<CardHeader>
 						<CardTitle className="text-base">Detalls sol·licitud</CardTitle>
 						<CardDescription className="text-xs">
-							Grup {request.group_size} ·{" "}
-							{request.allow_fill ? "allow_fill" : "no fill"}
+							Grup {request.group_size} · {allowFillLabel(request.allow_fill)}
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="text-xs space-y-3">
@@ -294,7 +310,7 @@ export default function AssignRequestPage() {
 						<div>
 							<div className="font-medium">Pagament</div>
 							<div className="text-[13px] text-muted-foreground">
-								{request.payment_method || "-"}
+								{paymentMethodLabel(request.payment_method)}
 							</div>
 							{request.direct_debit && (
 								<div className="mt-1 text-[12px] text-muted-foreground">

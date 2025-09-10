@@ -95,6 +95,23 @@ export default function SeasonAssignmentsTab({
 		[requests, assignedRequestIds]
 	);
 
+	function paymentMethodLabel(pm?: string | null) {
+		switch (pm) {
+			case "direct_debit":
+				return "Domiciliació";
+			case "cash":
+				return "Efectiu";
+			case "bizum":
+				return "Bizum";
+			default:
+				return pm || "-";
+		}
+	}
+
+	function allowFillLabel(allow: boolean) {
+		return allow ? "Admet omplir" : "No admet omplir";
+	}
+
 	return (
 		<>
 			<div className="flex items-center gap-2">
@@ -159,7 +176,7 @@ export default function SeasonAssignmentsTab({
 															? "bg-green-500/20 text-green-400"
 															: "bg-yellow-500/20 text-yellow-400"
 													)}>
-													{r.allow_fill ? "allow_fill" : "no fill"}
+													{allowFillLabel(r.allow_fill)}
 												</span>
 												<span className="hidden md:inline text-muted-foreground">
 													{r.created_at
@@ -236,7 +253,8 @@ export default function SeasonAssignmentsTab({
 															"-"}
 													</div>
 													<div className="mt-1 text-[11px] text-muted-foreground">
-														Mètode de pagament: {r.payment_method || "-"}
+														Mètode de pagament:{" "}
+														{paymentMethodLabel(r.payment_method)}
 													</div>
 													{r.direct_debit && (
 														<div className="mt-1 text-[11px] text-muted-foreground">
