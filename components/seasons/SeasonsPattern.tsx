@@ -454,48 +454,48 @@ export default function SeasonsPattern({
 																						</div>
 																					))}
 
-																					<div className="mt-2 flex gap-2">
-																						<button
-																							className="text-xs px-2 py-1 rounded bg-rose-500/10 text-rose-400 hover:bg-rose-500/20"
-																							onClick={async () => {
-																								if (
-																									!confirm(
-																										"Eliminar assignació?"
-																									)
-																								)
-																									return;
-																								try {
-																									await deleteAssignment(a.id);
-																								} catch (e) {
-																									alert(
-																										(e as any)?.message ||
-																											"Error eliminant"
-																									);
-																								}
-																							}}>
-																							Eliminar
-																						</button>
-																						<button
-																							className="text-xs px-2 py-1 rounded bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
-																							onClick={() => {
-																								// navigate to assign page with edit flag
-																								router.push(
-																									`/dashboard/admin/seasons/${
-																										a.season_id ||
-																										a.entry?.season_id
-																									}/assign/${
-																										a.request_id
-																									}?edit=1`
-																								);
-																							}}>
-																							Modificar
-																						</button>
-																					</div>
+																					{/* buttons moved to the bottom of the assignment card */}
 																				</div>
 																			)}
 																	</div>
 																</div>
 															)}
+
+															{/* Action buttons placed at the bottom of the assignment card */}
+															<div className="mt-3 flex gap-2">
+																<button
+																	className="text-xs px-2 py-1 rounded bg-rose-500/10 text-rose-400 hover:bg-rose-500/20"
+																	onClick={async () => {
+																		if (!confirm("Eliminar assignació?"))
+																			return;
+																		try {
+																			await deleteAssignment(a.id);
+																		} catch (e) {
+																			alert(
+																				(e as any)?.message || "Error eliminant"
+																			);
+																		}
+																	}}>
+																	Eliminar
+																</button>
+																<button
+																	className="text-xs px-2 py-1 rounded bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+																	onClick={() => {
+																		if (!a.request_id) {
+																			alert(
+																				"No es pot modificar: falta request id"
+																			);
+																			return;
+																		}
+																		router.push(
+																			`/dashboard/admin/seasons/${
+																				a.season_id || a.entry?.season_id
+																			}/assign/${a.request_id}?edit=1`
+																		);
+																	}}>
+																	Modificar
+																</button>
+															</div>
 														</div>
 													)}
 												</div>
