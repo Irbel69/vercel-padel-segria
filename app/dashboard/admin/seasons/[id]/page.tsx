@@ -11,6 +11,7 @@ import {
 	CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
 	Loader2,
@@ -260,14 +261,26 @@ export default function SeasonDetailPage() {
 		if (error) alert(error.message);
 		else loadAssignments();
 	}
-	async function toggleEnrollments() {
+	async function toggleEnrollments(nextState?: boolean) {
 		if (!season) return;
-		const { error } = await supabase
-			.from("seasons")
-			.update({ enrollments_open: !season.enrollments_open })
-			.eq("id", season.id);
-		if (!error)
-			setSeason({ ...season, enrollments_open: !season.enrollments_open });
+		const desired =
+			typeof nextState === "boolean" ? nextState : !season.enrollments_open;
+		// optimistic update
+		setSeason({ ...season, enrollments_open: desired });
+		try {
+			const { error } = await supabase
+				.from("seasons")
+				.update({ enrollments_open: desired })
+				.eq("id", season.id);
+			if (error) {
+				// revert on error
+				setSeason({ ...season, enrollments_open: !desired });
+				setMessage(error.message || "Error updating enrollments");
+			}
+		} catch (e: any) {
+			setSeason({ ...season, enrollments_open: !desired });
+			setMessage(e?.message || "Error updating enrollments");
+		}
 	}
 	async function buildPattern() {
 		setBuilding(true);
@@ -349,27 +362,46 @@ export default function SeasonDetailPage() {
 					{" "}
 					<ArrowLeft className="h-4 w-4" />
 				</Button>
-				<h1 className="text-2xl font-semibold">Temporada</h1>
-				<div className="ml-auto flex gap-2">
+				<h1 className="text-2xl font-semibold">
+					{season?.name ?? "Cargando…"}
+				</h1>{" "}
+				<div className="ml-auto flex items-center gap-3">
 					{season && (
-						<Button
-							variant={season.enrollments_open ? "secondary" : "outline"}
-							size="sm"
-							onClick={toggleEnrollments}>
-							{season.enrollments_open
-								? "Tancar inscripcions"
-								: "Obrir inscripcions"}
-						</Button>
+						<div className="flex items-center gap-2">
+							<span className="text-sm text-muted-foreground">
+								{season.enrollments_open
+									? "Inscripcions obertes"
+									: "Inscripcions tancades"}
+							</span>
+							<Switch
+								aria-label="Toggle enrollments"
+								checked={!!season.enrollments_open}
+								onCheckedChange={(v) => toggleEnrollments(Boolean(v))}
+							/>
+						</div>
 					)}
-					<Button variant="outline" size="sm" onClick={load}>
-						<RefreshCw className="h-4 w-4" />
-					</Button>
 				</div>
 			</div>
 			{season && (
-				<p className="text-xs text-muted-foreground">
-					{season.name} | {season.date_start} → {season.date_end} | TZ:{" "}
-					{season.timezone}
+				<p className="text-xs text-muted-foreground flex items-center gap-2">
+					{/* Inline SVG used to avoid lucide-react hydration mismatch */}
+					<svg
+						aria-hidden="true"
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						className="h-4 w-4 text-muted-foreground">
+						<circle cx="12" cy="12" r="10" />
+						<polyline points="12 6 12 12 16 14" />
+					</svg>
+					<span>
+						{season.date_start} → {season.date_end}
+					</span>
 				</p>
 			)}
 			{message && <p className="text-xs text-red-500">{message}</p>}

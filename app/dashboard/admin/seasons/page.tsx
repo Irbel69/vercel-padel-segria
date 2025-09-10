@@ -12,6 +12,14 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import type { DateRange } from "react-day-picker";
+import {
 	Dialog,
 	DialogTrigger,
 	DialogContent,
@@ -41,8 +49,9 @@ export default function AdminSeasonsPage() {
 		name: "",
 		date_start: "",
 		date_end: "",
-		timezone: "Europe/Madrid",
 	});
+	const [dialogOpen, setDialogOpen] = useState(false);
+	const [range, setRange] = useState<DateRange | undefined>();
 	const [message, setMessage] = useState<string | null>(null);
 
 	useEffect(() => {
@@ -70,16 +79,16 @@ export default function AdminSeasonsPage() {
 				name: form.name.trim(),
 				date_start: form.date_start,
 				date_end: form.date_end,
-				timezone: form.timezone,
 			});
 			if (error) throw error;
 			setForm({
 				name: "",
 				date_start: "",
 				date_end: "",
-				timezone: "Europe/Madrid",
 			});
+			setRange(undefined);
 			await load();
+			setDialogOpen(false);
 		} catch (e: any) {
 			setMessage(e.message);
 		}
@@ -108,7 +117,7 @@ export default function AdminSeasonsPage() {
 						<RefreshCw className="h-4 w-4 mr-1" />
 						{loading ? "..." : "Refrescar"}
 					</Button>
-					<Dialog>
+					<Dialog open={dialogOpen} onOpenChange={(o) => setDialogOpen(o)}>
 						<DialogTrigger asChild>
 							<Button>
 								<Plus className="h-4 w-4 mr-1" />
@@ -133,36 +142,54 @@ export default function AdminSeasonsPage() {
 										placeholder="Temporada 25-26"
 									/>
 								</div>
-								<div className="grid grid-cols-2 gap-3">
-									<div>
-										<label className="text-xs font-medium">Data inici</label>
-										<Input
-											type="date"
-											value={form.date_start}
-											onChange={(e) =>
-												setForm((f) => ({ ...f, date_start: e.target.value }))
-											}
-										/>
-									</div>
-									<div>
-										<label className="text-xs font-medium">Data fi</label>
-										<Input
-											type="date"
-											value={form.date_end}
-											onChange={(e) =>
-												setForm((f) => ({ ...f, date_end: e.target.value }))
-											}
-										/>
-									</div>
-								</div>
-								<div>
-									<label className="text-xs font-medium">Zona horària</label>
-									<Input
-										value={form.timezone}
-										onChange={(e) =>
-											setForm((f) => ({ ...f, timezone: e.target.value }))
-										}
-									/>
+								<div className="space-y-1">
+									<label className="text-xs font-medium">Rang de dates</label>
+									<Popover>
+										<PopoverTrigger asChild>
+											<Button
+												variant="outline"
+												className="w-full justify-start text-left font-normal">
+												{range?.from ? (
+													range.to ? (
+														`${format(range.from, "yyyy-MM-dd")} → ${format(
+															range.to,
+															"yyyy-MM-dd"
+														)}`
+													) : (
+														`${format(range.from, "yyyy-MM-dd")} → …`
+													)
+												) : (
+													<span className="text-muted-foreground">
+														Selecciona dates
+													</span>
+												)}
+											</Button>
+										</PopoverTrigger>
+										<PopoverContent
+											disablePortal
+											className="w-auto p-0"
+											align="start">
+											<Calendar
+												mode="range"
+												numberOfMonths={2}
+												selected={range}
+												onSelect={(r) => {
+													setRange(r);
+													const date_start = r?.from
+														? format(r.from, "yyyy-MM-dd")
+														: "";
+													const date_end = r?.to
+														? format(r.to, "yyyy-MM-dd")
+														: "";
+													setForm((f) => ({
+														...f,
+														date_start,
+														date_end,
+													}));
+												}}
+											/>
+										</PopoverContent>
+									</Popover>
 								</div>
 								{message && <p className="text-xs text-red-500">{message}</p>}
 							</div>
@@ -181,7 +208,7 @@ export default function AdminSeasonsPage() {
 					<CardTitle>Llista</CardTitle>
 					<CardDescription>Totes les temporades existents</CardDescription>
 				</CardHeader>
-				<CardContent className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
+				<CardContent className="space-y-2 max-h-[520px] overflow-y-auto px-6">
 					{seasons.map((s) => (
 						<div
 							key={s.id}
