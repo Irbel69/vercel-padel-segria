@@ -28,7 +28,7 @@ import {
 	DialogDescription,
 	DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Plus, RefreshCw, Trash2, Edit3 } from "lucide-react";
 
 interface Season {
 	id: number;
@@ -53,6 +53,18 @@ export default function AdminSeasonsPage() {
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [range, setRange] = useState<DateRange | undefined>();
 	const [message, setMessage] = useState<string | null>(null);
+
+	// Edit state
+	const [editDialogOpen, setEditDialogOpen] = useState(false);
+	const [editingId, setEditingId] = useState<number | null>(null);
+	const [editForm, setEditForm] = useState({
+		name: "",
+		date_start: "",
+		date_end: "",
+	});
+	const [editRange, setEditRange] = useState<DateRange | undefined>();
+	const [editing, setEditing] = useState(false);
+	const [editMessage, setEditMessage] = useState<string | null>(null);
 
 	useEffect(() => {
 		load();
@@ -100,6 +112,43 @@ export default function AdminSeasonsPage() {
 		const { error } = await supabase.from("seasons").delete().eq("id", id);
 		if (error) alert(error.message);
 		load();
+	}
+
+	function openEditSeason(e: React.MouseEvent, s: Season) {
+		e.stopPropagation();
+		setEditingId(s.id);
+		setEditForm({
+			name: s.name,
+			date_start: s.date_start,
+			date_end: s.date_end,
+		});
+		setEditRange({ from: new Date(s.date_start), to: new Date(s.date_end) });
+		setEditMessage(null);
+		setEditDialogOpen(true);
+	}
+
+	async function updateSeason() {
+		if (editingId == null) return;
+		setEditing(true);
+		setEditMessage(null);
+		try {
+			if (!editForm.name || !editForm.date_start || !editForm.date_end)
+				throw new Error("Camps requerits.");
+			const { error } = await supabase
+				.from("seasons")
+				.update({
+					name: editForm.name.trim(),
+					date_start: editForm.date_start,
+					date_end: editForm.date_end,
+				})
+				.eq("id", editingId);
+			if (error) throw error;
+			await load();
+			setEditDialogOpen(false);
+		} catch (e: any) {
+			setEditMessage(e.message);
+		}
+		setEditing(false);
 	}
 
 	return (
@@ -221,24 +270,52 @@ export default function AdminSeasonsPage() {
 										{s.date_start} → {s.date_end}
 									</p>
 								</div>
-								<div className="flex gap-1">
-									<Button
-										variant="ghost"
-										size="icon"
-										className="h-6 w-6"
-										onClick={(e) => {
-											e.stopPropagation();
-											deleteSeason(s.id);
-										}}>
-										<Trash2 className="h-3 w-3" />
-									</Button>
+								<div className="flex items-start gap-2">
+									{/* Tags: placed to the left of the buttons */}
+									{(() => {
+										const today = new Date();
+										const start = new Date(`${s.date_start}T00:00:00`);
+										const end = new Date(`${s.date_end}T23:59:59`);
+										const isActive = start <= today && today <= end;
+										return (
+											<div className="flex flex-col items-end gap-1">
+												{isActive && (
+													<span className="text-[10px] px-2 py-0.5 rounded bg-sky-500/20 text-sky-500">
+														Activa
+													</span>
+												)}
+												{s.enrollments_open && (
+													<span className="text-[10px] px-2 py-0.5 rounded bg-green-500/20 text-green-500">
+														Obertes
+													</span>
+												)}
+											</div>
+										);
+									})()}
+									<div className="flex gap-1">
+										<Button
+											variant="ghost"
+											size="icon"
+											className="h-6 w-6"
+											onClick={(e) => {
+												e.stopPropagation();
+												openEditSeason(e, s);
+											}}>
+											<Edit3 className="h-3 w-3" />
+										</Button>
+										<Button
+											variant="ghost"
+											size="icon"
+											className="h-6 w-6"
+											onClick={(e) => {
+												e.stopPropagation();
+												deleteSeason(s.id);
+											}}>
+											<Trash2 className="h-3 w-3" />
+										</Button>
+									</div>
 								</div>
 							</div>
-							{s.enrollments_open && (
-								<span className="absolute top-2 right-10 text-[10px] px-1.5 py-0.5 rounded bg-green-500/20 text-green-500">
-									Obertes
-								</span>
-							)}
 						</div>
 					))}
 					{seasons.length === 0 && !loading && (
@@ -247,6 +324,79 @@ export default function AdminSeasonsPage() {
 					{loading && <p className="text-xs">Carregant...</p>}
 				</CardContent>
 			</Card>
+
+			{/* Edit Dialog */}
+			<Dialog open={editDialogOpen} onOpenChange={(o) => setEditDialogOpen(o)}>
+				<DialogContent className="sm:max-w-md">
+					<DialogHeader>
+						<DialogTitle>Editar Temporada</DialogTitle>
+						<DialogDescription>Modifica nom i rang de dates.</DialogDescription>
+					</DialogHeader>
+					<div className="space-y-3 py-2">
+						<div>
+							<label className="text-xs font-medium">Nom</label>
+							<Input
+								value={editForm.name}
+								onChange={(e) =>
+									setEditForm((f) => ({ ...f, name: e.target.value }))
+								}
+								placeholder="Temporada 25-26"
+							/>
+						</div>
+						<div className="space-y-1">
+							<label className="text-xs font-medium">Rang de dates</label>
+							<Popover>
+								<PopoverTrigger asChild>
+									<Button
+										variant="outline"
+										className="w-full justify-start text-left font-normal">
+										{editRange?.from ? (
+											editRange.to ? (
+												`${format(editRange.from, "yyyy-MM-dd")} → ${format(
+													editRange.to,
+													"yyyy-MM-dd"
+												)}`
+											) : (
+												`${format(editRange.from, "yyyy-MM-dd")} → …`
+											)
+										) : (
+											<span className="text-muted-foreground">
+												Selecciona dates
+											</span>
+										)}
+									</Button>
+								</PopoverTrigger>
+								<PopoverContent
+									disablePortal
+									className="w-auto p-0"
+									align="start">
+									<Calendar
+										mode="range"
+										numberOfMonths={2}
+										selected={editRange}
+										onSelect={(r) => {
+											setEditRange(r);
+											const date_start = r?.from
+												? format(r.from, "yyyy-MM-dd")
+												: "";
+											const date_end = r?.to ? format(r.to, "yyyy-MM-dd") : "";
+											setEditForm((f) => ({ ...f, date_start, date_end }));
+										}}
+									/>
+								</PopoverContent>
+							</Popover>
+						</div>
+						{editMessage && (
+							<p className="text-xs text-red-500">{editMessage}</p>
+						)}
+					</div>
+					<DialogFooter>
+						<Button disabled={editing} onClick={updateSeason}>
+							{editing ? "Guardant..." : "Guardar"}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }
