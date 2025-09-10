@@ -245,14 +245,6 @@ export default function AssignRequestPage() {
 					</CardHeader>
 					<CardContent className="text-xs space-y-3">
 						<RequestDetails req={request} />
-						<div className="flex flex-wrap gap-2">
-							<span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400">
-								Preferències:{" "}
-								{request.choices?.length
-									? request.choices.map((c) => c.entry_id).join(", ")
-									: "—"}
-							</span>
-						</div>
 					</CardContent>
 				</Card>
 			)}

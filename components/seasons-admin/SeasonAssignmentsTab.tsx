@@ -8,7 +8,13 @@ import {
 	CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, ChevronDown, ChevronRight, RefreshCw } from "lucide-react";
+import {
+	Clock,
+	ChevronDown,
+	ChevronRight,
+	RefreshCw,
+	Users,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DirectDebit {
@@ -166,8 +172,11 @@ export default function SeasonAssignmentsTab({
 												<span className="font-medium">
 													{r.user?.name || "Sense nom"} {r.user?.surname || ""}
 												</span>
-												<span className="text-muted-foreground">
-													Grup: {r.group_size}
+												<span
+													className="text-muted-foreground flex items-center gap-1"
+													aria-label={`Grup: ${r.group_size}`}>
+													<Users className="h-4 w-4" aria-hidden="true" />
+													<span className="text-[11px]">{r.group_size}</span>
 												</span>
 												<span
 													className={cn(
@@ -253,7 +262,7 @@ export default function SeasonAssignmentsTab({
 															"-"}
 													</div>
 													<div className="mt-1 text-[11px] text-muted-foreground">
-														: {paymentMethodLabel(r.payment_method)}
+														Pagament: {paymentMethodLabel(r.payment_method)}
 													</div>
 													{r.direct_debit && (
 														<div className="mt-1 text-[11px] text-muted-foreground">
