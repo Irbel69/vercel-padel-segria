@@ -44,7 +44,6 @@ import { useEffect, useState } from "react";
 import useDashboard, {
   getQualityIcon as hookGetQualityIcon,
 } from "@/hooks/use-dashboard";
-import CountUp from "react-countup";
 import { useRouter } from "next/navigation";
 import EditFieldDialog from "@/components/EditFieldDialog";
 import UpcomingBookingsList from "@/components/lessons/UpcomingBookingsList";
@@ -129,6 +128,9 @@ export default function Dashboard() {
   const winPercentage = stats?.winPercentage || 0;
   const userScore = stats?.userScore || 0;
 
+  // Determine if stats were actually loaded (undefined means still loading/failed)
+  const statsLoaded = typeof stats !== "undefined" && stats !== null;
+
   // Show error message if stats failed to load
   if (statsError && !statsLoading) {
     console.error("Error loading stats:", statsError);
@@ -159,6 +161,7 @@ export default function Dashboard() {
               matchesWon={matchesWon}
               winPercentage={winPercentage}
               userScore={userScore}
+              animate={statsLoaded}
             />
 
             {/* Qualities */}

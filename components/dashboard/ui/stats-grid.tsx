@@ -10,11 +10,13 @@ export default function StatsGrid({
 	matchesPlayed,
 	winPercentage,
 	className,
+	animate = true,
 }: {
 	matchesWon: number;
 	matchesPlayed: number;
 	winPercentage: number;
 	className?: string;
+	animate?: boolean;
 }) {
 	const tileClass =
 		"text-center p-4 rounded-xl bg-white/5 ring-1 ring-white/15 transition-colors hover:bg-white/[.06]";
@@ -25,7 +27,11 @@ export default function StatsGrid({
 				<CardContent className="p-0">
 					<Trophy className="w-7 h-7 text-green-400 mx-auto mb-2" />
 					<div className="text-2xl font-bold text-white">
-						<CountUp end={matchesWon} duration={2.0} delay={0.3} />
+						{animate ? (
+							<CountUp start={0} end={matchesWon} duration={2.0} delay={0.3} key={String(matchesWon)} />
+						) : (
+							<span>{matchesWon}</span>
+						)}
 					</div>
 					<div className="text-sm text-white/60">Partits Guanyats</div>
 				</CardContent>
@@ -35,7 +41,11 @@ export default function StatsGrid({
 				<CardContent className="p-0">
 					<Activity className="w-7 h-7 text-blue-400 mx-auto mb-2" />
 					<div className="text-2xl font-bold text-white">
-						<CountUp end={matchesPlayed} duration={2.0} delay={0.45} />
+						{animate ? (
+							<CountUp start={0} end={matchesPlayed} duration={2.0} delay={0.45} key={String(matchesPlayed)} />
+						) : (
+							<span>{matchesPlayed}</span>
+						)}
 					</div>
 					<div className="text-sm text-white/60">Partits Jugats</div>
 				</CardContent>
@@ -45,12 +55,11 @@ export default function StatsGrid({
 				<CardContent className="p-0">
 					<BarChart3 className="w-7 h-7 text-purple-400 mx-auto mb-2" />
 					<div className="text-2xl font-bold text-white">
-						<CountUp
-							end={winPercentage}
-							duration={2.0}
-							delay={0.6}
-							suffix="%"
-						/>
+						{animate ? (
+							<CountUp start={0} end={winPercentage} duration={2.0} delay={0.6} suffix="%" key={String(winPercentage)} />
+						) : (
+							<span>{winPercentage}%</span>
+						)}
 					</div>
 					<div className="text-sm text-white/60">% Victòries</div>
 				</CardContent>

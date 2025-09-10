@@ -55,7 +55,7 @@ export default function AuthCallbackPage() {
       <div className="text-center text-white/80">
         <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4" />
         <p>Connectant…</p>
-        {error && <p className="text-xs mt-2 opacity-70">{error}</p>}
+        {/* Do not show raw error text to the user here — redirects will surface any necessary messages on the signin page. */}
       </div>
     </main>
   );

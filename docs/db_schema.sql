@@ -12,8 +12,21 @@ CREATE TABLE public.battle_pass_prizes (
   created_by uuid,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  original_image_url text,
   CONSTRAINT battle_pass_prizes_pkey PRIMARY KEY (id),
   CONSTRAINT battle_pass_prizes_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.battle_pass_user_prizes (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  user_id uuid NOT NULL,
+  prize_id bigint NOT NULL,
+  claimed_at timestamp with time zone NOT NULL DEFAULT now(),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  delivery_status text NOT NULL DEFAULT 'pending_delivery'::text CHECK (delivery_status = ANY (ARRAY['pending_delivery'::text, 'delivered'::text, 'delivery_failed'::text])),
+  delivered_at timestamp with time zone,
+  CONSTRAINT battle_pass_user_prizes_pkey PRIMARY KEY (id),
+  CONSTRAINT battle_pass_user_prizes_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT battle_pass_user_prizes_prize_id_fkey FOREIGN KEY (prize_id) REFERENCES public.battle_pass_prizes(id)
 );
 CREATE TABLE public.direct_debit_details (
   id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
@@ -131,9 +144,9 @@ CREATE TABLE public.pair_invites (
   accepted_at timestamp with time zone,
   declined_at timestamp with time zone,
   CONSTRAINT pair_invites_pkey PRIMARY KEY (id),
-  CONSTRAINT pair_invites_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id),
   CONSTRAINT pair_invites_inviter_id_fkey FOREIGN KEY (inviter_id) REFERENCES public.users(id),
-  CONSTRAINT pair_invites_invitee_id_fkey FOREIGN KEY (invitee_id) REFERENCES public.users(id)
+  CONSTRAINT pair_invites_invitee_id_fkey FOREIGN KEY (invitee_id) REFERENCES public.users(id),
+  CONSTRAINT pair_invites_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id)
 );
 CREATE TABLE public.qualities (
   id integer NOT NULL DEFAULT nextval('qualities_id_seq'::regclass),
@@ -169,8 +182,8 @@ CREATE TABLE public.season_assignments (
   CONSTRAINT season_assignments_pkey PRIMARY KEY (id),
   CONSTRAINT season_assignments_season_id_fkey FOREIGN KEY (season_id) REFERENCES public.seasons(id),
   CONSTRAINT season_assignments_entry_id_fkey FOREIGN KEY (entry_id) REFERENCES public.season_week_entries(id),
-  CONSTRAINT season_assignments_request_id_fkey FOREIGN KEY (request_id) REFERENCES public.season_enrollment_requests(id),
-  CONSTRAINT season_assignments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+  CONSTRAINT season_assignments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT season_assignments_request_id_fkey FOREIGN KEY (request_id) REFERENCES public.season_enrollment_requests(id)
 );
 CREATE TABLE public.season_direct_debit_details (
   id bigint NOT NULL DEFAULT nextval('season_direct_debit_details_id_seq'::regclass),
@@ -205,14 +218,15 @@ CREATE TABLE public.season_request_choices (
   entry_id bigint NOT NULL,
   preference smallint,
   CONSTRAINT season_request_choices_pkey PRIMARY KEY (id),
-  CONSTRAINT season_request_choices_request_id_fkey FOREIGN KEY (request_id) REFERENCES public.season_enrollment_requests(id),
-  CONSTRAINT season_request_choices_entry_id_fkey FOREIGN KEY (entry_id) REFERENCES public.season_week_entries(id)
+  CONSTRAINT season_request_choices_entry_id_fkey FOREIGN KEY (entry_id) REFERENCES public.season_week_entries(id),
+  CONSTRAINT season_request_choices_request_id_fkey FOREIGN KEY (request_id) REFERENCES public.season_enrollment_requests(id)
 );
 CREATE TABLE public.season_request_participants (
   id bigint NOT NULL DEFAULT nextval('season_request_participants_id_seq'::regclass),
   request_id bigint NOT NULL,
   name text NOT NULL,
-  is_primary boolean NOT NULL DEFAULT false,
+  phone text,
+  dni text,
   CONSTRAINT season_request_participants_pkey PRIMARY KEY (id),
   CONSTRAINT season_request_participants_request_id_fkey FOREIGN KEY (request_id) REFERENCES public.season_enrollment_requests(id)
 );
@@ -259,8 +273,8 @@ CREATE TABLE public.user_qualities (
   quality_id integer NOT NULL,
   assigned_at timestamp with time zone DEFAULT now(),
   CONSTRAINT user_qualities_pkey PRIMARY KEY (id),
-  CONSTRAINT user_qualities_quality_id_fkey FOREIGN KEY (quality_id) REFERENCES public.qualities(id),
-  CONSTRAINT user_qualities_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+  CONSTRAINT user_qualities_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT user_qualities_quality_id_fkey FOREIGN KEY (quality_id) REFERENCES public.qualities(id)
 );
 CREATE TABLE public.users (
   id uuid NOT NULL DEFAULT auth.uid(),
@@ -278,5 +292,6 @@ CREATE TABLE public.users (
   image_rights_accepted boolean NOT NULL DEFAULT false,
   privacy_policy_accepted boolean NOT NULL DEFAULT false,
   score integer NOT NULL DEFAULT 0,
+  shirt_size USER-DEFINED,
   CONSTRAINT users_pkey PRIMARY KEY (id)
 );

@@ -50,13 +50,33 @@ export default function AcceptInvite({ token }: AcceptInviteProps) {
   });
 
   const handleAccept = async () => {
+    console.log("🔍 [FRONTEND DEBUG] Starting handleAccept");
+    console.log("🔍 [FRONTEND DEBUG] Current user:", user ? { id: user.id, email: user.email } : "No user");
+    console.log("🔍 [FRONTEND DEBUG] Token:", token);
+    
     setError(null);
     setUnauthorized(false);
     setStatus("accepting");
     try {
-      const res = await fetch(`/api/invites/${encodeURIComponent(token)}/accept`, { method: "POST" });
+      const url = `/api/invites/${encodeURIComponent(token)}/accept`;
+      console.log("🔍 [FRONTEND DEBUG] Fetching URL:", url);
+      
+      const res = await fetch(url, { 
+        method: "POST",
+        credentials: "include", // Ensure cookies are included
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+      
+      console.log("🔍 [FRONTEND DEBUG] Response status:", res.status);
+      console.log("🔍 [FRONTEND DEBUG] Response headers:", Object.fromEntries(res.headers.entries()));
+      
       const data = await res.json().catch(() => ({}));
+      console.log("🔍 [FRONTEND DEBUG] Response data:", data);
+      
       if (res.status === 401) {
+        console.log("❌ [FRONTEND DEBUG] Got 401, setting unauthorized");
         setUnauthorized(true);
         throw new Error("Cal iniciar sessió per continuar");
       }
@@ -64,6 +84,7 @@ export default function AcceptInvite({ token }: AcceptInviteProps) {
       setStatus("done");
       router.push("/dashboard/tournaments");
     } catch (e: any) {
+      console.error("❌ [FRONTEND DEBUG] Error in handleAccept:", e);
       setError(e?.message || "Error acceptant la invitació");
       setStatus("idle");
     }

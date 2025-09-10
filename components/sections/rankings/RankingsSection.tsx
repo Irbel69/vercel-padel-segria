@@ -31,17 +31,23 @@ export function RankingsSection({ showNavButtons = true, showHeader = true }: Ra
 	const { user } = useUser();
 	const userId = user?.id;
 	const { data, isLoading, error } = useRankings(page, DEFAULT_LIMIT, userId);
-	const players = data?.players ?? [];
+	// Ensure we only render the top DEFAULT_LIMIT players for the page
+	const players = (data?.players ?? []).slice(0, DEFAULT_LIMIT);
 	const pagination = data?.pagination ?? null;
 	const contextRows = data?.contextRows ?? [];
 
 	const userInPage = userId ? players.some((p) => p.id === userId) : false;
 
-	// Merge extra context rows if needed (user present? don't render extras). Also dedupe if any overlap.
-	const extraRows: RankingPlayer[] =
-		!userId || userInPage
-			? []
-			: contextRows.filter((row) => !players.some((p) => p.id === row.id));
+	// If the user is not in the current page and we have contextRows (user's row),
+	// only keep the single row that corresponds to the current user so we can show
+	// a highlighted "your position" row below the top list.
+	const extraRows: RankingPlayer[] = [];
+	if (userId && !userInPage && contextRows.length > 0) {
+		const userRow = contextRows.find((r) => r.id === userId);
+		if (userRow && !players.some((p) => p.id === userRow.id)) {
+			extraRows.push(userRow);
+		}
+	}
 
 	const getRankIcon = (rank: number) => {
 		switch (rank) {
@@ -190,6 +196,29 @@ export function RankingsSection({ showNavButtons = true, showHeader = true }: Ra
 												</div>
 											</div>
 										))}
+
+										{/* If user is outside the top list, show a single highlighted row for them */}
+										{extraRows.length > 0 && extraRows.map((player) => (
+											<div
+												key={player.id}
+												className={`flex items-center justify-between p-3 mt-2 border-t border-white/10 bg-padel-primary/10 border-l-2 border-padel-primary`}>
+												<div className="flex items-center gap-3 min-w-0">
+													<span className="text-gray-200 font-bold text-xs sm:text-sm">#{player.ranking_position}</span>
+													<div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold bg-gray-600 text-white flex-shrink-0">
+														{`${player.name?.[0] ?? ""}${player.surname?.[0] ?? ""}`}
+													</div>
+													<div className="min-w-0">
+														<p className="font-semibold text-white text-sm truncate">
+															{player.name} {player.surname}
+														</p>
+													</div>
+												</div>
+												<div className="text-right">
+													<span className="text-padel-primary font-bold text-base">{player.total_points}</span>
+													<div className="text-[10px] text-white/50">Punts</div>
+												</div>
+											</div>
+										))}
 									</div>
 
 									{/* Table for >= xs (>=480px) */}
@@ -249,57 +278,39 @@ export function RankingsSection({ showNavButtons = true, showHeader = true }: Ra
 														</TableCell>
 													</TableRow>
 												))}
-												{/* Extra context rows when user not on this page */}
-												{extraRows.length > 0 && (
-													<>
-														<TableRow className="border-b border-white/10">
-															<TableCell
-																colSpan={4}
-																className="py-2 text-center text-white/60 text-xs">
-																La teva posició
-															</TableCell>
-														</TableRow>
-														{extraRows.map((player) => (
-															<TableRow
-																key={player.id}
-																className={`border-b border-white/10 ${
-																	userId && player.id === userId
-																		? "bg-padel-primary/5"
-																		: "bg-transparent"
-																}`}>
-																<TableCell className="py-3 sm:py-4 px-3 sm:px-6">
-																	<div className="flex items-center gap-1 sm:gap-2">
-																		<span className="text-gray-400 font-bold text-xs sm:text-sm">
-																			#{player.ranking_position}
-																		</span>
-																	</div>
-																</TableCell>
-																<TableCell className="py-3 sm:py-4 px-2 sm:px-4">
-																	<div className="flex items-center gap-2 sm:gap-3">
-																		<div className="w-8 sm:w-10 h-8 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold bg-gray-600 text-white flex-shrink-0">
-																			{`${player.name?.[0] ?? ""}${
-																				player.surname?.[0] ?? ""
-																			}`}
-																		</div>
-																		<div className="min-w-0">
-																			<p className="font-semibold text-white text-xs sm:text-sm truncate">
-																				{player.name} {player.surname}
-																			</p>
-																		</div>
-																	</div>
-																</TableCell>
-																<TableCell className="py-3 sm:py-4 text-center">
-																	<span className="text-padel-primary font-bold text-xs sm:text-sm">
-																		{player.total_points}
-																	</span>
-																</TableCell>
-																<TableCell className="py-3 sm:py-4 text-center hidden xs:table-cell">
-																	{renderRecentForm(player.recent_form)}
-																</TableCell>
-															</TableRow>
-														))}
-													</>
-												)}
+
+												{/* If user is outside the top list, show single highlighted row */}
+												{extraRows.length > 0 && extraRows.map((player) => (
+													<TableRow
+														key={player.id}
+														className={`border-b border-white/10 bg-padel-primary/10`}>
+														<TableCell className="py-3 sm:py-4 px-3 sm:px-6">
+															<div className="flex items-center gap-1 sm:gap-2">
+																<span className="text-gray-200 font-bold text-xs sm:text-sm">#{player.ranking_position}</span>
+															</div>
+														</TableCell>
+														<TableCell className="py-3 sm:py-4 px-2 sm:px-4">
+															<div className="flex items-center gap-2 sm:gap-3">
+																<div className="w-8 sm:w-10 h-8 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold bg-gray-600 text-white flex-shrink-0">
+																	{`${player.name?.[0] ?? ""}${player.surname?.[0] ?? ""}`}
+																</div>
+																<div className="min-w-0">
+																	<p className="font-semibold text-white text-xs sm:text-sm truncate">
+																		{player.name} {player.surname}
+																	</p>
+																</div>
+															</div>
+														</TableCell>
+														<TableCell className="py-3 sm:py-4 text-center">
+															<span className="text-padel-primary font-bold text-xs sm:text-sm">
+																{player.total_points}
+															</span>
+														</TableCell>
+														<TableCell className="py-3 sm:py-4 text-center hidden xs:table-cell">
+															{renderRecentForm(player.recent_form)}
+														</TableCell>
+													</TableRow>
+												))}
 											</TableBody>
 										</Table>
 									</div>

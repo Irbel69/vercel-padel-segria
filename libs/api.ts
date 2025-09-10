@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import config from "@/config";
 
 // use this to interact with our own API (/app/api folder) from the front-end side
-// See https://shipfa.st/docs/tutorials/api-call
+// See Padel Segria API docs: https://www.padelsegria.com/docs/tutorials/api-call
 const apiClient = axios.create({
   baseURL: "/api",
 });
@@ -18,7 +18,7 @@ apiClient.interceptors.response.use(
 
     if (error.response?.status === 401) {
       // User not auth, ask to re login
-      toast.error("Please login");
+  toast.error("Si us plau, inicia sessió");
       // Sends the user to the login page
       redirect(config.auth.loginUrl);
     } else if (error.response?.status === 403) {
@@ -36,9 +36,9 @@ apiClient.interceptors.response.use(
 
     // Automatically display errors to the user
     if (error.message) {
-      toast.error(error.message);
+  toast.error(error.message);
     } else {
-      toast.error("something went wrong...");
+  toast.error("S'ha produït un error. Si us plau, torna-ho a intentar.");
     }
     return Promise.reject(error);
   }

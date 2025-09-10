@@ -6,7 +6,7 @@ import config from "@/config";
 // It prefills data with default title/description/OG, etc.. and you can cusotmize it for each page.
 // It's already added in the root layout.js so you don't have to add it to every pages
 // But I recommend to set the canonical URL for each page (export const metadata = getSEOTags({canonicalUrlRelative: "/"});)
-// See https://shipfa.st/docs/features/seo
+// See Padel Segria documentation: https://www.padelsegria.com/docs/features/seo
 export const getSEOTags = ({
   title,
   description,
@@ -75,7 +75,7 @@ export const getSEOTags = ({
 // You don't have to use this component, but it increase your chances of having a rich snippet on Google.
 // I recommend this one below to your /page.js for software apps: It tells Google your AppName is a Software, and it has a rating of 4.8/5 from 12 reviews.
 // Fill the fields with your own data
-// See https://shipfa.st/docs/features/seo
+// See Padel Segria documentation: https://www.padelsegria.com/docs/features/seo
 export const renderSchemaTags = () => {
   const nonce = headers().get("x-nonce") || undefined;
   return (
@@ -91,8 +91,8 @@ export const renderSchemaTags = () => {
           image: `https://${config.domainName}/icon.png`,
           url: `https://${config.domainName}/`,
           author: {
-            "@type": "Person",
-            name: "Marc Lou",
+            "@type": "Organization",
+            name: "Padel Segrià",
           },
           datePublished: "2023-08-01",
           applicationCategory: "EducationalApplication",

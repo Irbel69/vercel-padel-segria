@@ -13,6 +13,9 @@ export interface UserProfile {
 	trend: "up" | "down" | "same";
 	image_rights_accepted: boolean;
 	privacy_policy_accepted: boolean;
+	score: number;
+	// Optional shirt size (XS, S, M, L, XL, XXL)
+	shirt_size?: string | null;
 	created_at: string;
 	updated_at: string;
 }
@@ -170,4 +173,118 @@ export interface PairInvite {
 	expires_at: string | null;
 	accepted_at?: string | null;
 	declined_at?: string | null;
+}
+
+// Battle Pass system types
+export interface BattlePassPrize {
+	id: number;
+	title: string;
+	description: string | null;
+	points_required: number;
+	image_url: string | null;
+	original_image_url?: string | null; // full-size original image to allow future re-crops
+	is_active: boolean;
+	display_order: number;
+	created_by: string | null;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface BattlePassProgress {
+	prize_id: number;
+	title: string;
+	description: string | null;
+	points_required: number;
+	image_url: string | null;
+	display_order: number;
+	user_points: number;
+	can_claim: boolean;
+	progress_percentage: number;
+}
+
+export interface BattlePassProgressResponse {
+	prizes: BattlePassProgress[];
+	user_total_points: number;
+}
+
+// Battle Pass API request/response types
+export interface CreateBattlePassPrizeData {
+	title: string;
+	description?: string;
+	points_required: number;
+	image_url?: string;
+	original_image_url?: string; // optional original asset
+	is_active?: boolean;
+	display_order?: number;
+}
+
+export interface UpdateBattlePassPrizeData {
+	title?: string;
+	description?: string | null;
+	points_required?: number;
+	image_url?: string | null;
+	original_image_url?: string | null;
+	is_active?: boolean;
+	display_order?: number;
+}
+
+export interface BattlePassPrizesListResponse {
+	prizes: BattlePassPrize[];
+	pagination: {
+		currentPage: number;
+		totalPages: number;
+		totalPrizes: number;
+		hasMore: boolean;
+		limit: number;
+	};
+}
+
+// Delivery status types for battle pass prizes
+export type DeliveryStatus = "pending_delivery" | "delivered" | "delivery_failed";
+
+export interface BattlePassUserPrize {
+	id: number;
+	user_id: string;
+	prize_id: number;
+	claimed_at: string;
+	delivery_status: DeliveryStatus;
+	delivered_at: string | null;
+	created_at: string;
+}
+
+export interface PrizeClaimer {
+	id: number; // battle_pass_user_prizes.id for delivery status updates
+	user_id: string;
+	claimed_at: string;
+	delivery_status: DeliveryStatus;
+	delivered_at: string | null;
+	email: string | null;
+	name: string | null;
+	surname: string | null;
+	phone: string | null;
+	shirt_size: string | null;
+}
+
+export interface PrizeClaimersResponse {
+	claimers: PrizeClaimer[];
+}
+
+export interface UpdateDeliveryStatusRequest {
+	delivery_status: DeliveryStatus;
+	delivered_at?: string | null;
+}
+
+export interface UpdateDeliveryStatusResponse {
+	success: true;
+	data: {
+		id: number;
+		delivery_status: DeliveryStatus;
+		delivered_at: string | null;
+		updated_at: string;
+	};
+}
+
+export interface DeliveryStats {
+	delivery_status: string;
+	count: number;
 }

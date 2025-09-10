@@ -4,8 +4,12 @@ export function useEventLogic() {
   const canRegister = (event: Event) => {
     const registrationDeadline = new Date(event.registration_deadline);
     const now = new Date();
+    // Allow registration for events marked as "open" or "soon"
+    // ("soon" events are near-future but may still accept registrations
+    // before the registration_deadline). Keep existing checks for deadline,
+    // capacity and that the user is not already registered.
     return (
-      event.status === "open" &&
+      (event.status === "open" || event.status === "soon") &&
       registrationDeadline > now &&
       (event.current_participants || 0) < event.max_participants &&
       !event.user_registration_status

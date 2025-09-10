@@ -1,51 +1,100 @@
--- Create bucket (run once in Supabase SQL editor)
--- Note: Buckets are created via storage API or dashboard; this SQL is illustrative if using RPC.
-select storage.create_bucket('event-images', public := true);
+-- Create 'images' bucket only if missing and make it public when created.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'images') THEN
+    -- create_bucket supports the 'public' named param in most Supabase installs
+    PERFORM storage.create_bucket('images', public := true);
+  END IF;
+END
+$$ LANGUAGE plpgsql;
 
--- Make bucket public (if it already exists)
-select storage.update_bucket('event-images', public := true);
+-- (If your Supabase instance does not support CREATE via RPC, create the bucket in the dashboard)
 
--- Example policies for storage.objects restricted by bucket
--- Public read for objects in 'event-images'
-CREATE POLICY "Public read for event-images"
-  ON storage.objects FOR SELECT
-  TO public
-  USING ( bucket_id = 'event-images' );
+-- Policies for the 'images' bucket (public read, admin write/update/delete)
+-- Public read for objects in 'images'
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies p
+    WHERE p.polname = 'Public read for images' AND p.schemaname = 'storage' AND p.tablename = 'objects'
+  ) THEN
+    EXECUTE $$
+      CREATE POLICY "Public read for images"
+        ON storage.objects FOR SELECT
+        TO public
+        USING ( bucket_id = 'images' );
+    $$;
+  END IF;
+END
+$$ LANGUAGE plpgsql;
 
--- Allow write only to admins (assuming users table with is_admin boolean)
-CREATE POLICY "Admins can write event-images"
-  ON storage.objects FOR INSERT TO authenticated
-  WITH CHECK (
-    bucket_id = 'event-images' AND
-    EXISTS (
-      SELECT 1 FROM public.users u
-      WHERE u.id = auth.uid() AND u.is_admin = true
-    )
-  );
+-- Allow write only to admins (assuming public.users.is_admin boolean)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies p
+    WHERE p.polname = 'Admins can write images' AND p.schemaname = 'storage' AND p.tablename = 'objects'
+  ) THEN
+    EXECUTE $$
+      CREATE POLICY "Admins can write images"
+        ON storage.objects FOR INSERT TO authenticated
+        WITH CHECK (
+          bucket_id = 'images' AND
+          EXISTS (
+            SELECT 1 FROM public.users u
+            WHERE u.id = auth.uid() AND u.is_admin = true
+          )
+        );
+    $$;
+  END IF;
+END
+$$ LANGUAGE plpgsql;
 
-CREATE POLICY "Admins can update event-images"
-  ON storage.objects FOR UPDATE TO authenticated
-  USING (
-    bucket_id = 'event-images' AND
-    EXISTS (
-      SELECT 1 FROM public.users u
-      WHERE u.id = auth.uid() AND u.is_admin = true
-    )
-  )
-  WITH CHECK (
-    bucket_id = 'event-images' AND
-    EXISTS (
-      SELECT 1 FROM public.users u
-      WHERE u.id = auth.uid() AND u.is_admin = true
-    )
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies p
+    WHERE p.polname = 'Admins can update images' AND p.schemaname = 'storage' AND p.tablename = 'objects'
+  ) THEN
+    EXECUTE $$
+      CREATE POLICY "Admins can update images"
+        ON storage.objects FOR UPDATE TO authenticated
+        USING (
+          bucket_id = 'images' AND
+          EXISTS (
+            SELECT 1 FROM public.users u
+            WHERE u.id = auth.uid() AND u.is_admin = true
+          )
+        )
+        WITH CHECK (
+          bucket_id = 'images' AND
+          EXISTS (
+            SELECT 1 FROM public.users u
+            WHERE u.id = auth.uid() AND u.is_admin = true
+          )
+        );
+    $$;
+  END IF;
+END
+$$ LANGUAGE plpgsql;
 
-CREATE POLICY "Admins can delete event-images"
-  ON storage.objects FOR DELETE TO authenticated
-  USING (
-    bucket_id = 'event-images' AND
-    EXISTS (
-      SELECT 1 FROM public.users u
-      WHERE u.id = auth.uid() AND u.is_admin = true
-    )
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies p
+    WHERE p.polname = 'Admins can delete images' AND p.schemaname = 'storage' AND p.tablename = 'objects'
+  ) THEN
+    EXECUTE $$
+      CREATE POLICY "Admins can delete images"
+        ON storage.objects FOR DELETE TO authenticated
+        USING (
+          bucket_id = 'images' AND
+          EXISTS (
+            SELECT 1 FROM public.users u
+            WHERE u.id = auth.uid() AND u.is_admin = true
+          )
+        );
+    $$;
+  END IF;
+END
+$$ LANGUAGE plpgsql;
