@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/libs/supabase/server";
+import { sendCancellationEmail } from "@/libs/resend";
+import config from "@/config";
 
 // POST /api/events/[id]/register - Inscribirse en un evento
 export async function POST(
@@ -18,6 +20,7 @@ export async function POST(
 		if (authError || !user) {
 			return NextResponse.json({ error: "No autoritzat" }, { status: 401 });
 		}
+		// (No cal carregar perfil per a inscripció simple.)
 
 		const eventId = parseInt(params.id);
 
@@ -143,6 +146,35 @@ export async function DELETE(
 			return NextResponse.json({ error: "No autoritzat" }, { status: 401 });
 		}
 
+		// Cargar perfil del usuario que cancela para obtener un nombre legible (si existe)
+		let cancellingUserProfile: { name?: string | null; surname?: string | null; email?: string | null } | null = null;
+		try {
+			const { data: profile } = await supabase
+				.from("users")
+				.select("name, surname, email")
+				.eq("id", user.id)
+				.single();
+			cancellingUserProfile = profile || null;
+		} catch (_e) {
+			// No es crítico; fallback a metadata/email
+		}
+
+		const cancellingUserDisplayName = (() => {
+			const parts: string[] = [];
+			if (cancellingUserProfile?.name) parts.push(cancellingUserProfile.name.trim());
+			if (cancellingUserProfile?.surname) parts.push(cancellingUserProfile.surname.trim());
+			const joined = parts.join(" ").trim();
+			if (joined) return joined;
+			const meta: any = (user as any)?.user_metadata || {};
+			if (meta.full_name) return meta.full_name;
+			if (meta.name) return meta.name;
+			return (
+				cancellingUserProfile?.email ||
+				(user as any)?.email ||
+				""
+			);
+		})();
+
 		const eventId = parseInt(params.id);
 
 		// Verificar que el evento existe
@@ -190,6 +222,36 @@ export async function DELETE(
 			);
 		}
 
+		// --- START: Gather partner users BEFORE deletion (so we can notify them) ---
+		let partnerUsers: Array<{ id: number; name?: string | null; email?: string | null }> = [];
+		try {
+			if (existingRegistration?.pair_id) {
+				const { data: pairRegs, error: pairRegsErr } = await supabase
+					.from("registrations")
+					.select("user_id")
+					.eq("pair_id", existingRegistration.pair_id)
+					.eq("event_id", eventId);
+
+				if (!pairRegsErr && Array.isArray(pairRegs) && pairRegs.length) {
+					const partnerIds = (pairRegs as any[])
+						.map((r) => r.user_id)
+						.filter((id) => id && id !== user.id);
+
+					if (partnerIds.length) {
+						const { data: usersData } = await supabase
+							.from("users")
+							.select("id, name, email")
+							.in("id", partnerIds);
+						partnerUsers = usersData || [];
+					}
+				}
+			}
+		} catch (e) {
+			// Non-fatal: proceed with cancellation even if partner lookup fails
+			console.warn("Failed to lookup partner users for cancellation email:", e);
+		}
+		// --- END gather partner users ---
+
 		// Si el usuario está registrado como pareja, cancelar también la inscripción del compañero
 		if (existingRegistration.pair_id) {
 			// Buscar y eliminar todas las inscripciones con el mismo pair_id
@@ -205,6 +267,62 @@ export async function DELETE(
 					{ error: "Error cancel·lant la inscripció de la parella" },
 					{ status: 500 }
 				);
+			}
+
+			// After successful deletion, send best-effort notification emails:
+			try {
+				const subject = `Inscripció cancel·lada — ${(event as any).title}`;
+				const when = (event as any).date ? new Date((event as any).date).toLocaleString() : "";
+				// Display canonical domain but link to local dashboard tournaments page during development
+				const siteDomain = config.domainName || "padelsegria.com";
+				const eventUrlDisplay = `https://${siteDomain}`;
+				const eventUrlLink = `https://${siteDomain}/dashboard/tournaments`;
+
+				// Email to cancelling user
+				const cancellingEmail = (user as any)?.email;
+				if (cancellingEmail) {
+					try {
+						await sendCancellationEmail({
+							to: cancellingEmail,
+							recipientName: cancellingUserDisplayName,
+							eventName: (event as any).title,
+							eventDate: when,
+							eventLocation: (event as any).location || (event as any).venue || "",
+							eventUrl: eventUrlLink,
+							supportEmail: config.resend.supportEmail,
+							subject,
+							text: `La teva inscripció a "${(event as any).title}" (${when}) ha estat cancel·lada.`,
+						});
+					} catch (e) {
+						console.warn("Failed to send cancellation email to cancelling user:", e);
+					}
+				}
+
+				// Emails to partner(s) (if any)
+				for (const p of partnerUsers) {
+					if (p?.email) {
+						const text = `La teva parella ha cancel·lat la inscripció a "${(event as any).title}" (${when}). Consulta altres esdeveniments a ${eventUrlDisplay} (Dashboard de tornejos: ${eventUrlLink}).`;
+						const html = `<p>Hola ${p.name || ""},</p><p>La teva parella ha cancel·lat la inscripció a "<strong>${(event as any).title}</strong>" (${when}).</p><p>Per veure altres esdeveniments o inscriure't de nou, visita <a href="${eventUrlLink}">${eventUrlDisplay}</a>.</p>`;
+						try {
+							await sendCancellationEmail({
+								to: p.email,
+								recipientName: p.name || p.email || "",
+								eventName: (event as any).title,
+								eventDate: when,
+								eventLocation: (event as any).location || (event as any).venue || "",
+								eventUrl: eventUrlLink,
+								supportEmail: config.resend.supportEmail,
+								subject,
+								text,
+								canceledByName: cancellingUserDisplayName,
+							});
+						} catch (e) {
+							console.warn(`Failed to send cancellation email to partner ${p.id}:`, e);
+						}
+					}
+				}
+			} catch (e) {
+				console.warn("Error sending cancellation emails (non-fatal):", e);
 			}
 
 			return NextResponse.json({
@@ -223,6 +341,37 @@ export async function DELETE(
 					{ error: "Error cancel·lant la inscripció" },
 					{ status: 500 }
 				);
+			}
+
+			// After successful deletion, send best-effort notification emails:
+			try {
+				const subject = `Inscripció cancel·lada — ${(event as any).title}`;
+				const when = (event as any).date ? new Date((event as any).date).toLocaleString() : "";
+				const siteDomain = config.domainName || "padelsegria.com";
+				const eventUrlDisplay = `https://${siteDomain}`;
+				const eventUrlLink = `https://${siteDomain}/dashboard/tournaments`;
+
+				// Email to cancelling user
+				const cancellingEmail = (user as any)?.email;
+				if (cancellingEmail) {
+					try {
+						await sendCancellationEmail({
+							to: cancellingEmail,
+							recipientName: cancellingUserDisplayName,
+							eventName: (event as any).title,
+							eventDate: when,
+							eventLocation: (event as any).location || (event as any).venue || "",
+							eventUrl: eventUrlLink,
+							supportEmail: config.resend.supportEmail,
+							subject,
+							text: `La teva inscripció a "${(event as any).title}" (${when}) ha estat cancel·lada.`,
+						});
+					} catch (e) {
+						console.warn("Failed to send cancellation email to cancelling user:", e);
+					}
+				}
+			} catch (e) {
+				console.warn("Error sending cancellation emails (non-fatal):", e);
 			}
 
 			return NextResponse.json({
