@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +34,48 @@ export default function InviteDialog({ openForEventId, onClose, generatedCode, a
   const selectingActive = useRef<boolean>(false);
   const prevBodyUserSelect = useRef<string | null>(null);
   const prevSpanUserSelect = useRef<string | null>(null);
-  const toast = useToast();
+  const { toast } = useToast();
+
+  // Inline partner join (optional) - keeps external logic unchanged
+  const [partnerCode, setPartnerCode] = useState("");
+  const [joiningPartner, setJoiningPartner] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
+  const validPartnerPattern = /^[A-Z0-9]{6}$/;
+  const partnerValid = validPartnerPattern.test(partnerCode);
+
+  const handleJoinPartner = async () => {
+    setJoinError(null);
+    if (!partnerValid) {
+      setJoinError("Introdueix un codi vàlid (6 caràcters)");
+      return;
+    }
+    setJoiningPartner(true);
+    try {
+      const res = await fetch("/api/invites/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: partnerCode })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setJoinError(data?.error || data?.message || "No s'ha pogut validar el codi");
+        return;
+      }
+      const token = data?.data?.token as string | undefined;
+      if (token) {
+        // Manté el flux existent de accept/redirect
+        window.location.href = `/invite/accept?token=${encodeURIComponent(token)}`;
+      } else {
+        setJoinError(data?.message || "Codi incorrecte o expirat");
+      }
+    } catch (e: any) {
+      const msg = e?.message || "No s'ha pogut validar el codi";
+      setJoinError(msg);
+      toast({ title: "Error", description: msg });
+    } finally {
+      setJoiningPartner(false);
+    }
+  };
 
   const selectInviteCode = () => {
     if (!inviteCodeRef.current) return;
@@ -171,6 +212,46 @@ export default function InviteDialog({ openForEventId, onClose, generatedCode, a
               <div aria-live="polite" className="flex items-center justify-center gap-2 text-green-400"><CheckCircle className="h-4 w-4" /><span className="text-sm">Codi copiat al portapapers</span></div>
             )}
             {generatedCode && <p className="text-xs text-white/60 text-center">Comparteix aquest codi amb la teva parella per unir-se al torneig</p>}
+
+            {generatedCode && (
+              <div className="pt-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium text-white/80">Introdueix el codi de la teva parella</h4>
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    id="partner-code"
+                    placeholder="ABC123"
+                    value={partnerCode}
+                    inputMode="text"
+                    autoComplete="off"
+                    spellCheck={false}
+                    maxLength={6}
+                    onChange={(e) => {
+                      const v = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+                      setPartnerCode(v);
+                    }}
+                    aria-invalid={!!joinError || (!!partnerCode && !partnerValid)}
+                    className="uppercase tracking-[0.3em] font-mono bg-white/10 border-white/20 text-white placeholder:text-white/30"
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleJoinPartner}
+                    disabled={joiningPartner || !partnerValid}
+                    className="h-11 px-5 bg-padel-primary text-black hover:bg-padel-primary/90 disabled:opacity-50"
+                  >
+                    {joiningPartner ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" />Validant</> : "Unir-me"}
+                  </Button>
+                </div>
+                <p className={`text-xs ${joinError ? "text-red-400" : partnerValid || !partnerCode ? "text-white/50" : "text-yellow-400"}`}>
+                  {joinError
+                    ? joinError
+                    : partnerCode
+                      ? (partnerValid ? "Prem 'Unir-me' per continuar" : "Format: 6 caràcters A-Z 0-9")
+                      : "Si ja tens el codi de la teva parella, introdueix-lo i uneix-te directament"}
+                </p>
+              </div>
+            )}
           </div>
 
          {/*  <div className="border-t border-white/10 pt-4 space-y-3">
