@@ -72,7 +72,7 @@ function BattlePassContent() {
 			</div>
 
 			{/* Battle Pass Track */}
-			<div className="relative transform transition-transform duration-300 hover:scale-105">
+			<div className="relative transform transition-transform duration-300">
 				{/* Background gradient */}
 				<div className="absolute inset-0 bg-gradient-to-b from-transparent via-padel-primary/5 to-transparent pointer-events-none" />
 				
