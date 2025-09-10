@@ -250,6 +250,16 @@ export default function SeasonDetailPage() {
 		if (error) alert(error.message);
 		else load();
 	}
+
+	async function deleteAssignment(asgId: number) {
+		if (!confirm("Eliminar assignació?")) return;
+		const { error } = await supabase
+			.from("season_assignments")
+			.update({ status: "cancelled" })
+			.eq("id", asgId);
+		if (error) alert(error.message);
+		else loadAssignments();
+	}
 	async function toggleEnrollments() {
 		if (!season) return;
 		const { error } = await supabase
@@ -387,6 +397,7 @@ export default function SeasonDetailPage() {
 							buildPattern={buildPattern}
 							setEntryDialog={setEntryDialog}
 							deleteEntry={deleteEntry}
+							deleteAssignment={deleteAssignment}
 							assignments={assignments}
 							requests={requests}
 						/>

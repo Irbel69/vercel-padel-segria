@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -24,6 +25,7 @@ interface Props {
 	buildPattern: () => Promise<void>;
 	setEntryDialog: (d: { open: boolean; day?: number }) => void;
 	deleteEntry: (id: number) => Promise<void>;
+	deleteAssignment: (id: number) => Promise<void>;
 	assignments?: any[];
 	requests?: any[]; // enrollment requests so sheet can show details
 }
@@ -39,11 +41,14 @@ export default function SeasonsPattern({
 	buildPattern,
 	setEntryDialog,
 	deleteEntry,
+	deleteAssignment,
 	assignments = [],
 	requests = [],
 }: Props) {
 	const [selectedEntry, setSelectedEntry] = React.useState<number | null>(null);
 	const [isMobile, setIsMobile] = React.useState(false);
+
+	const router = useRouter();
 
 	React.useEffect(() => {
 		const mq = window.matchMedia("(max-width: 640px)");
@@ -448,6 +453,44 @@ export default function SeasonsPattern({
 																							</div>
 																						</div>
 																					))}
+
+																					<div className="mt-2 flex gap-2">
+																						<button
+																							className="text-xs px-2 py-1 rounded bg-rose-500/10 text-rose-400 hover:bg-rose-500/20"
+																							onClick={async () => {
+																								if (
+																									!confirm(
+																										"Eliminar assignació?"
+																									)
+																								)
+																									return;
+																								try {
+																									await deleteAssignment(a.id);
+																								} catch (e) {
+																									alert(
+																										(e as any)?.message ||
+																											"Error eliminant"
+																									);
+																								}
+																							}}>
+																							Eliminar
+																						</button>
+																						<button
+																							className="text-xs px-2 py-1 rounded bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+																							onClick={() => {
+																								// navigate to assign page with edit flag
+																								router.push(
+																									`/dashboard/admin/seasons/${
+																										a.season_id ||
+																										a.entry?.season_id
+																									}/assign/${
+																										a.request_id
+																									}?edit=1`
+																								);
+																							}}>
+																							Modificar
+																						</button>
+																					</div>
 																				</div>
 																			)}
 																	</div>
