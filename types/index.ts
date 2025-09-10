@@ -14,6 +14,8 @@ export interface UserProfile {
 	image_rights_accepted: boolean;
 	privacy_policy_accepted: boolean;
 	score: number;
+	// Optional shirt size (XS, S, M, L, XL, XXL)
+	shirt_size?: string | null;
 	created_at: string;
 	updated_at: string;
 }

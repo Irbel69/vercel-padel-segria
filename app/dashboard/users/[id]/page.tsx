@@ -76,10 +76,14 @@ export default function UserDetailPage() {
 		score: 0,
 		// Removed: skill_level
 		trend: "same" as "up" | "down" | "same",
+		shirt_size: null as string | null,
 		observations: "",
 		image_rights_accepted: false,
 		privacy_policy_accepted: false,
 	});
+
+	// Shirt sizes loaded from public API
+	const [shirtSizes, setShirtSizes] = useState<string[]>([]);
 
 	// Redirect if not admin
 	useEffect(() => {
@@ -131,6 +135,20 @@ export default function UserDetailPage() {
 
 	// Fetch user data
 	useEffect(() => {
+		// Fetch available shirt sizes for select
+		const fetchShirtSizes = async () => {
+			try {
+				const res = await fetch(`/api/public/shirt-sizes`);
+				const d = await res.json();
+				if (res.ok && Array.isArray(d.sizes)) {
+					setShirtSizes(d.sizes);
+				}
+			} catch (e) {
+				console.warn("Could not load shirt sizes", e);
+			}
+		};
+
+		fetchShirtSizes();
 		const fetchUser = async () => {
 			if (!id || !profile?.is_admin) return;
 
@@ -156,6 +174,7 @@ export default function UserDetailPage() {
 					score: data.user.score || 0,
 						// Removed: skill_level
 					trend: data.user.trend || "same",
+					shirt_size: data.user.shirt_size || null,
 					observations: data.user.observations || "",
 					image_rights_accepted: data.user.image_rights_accepted || false,
 					privacy_policy_accepted: data.user.privacy_policy_accepted || false,
@@ -378,6 +397,12 @@ export default function UserDetailPage() {
 											{user.phone}
 										</p>
 									)}
+									{user.shirt_size && (
+										<p className="text-white/40 text-sm flex items-center justify-center gap-1">
+											<span className="text-white/60">Talla:</span>
+											<span className="text-white font-medium">{user.shirt_size}</span>
+										</p>
+									)}
 								</div>
 							</div>
 
@@ -542,6 +567,41 @@ export default function UserDetailPage() {
 										className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
 										placeholder="Número de telèfon"
 									/>
+								</div>
+
+								{/* Shirt size */}
+								<div className="space-y-2">
+									<Label htmlFor="shirt_size" className="text-white/70">
+										Talla de samarreta
+									</Label>
+									<Select
+										value={formData.shirt_size || ""}
+										onValueChange={(value) =>
+											handleInputChange("shirt_size", value || null)
+										}
+									>
+										<SelectTrigger className="bg-white/10 border-white/20 text-white">
+											<SelectValue placeholder="Selecciona una talla" />
+										</SelectTrigger>
+										<SelectContent>
+											{shirtSizes.length > 0 ? (
+												shirtSizes.map((s) => (
+													<SelectItem key={s} value={s}>
+														{s}
+													</SelectItem>
+												))
+											) : (
+												<>
+													<SelectItem value="XS">XS</SelectItem>
+													<SelectItem value="S">S</SelectItem>
+													<SelectItem value="M">M</SelectItem>
+													<SelectItem value="L">L</SelectItem>
+													<SelectItem value="XL">XL</SelectItem>
+													<SelectItem value="XXL">XXL</SelectItem>
+												</>
+											)}
+										</SelectContent>
+									</Select>
 								</div>
 							</div>
 
