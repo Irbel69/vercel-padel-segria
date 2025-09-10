@@ -96,6 +96,7 @@ export async function GET(
 interface PostBody {
 	request_id: number;
 	entry_id: number;
+	edit?: boolean;
 }
 
 // POST: create new assignment from request -> entry (admin only)
@@ -156,14 +157,73 @@ export async function POST(
 			);
 		}
 
-		// Prevent duplicate assignment for request
+		// Check for existing active assignment for this request
 		const { data: existingForRequest } = await supabase
 			.from("season_assignments")
-			.select("id")
+			.select("id, entry_id")
 			.eq("request_id", body.request_id)
 			.eq("status", "active")
 			.maybeSingle();
-		if (existingForRequest) {
+
+		// When editing, update the existing assignment instead of failing
+		if (existingForRequest && body.edit) {
+			// If entry is unchanged, return current assignment (no-op)
+			if (existingForRequest.entry_id === entryRow.id) {
+				const { data: current, error: curErr } = await supabase
+					.from("season_assignments")
+					.select(
+						`id, season_id, entry_id, request_id, user_id, group_size, allow_fill, payment_method, status, assigned_at, created_at,
+		 user:users(id,name,surname,email,phone),
+		 entry:season_week_entries(id, day_of_week, start_time, end_time, location, capacity)`
+					)
+					.eq("id", existingForRequest.id)
+					.single();
+				if (curErr) throw curErr;
+				return NextResponse.json({ assignment: current });
+			}
+
+			// Capacity check for the new target entry
+			if (entryRow.capacity != null) {
+				const { data: existingAssignments, error: capErr } = await supabase
+					.from("season_assignments")
+					.select("group_size")
+					.eq("entry_id", entryRow.id)
+					.eq("status", "active");
+				if (capErr) throw capErr;
+				const used = (existingAssignments || []).reduce(
+					(s, a) => s + (a.group_size || 0),
+					0
+				);
+				if (used + requestRow.group_size > entryRow.capacity) {
+					return NextResponse.json(
+						{ error: "Capacity exceeded" },
+						{ status: 409 }
+					);
+				}
+			}
+
+			// Perform the update (move assignment to another entry)
+			const { data: updated, error: updErr } = await supabase
+				.from("season_assignments")
+				.update({
+					entry_id: entryRow.id,
+					group_size: requestRow.group_size,
+					allow_fill: requestRow.allow_fill,
+					payment_method: requestRow.payment_method,
+				})
+				.eq("id", existingForRequest.id)
+				.select(
+					`id, season_id, entry_id, request_id, user_id, group_size, allow_fill, payment_method, status, assigned_at, created_at,
+		 user:users(id,name,surname,email,phone),
+		 entry:season_week_entries(id, day_of_week, start_time, end_time, location, capacity)`
+				)
+				.single();
+			if (updErr) throw updErr;
+			return NextResponse.json({ assignment: updated });
+		}
+
+		// If not editing, prevent duplicate assignment for request
+		if (existingForRequest && !body.edit) {
 			return NextResponse.json(
 				{ error: "Request already assigned" },
 				{ status: 409 }

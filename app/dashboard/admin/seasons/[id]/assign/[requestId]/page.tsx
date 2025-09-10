@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/libs/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,6 +55,7 @@ interface Assignment {
 	entry_id: number;
 	group_size: number;
 	allow_fill: boolean; // Added to evaluate fill compatibility
+	request_id?: number;
 }
 
 const dayNames = ["Dg", "Dl", "Dt", "Dc", "Dj", "Dv", "Ds"];
@@ -64,6 +65,8 @@ export default function AssignRequestPage() {
 	const params = useParams();
 	const seasonId = Number(params?.id);
 	const requestId = Number(params?.requestId);
+	const search = useSearchParams();
+	const isEdit = search?.get("edit") === "1";
 	const router = useRouter();
 	const supabase = createClient();
 	const [request, setRequest] = useState<RequestRow | null>(null);
@@ -186,7 +189,11 @@ export default function AssignRequestPage() {
 			const res = await fetch(`/api/seasons/${seasonId}/assignments`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ request_id: request.id, entry_id: entry.id }),
+				body: JSON.stringify({
+					request_id: request.id,
+					entry_id: entry.id,
+					edit: isEdit,
+				}),
 			});
 			const json = await res.json();
 			if (!res.ok) throw new Error(json.error || "Error creant assignació");

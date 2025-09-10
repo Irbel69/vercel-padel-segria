@@ -49,6 +49,8 @@ interface AssignmentRow {
 	entry?: { day_of_week: number; start_time: string; end_time: string };
 	group_size: number;
 	allow_fill: boolean;
+	// include request_id so we can detect assigned requests
+	request_id?: number;
 }
 
 const dayNames = ["Dg", "Dl", "Dt", "Dc", "Dj", "Dv", "Ds"];
@@ -72,6 +74,27 @@ export default function SeasonAssignmentsTab({
 	router,
 	seasonId,
 }: SeasonAssignmentsTabProps) {
+	// Build a set of request IDs that already have an assignment
+	const assignedRequestIds = React.useMemo(() => {
+		return new Set<number>(
+			(assignments || [])
+				.map((a) => (a as any).request_id)
+				.filter(
+					(id: number | undefined): id is number => typeof id === "number"
+				)
+		);
+	}, [assignments]);
+
+	// Split requests: unassigned first, then assigned (to be shown at the end)
+	const unassignedRequests = React.useMemo(
+		() => requests.filter((r) => !assignedRequestIds.has(r.id)),
+		[requests, assignedRequestIds]
+	);
+	const assignedRequests = React.useMemo(
+		() => requests.filter((r) => assignedRequestIds.has(r.id)),
+		[requests, assignedRequestIds]
+	);
+
 	return (
 		<>
 			<div className="flex items-center gap-2">
@@ -86,12 +109,13 @@ export default function SeasonAssignmentsTab({
 				</Button>
 			</div>
 
-			<div className="grid lg:grid-cols-2 gap-6">
+			{/* Single-column: show all requests top-to-bottom. */}
+			<div className="grid gap-6">
 				<Card className="overflow-hidden">
 					<CardHeader>
 						<CardTitle className="text-base">Sol·licituds</CardTitle>
 						<CardDescription className="text-xs">
-							Pendents / aprovades sense classe.
+							Pendents / aprovades. Les assignades es mostren al final.
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-2">
@@ -101,10 +125,16 @@ export default function SeasonAssignmentsTab({
 							</div>
 						)}
 						<ul className="divide-y divide-white/10">
-							{requests.map((r) => {
+							{[...unassignedRequests, ...assignedRequests].map((r) => {
+								const isAssigned = assignedRequestIds.has(r.id);
 								const isOpen = expanded.has(r.id);
 								return (
-									<li key={r.id} className="py-2 text-xs">
+									<li
+										key={r.id}
+										className={cn(
+											"py-2 text-xs",
+											isAssigned && "bg-green-500/10 rounded-md px-2"
+										)}>
 										<div className="flex items-center gap-2">
 											<button
 												onClick={() => toggleExpand(r.id)}
@@ -142,10 +172,12 @@ export default function SeasonAssignmentsTab({
 												variant="secondary"
 												onClick={() =>
 													router.push(
-														`/dashboard/admin/seasons/${seasonId}/assign/${r.id}`
+														`/dashboard/admin/seasons/${seasonId}/assign/${
+															r.id
+														}${isAssigned ? "?edit=1" : ""}`
 													)
 												}>
-												Veure
+												{isAssigned ? "Modifica" : "Veure"}
 											</Button>
 										</div>
 
@@ -228,53 +260,6 @@ export default function SeasonAssignmentsTab({
 									</li>
 								);
 							})}
-						</ul>
-					</CardContent>
-				</Card>
-
-				<Card className="overflow-hidden">
-					<CardHeader>
-						<CardTitle className="text-base">Assignacions</CardTitle>
-						<CardDescription className="text-xs">
-							Classes actives.
-						</CardDescription>
-					</CardHeader>
-					<CardContent className="space-y-2">
-						{assignments.length === 0 && (
-							<div className="text-xs text-muted-foreground">
-								Sense assignacions.
-							</div>
-						)}
-						<ul className="divide-y divide-white/10">
-							{assignments.map((a) => (
-								<li key={a.id} className="py-2 text-xs flex items-center gap-3">
-									<div className="flex-1 flex flex-col md:flex-row md:items-center md:gap-3">
-										<span className="font-medium">
-											{a.user?.name || "Sense nom"} {a.user?.surname || ""}
-										</span>
-										{a.entry && (
-											<span className="flex items-center gap-1 text-muted-foreground">
-												<Clock className="h-3 w-3" />
-												{a.entry.start_time.slice(0, 5)}-
-												{a.entry.end_time.slice(0, 5)} (
-												{dayNames[a.entry.day_of_week]})
-											</span>
-										)}
-										<span className="text-muted-foreground">
-											Grup: {a.group_size}
-										</span>
-										<span
-											className={cn(
-												"px-1.5 py-0.5 rounded text-[10px] w-fit",
-												a.allow_fill
-													? "bg-green-500/20 text-green-400"
-													: "bg-yellow-500/20 text-yellow-400"
-											)}>
-											{a.allow_fill ? "allow_fill" : "no fill"}
-										</span>
-									</div>
-								</li>
-							))}
 						</ul>
 					</CardContent>
 				</Card>
