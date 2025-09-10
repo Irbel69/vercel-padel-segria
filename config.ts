@@ -5,7 +5,7 @@ const config = {
 	appName: "Padel Segrià",
 	// REQUIRED: a short description of your app for SEO tags (can be overwritten)
 	appDescription:
-		"A modern SaaS application built with Next.js, Supabase, and Resend.",
+		"Padel Segrià — plataforma per a la gestió de tornejos i l'experiència de jugadors per a clubs i organitzadors.",
 	// REQUIRED (no https://, not trialing slash at the end, just the naked domain)
 	domainName: "padelsegria.com",
 	crisp: {
@@ -22,9 +22,9 @@ const config = {
 	},
 	resend: {
 	// REQUIRED — Email 'From' field to be used when sending magic login links
-	fromNoReply: `Padelsegria <noreply@padelsegria.com>`,
+	fromNoReply: `Padel Segrià <noreply@padelsegria.com>`,
 	// REQUIRED — Email 'From' field to be used when sending other emails, like notifications, updates etc..
-	fromAdmin: `Team at Padelsegria <team@padelsegria.com>`,
+	fromAdmin: `Equip Padel Segrià <team@padelsegria.com>`,
 	// Email shown to customer if need support. Leave empty if not needed => if empty, set up Crisp above, otherwise you won't be able to offer customer support."
 	supportEmail: "support@padelsegria.com"
 	},

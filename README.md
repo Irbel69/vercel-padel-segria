@@ -27,11 +27,11 @@ For detailed security configuration, see [Security Documentation](./docs/SECURIT
 
 ## Get Started
 
-1. Follow the [Get Started Tutorial](https://shipfa.st/docs) to clone the repo and run your local server 💻
+1. Follow the [Get Started Tutorial](https://www.padelsegria.com/docs) to clone the repo and run your local server 💻
 
-<sub>**Looking for the /pages router version?** Use this [documentation](https://shipfa.st/docs-old) instead</sub>
+<sub>**Looking for the /pages router version?** Use this [documentation](https://www.padelsegria.com/docs-old) instead</sub>
 
-2. Follow the [Ship In 5 Minutes Tutorial](https://shipfa.st/docs/tutorials/ship-in-5-minutes) to learn the foundation and ship your app quickly ⚡️
+2. Follow the [Ship In 5 Minutes Tutorial](https://www.padelsegria.com/docs/tutorials/ship-in-5-minutes) to learn the foundation and ship your app quickly ⚡️
 
 ## Environment Configuration
 
@@ -52,11 +52,11 @@ RESEND_API_KEY=your_resend_api_key
 
 ## Links
 
--   [📚 Documentation](https://shipfa.st/docs)
+-   [📚 Documentation](https://www.padelsegria.com/docs)
 -   [🔒 Security Documentation](./docs/SECURITY.md)
--   [📣 Updates](https://shipfast.beehiiv.com/)
--   [🧑‍💻 Discord](https://shipfa.st/dashboard)
--   [🥇 Leaderboard](https://shipfa.st/leaderboard)
+	[📣 Updates](https://www.padelsegria.com/updates)
+-   [🧑‍💻 Discord](https://www.padelsegria.com/dashboard)
+-   [🥇 Leaderboard](https://www.padelsegria.com/leaderboard)
  -   [✅ Project Testing (Jest)](./docs/testing.md)
  -   [🛡️ Rate Limiting Docs](./docs/rate-limiting.md)
 
@@ -73,21 +73,17 @@ If you're reviewing the code for the "pairs" feature, start with those docs and 
 
 ## Support
 
-Reach out at hello@shipfa.st
+Reach out at hello@padelsegria.com
 
 Let's ship it, FAST ⚡️
 
 \_
 
-**📈 Grow your startup with [DataFast](https://datafa.st?ref=shipfast_readme)**
+**📈 Insights & Analytics**
 
--   Analyze your traffic
--   Get insights on your customers
--   Make data-driven decisions
+-   Track user engagement and tournament metrics with our built-in analytics dashboard at https://www.padelsegria.com/analytics
 
-ShipFast members get 30% OFF on all plans! 🎁
-
-![datafast](https://github.com/user-attachments/assets/2a9710f8-9a39-4593-b4bf-9ee933529870)
+Contact sales for premium analytics and integrations.
 
 ---
 
