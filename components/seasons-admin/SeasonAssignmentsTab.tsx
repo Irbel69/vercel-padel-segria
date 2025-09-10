@@ -253,8 +253,7 @@ export default function SeasonAssignmentsTab({
 															"-"}
 													</div>
 													<div className="mt-1 text-[11px] text-muted-foreground">
-														Mètode de pagament:{" "}
-														{paymentMethodLabel(r.payment_method)}
+														: {paymentMethodLabel(r.payment_method)}
 													</div>
 													{r.direct_debit && (
 														<div className="mt-1 text-[11px] text-muted-foreground">

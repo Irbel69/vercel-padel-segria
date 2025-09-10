@@ -10,6 +10,9 @@ import {
 	CardDescription,
 	CardContent,
 } from "@/components/ui/card";
+import RequestDetails, {
+	type RequestRowDetails,
+} from "@/components/seasons-admin/RequestDetails";
 import { Clock, Users, ArrowLeft, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,32 +26,10 @@ interface Entry {
 	location: string;
 	remaining_capacity?: number | null;
 }
-interface RequestRow {
+interface RequestRow extends RequestRowDetails {
 	id: number;
-	group_size: number;
-	allow_fill: boolean;
 	user_id: string;
-	observations?: string | null;
-	participants?: {
-		id: number;
-		name: string;
-		dni?: string | null;
-		phone?: string | null;
-	}[];
 	choices?: { entry_id: number }[];
-	user?: {
-		name: string | null;
-		surname: string | null;
-		email: string;
-		phone?: string | null;
-	};
-	payment_method?: string | null;
-	direct_debit?: {
-		iban?: string | null;
-		holder_name?: string | null;
-		holder_address?: string | null;
-		holder_dni?: string | null;
-	} | null;
 }
 interface Assignment {
 	id: number;
@@ -259,56 +240,11 @@ export default function AssignRequestPage() {
 					<CardHeader>
 						<CardTitle className="text-base">Detalls sol·licitud</CardTitle>
 						<CardDescription className="text-xs">
-							Grup {request.group_size} · {allowFillLabel(request.allow_fill)}
+							Preferències i dades del titular
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="text-xs space-y-3">
-						{request.observations && (
-							<div>
-								<span className="font-medium">Obs:</span> {request.observations}
-							</div>
-						)}
-
-						{/* Titular / Contact */}
-						<div>
-							<div className="font-medium">Titular</div>
-							<div className="text-muted-foreground text-[13px]">
-								{request.user?.name || "-"} {request.user?.surname || ""}
-							</div>
-							<div className="text-[12px] text-muted-foreground">
-								{request.user?.email}
-								{request.user?.phone && (
-									<span className="ml-4">Tel: {request.user.phone}</span>
-								)}
-							</div>
-							{request.direct_debit?.holder_dni && (
-								<div className="text-[12px] text-muted-foreground">
-									DNI: {request.direct_debit.holder_dni}
-								</div>
-							)}
-						</div>
-
-						{/* Participants detail */}
-						{request.participants && request.participants.length > 0 && (
-							<div>
-								<div className="font-medium mb-1">Participants</div>
-								<div className="grid gap-1">
-									{request.participants.map((p) => (
-										<div
-											key={p.id}
-											className="flex flex-col sm:flex-row sm:items-center gap-2 bg-white/5 rounded px-2 py-1 text-[13px]">
-											<div className="font-medium">{p.name}</div>
-											<div className="text-muted-foreground">
-												{p.dni ? `DNI: ${p.dni}` : ""}{" "}
-												{p.phone ? ` · Tel: ${p.phone}` : ""}
-											</div>
-										</div>
-									))}
-								</div>
-							</div>
-						)}
-
-						{/* Preferences */}
+						<RequestDetails req={request} />
 						<div className="flex flex-wrap gap-2">
 							<span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400">
 								Preferències:{" "}
@@ -316,27 +252,6 @@ export default function AssignRequestPage() {
 									? request.choices.map((c) => c.entry_id).join(", ")
 									: "—"}
 							</span>
-						</div>
-
-						{/* Payment info */}
-						<div>
-							<div className="font-medium">Pagament</div>
-							<div className="text-[13px] text-muted-foreground">
-								{paymentMethodLabel(request.payment_method)}
-							</div>
-							{request.direct_debit && (
-								<div className="mt-1 text-[12px] text-muted-foreground">
-									<div>Domiciliació:</div>
-									<div>IBAN: {request.direct_debit.iban || "-"}</div>
-									<div>Titular: {request.direct_debit.holder_name || "-"}</div>
-									{request.direct_debit.holder_address && (
-										<div>Adreça: {request.direct_debit.holder_address}</div>
-									)}
-									{request.direct_debit.holder_dni && (
-										<div>DNI: {request.direct_debit.holder_dni}</div>
-									)}
-								</div>
-							)}
 						</div>
 					</CardContent>
 				</Card>
