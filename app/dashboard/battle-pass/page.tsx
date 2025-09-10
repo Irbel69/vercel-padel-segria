@@ -62,7 +62,7 @@ function BattlePassContent() {
 			</div>
 
 			{/* User progress display */}
-			<div className="max-w-md mx-auto w-[screen]">
+			<div className="max-w-full mx-auto w-[screen]">
 				<UserPointsDisplay
 					userPoints={data?.user_points || 0}
 					totalPrizes={data?.total_prizes || 0}

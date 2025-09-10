@@ -5,6 +5,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import ButtonAccount from "@/components/ButtonAccount";
 import AddToHomeScreen from "@/components/AddToHomeScreen";
+import ConditionalPadding from "@/components/dashboard/conditional-padding";
 import config from "@/config";
 
 // This is a server-side component to ensure the user is logged in.
@@ -56,7 +57,18 @@ export default async function LayoutPrivate({
 				{/* Make main take full height and be a flex column so we can control
 					where scrolling happens. The visual page should not scroll; the
 					content area will handle overflow. */}
-				<main className="flex-1 relative z-10 flex flex-col ">
+				<main
+					className="flex-1 relative z-10 flex flex-col transition-[max-width] duration-300 ease-in-out md:peer-data-[state=expanded]:max-w-[calc(100vw_-_var(--sidebar-width))]"
+					// On desktop we want the main area to shrink when the sidebar
+					// is expanded. Use the peer (the Sidebar provider uses `group peer`)
+					// to target the data-state and animate max-width. We add explicit
+					// values for expanded/collapsed states so the change is smooth.
+					// The inline style keeps the same calc() expression used elsewhere.
+					style={{
+						// Default (collapsed) — full width
+						maxWidth: '100%'
+					}}
+				>
 					{/* Header */}
 					<div
 						className="fixed left-0 right-0 top-0 z-40 md:relative flex items-center border-b px-4 lg:px-8 bg-white/5 backdrop-blur-sm border-white/10"
@@ -74,12 +86,12 @@ export default async function LayoutPrivate({
 						</div>
 					</div>
 
-					{/* Main content */}
-					<div className="flex-1 space-y-6 p-4 lg:p-8 mt-12" style={{ paddingTop: '0' }}>
+					{/* Main content - padding is conditional (removed for battle-pass) */}
+					<ConditionalPadding>
 						{/* Ensure a minimum gap between header and page titles so headings aren't glued to the top */}
 						<div className="mt-2" />
 						{children}
-					</div>
+					</ConditionalPadding>
 				</main>
 				
 				{/* Add to Home Screen component - only shows on mobile when not installed */}

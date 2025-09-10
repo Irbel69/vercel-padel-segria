@@ -35,7 +35,7 @@ export function UserPointsDisplay({
 	return (
 		<div className={cn(
 			"bg-gradient-to-r from-gray-900/80 via-gray-800/90 to-gray-900/80",
-			"border border-gray-700/50 rounded-2xl p-4 backdrop-blur-sm w-[90vw] mx-auto",
+			"border border-gray-700/50 rounded-2xl p-4 backdrop-blur-sm w-full md:w-1/3 mx-auto",
 			className
 		)}>
 			{/* Header */}
