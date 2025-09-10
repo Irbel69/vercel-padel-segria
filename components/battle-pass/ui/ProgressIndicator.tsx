@@ -45,15 +45,18 @@ function buildEqualSpacingMapper(prizes: BattlePassPrizeProgress[]) {
   // Precompute marker percents for each prize in input order, using its rank in the sorted array
   const rankById = new Map<number, number>();
   sorted.forEach((p, i) => rankById.set(p.id, i));
+  // Keep a small inset from both ends so progress visually starts before first marker
+  const START_OFFSET_PERCENT = 8;
+  const usableSpan = 100 - START_OFFSET_PERCENT * 2;
   const markerPercents = prizes.map((p) => {
     const i = rankById.get(p.id) ?? 0;
-    return i * segment * 100;
+    return START_OFFSET_PERCENT + i * segment * usableSpan;
   });
 
   const toPercent = (x: number) => {
-    if (n === 1) return 100; // single prize => treat as end
-    if (x <= P[0]) return 0;
-    if (x >= P[n - 1]) return 100;
+  if (n === 1) return 100 - START_OFFSET_PERCENT; // single prize => treat as end inset
+  if (x <= P[0]) return START_OFFSET_PERCENT;
+  if (x >= P[n - 1]) return 100 - START_OFFSET_PERCENT;
 
     // Find segment i where P[i] <= x <= P[i+1]
     let i = 0;
@@ -66,7 +69,7 @@ function buildEqualSpacingMapper(prizes: BattlePassPrizeProgress[]) {
     // Avoid divide-by-zero when consecutive prizes have identical points
     const localT = b === a ? (x >= b ? 1 : 0) : (x - a) / (b - a);
     const pos = i * segment + localT * segment;
-    return pos * 100;
+    return START_OFFSET_PERCENT + pos * usableSpan;
   };
 
   return { toPercent, markerPercents };

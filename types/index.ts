@@ -238,3 +238,53 @@ export interface BattlePassPrizesListResponse {
 		limit: number;
 	};
 }
+
+// Delivery status types for battle pass prizes
+export type DeliveryStatus = "pending_delivery" | "delivered" | "delivery_failed";
+
+export interface BattlePassUserPrize {
+	id: number;
+	user_id: string;
+	prize_id: number;
+	claimed_at: string;
+	delivery_status: DeliveryStatus;
+	delivered_at: string | null;
+	created_at: string;
+}
+
+export interface PrizeClaimer {
+	id: number; // battle_pass_user_prizes.id for delivery status updates
+	user_id: string;
+	claimed_at: string;
+	delivery_status: DeliveryStatus;
+	delivered_at: string | null;
+	email: string | null;
+	name: string | null;
+	surname: string | null;
+	phone: string | null;
+	shirt_size: string | null;
+}
+
+export interface PrizeClaimersResponse {
+	claimers: PrizeClaimer[];
+}
+
+export interface UpdateDeliveryStatusRequest {
+	delivery_status: DeliveryStatus;
+	delivered_at?: string | null;
+}
+
+export interface UpdateDeliveryStatusResponse {
+	success: true;
+	data: {
+		id: number;
+		delivery_status: DeliveryStatus;
+		delivered_at: string | null;
+		updated_at: string;
+	};
+}
+
+export interface DeliveryStats {
+	delivery_status: string;
+	count: number;
+}

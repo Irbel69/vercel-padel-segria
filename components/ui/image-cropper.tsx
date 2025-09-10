@@ -132,6 +132,23 @@ const getCroppedImg = async (
   });
 };
 
+// Try to obtain a Blob for the original image source. This works for data: URLs,
+// blob: URLs and http(s) URLs when CORS permits. Returns undefined on failure.
+const fetchBlobFromSrc = async (src: string): Promise<Blob | undefined> => {
+  try {
+    const res = await fetch(src);
+    if (!res.ok) {
+      console.warn('fetchBlobFromSrc response not ok', res.status, res.statusText);
+      return undefined;
+    }
+    const blob = await res.blob();
+    return blob;
+  } catch (e) {
+    console.warn('fetchBlobFromSrc failed for', src, e);
+    return undefined;
+  }
+};
+
 export function ImageCropper({
   isOpen,
   onClose,
@@ -159,8 +176,21 @@ export function ImageCropper({
     
     setIsProcessing(true);
     try {
-      const croppedImage = await getCroppedImg(imageSrc, croppedAreaPixels, rotation);
-      onCropComplete(croppedImage, { originalBlob, cropPixels: croppedAreaPixels, rotation, zoom });
+      // Produce cropped image and attempt to also provide the original (uncropped)
+      // image as a Blob in the callback. If `originalBlob` prop was provided,
+      // use it directly, otherwise try to fetch/convert from `imageSrc`.
+      const croppedImagePromise = getCroppedImg(imageSrc, croppedAreaPixels, rotation);
+      const originalBlobPromise = (async () => {
+        if (originalBlob) return originalBlob;
+        return await fetchBlobFromSrc(imageSrc);
+      })();
+
+      const [croppedImage, fetchedOriginalBlob] = await Promise.all([
+        croppedImagePromise,
+        originalBlobPromise,
+      ]);
+
+      onCropComplete(croppedImage, { originalBlob: fetchedOriginalBlob, cropPixels: croppedAreaPixels, rotation, zoom });
       onClose();
     } catch (e) {
       console.error('Error cropping image:', e);

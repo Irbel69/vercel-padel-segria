@@ -26,14 +26,18 @@ export function BattlePassTrack({ prizes, userPoints, isLoading = false }: Battl
 		const segment = n > 1 ? 1 / (n - 1) : 1;
 		const rankById = new Map<number, number>();
 		sorted.forEach((p, i) => rankById.set(p.id, i));
+		// Add a small start/end offset (in percent) so the visual progress doesn't begin flush
+		// against the very edge. This lets the progress bar show progress before the first prize.
+		const START_OFFSET_PERCENT = 8; // percent from left and right to inset markers/track
+		const usableSpan = 100 - START_OFFSET_PERCENT * 2;
 		const markerPercents = prizes.map(p => {
 			const i = rankById.get(p.id) ?? 0;
-			return (i * segment) * 100;
+			return START_OFFSET_PERCENT + (i * segment) * usableSpan;
 		});
 		const toPercent = (x: number) => {
-			if (n === 1) return 100;
-			if (x <= P[0]) return 0;
-			if (x >= P[n - 1]) return 100;
+			if (n === 1) return 100 - START_OFFSET_PERCENT;
+			if (x <= P[0]) return START_OFFSET_PERCENT;
+			if (x >= P[n - 1]) return 100 - START_OFFSET_PERCENT;
 			let i = 0;
 			for (; i < n - 1; i++) {
 				if (x <= P[i + 1]) break;
@@ -42,7 +46,7 @@ export function BattlePassTrack({ prizes, userPoints, isLoading = false }: Battl
 			const b = P[i + 1];
 			const localT = b === a ? (x >= b ? 1 : 0) : (x - a) / (b - a);
 			const pos = i * segment + localT * segment;
-			return pos * 100;
+			return START_OFFSET_PERCENT + pos * usableSpan;
 		};
 
 		// Calculate required width to show all prizes properly

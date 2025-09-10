@@ -15,6 +15,19 @@ CREATE TABLE public.battle_pass_prizes (
   CONSTRAINT battle_pass_prizes_pkey PRIMARY KEY (id),
   CONSTRAINT battle_pass_prizes_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
 );
+CREATE TABLE public.battle_pass_user_prizes (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  user_id uuid NOT NULL,
+  prize_id bigint NOT NULL,
+  claimed_at timestamp with time zone NOT NULL DEFAULT now(),
+  delivery_status text NOT NULL DEFAULT 'pending_delivery' CHECK (delivery_status IN ('pending_delivery', 'delivered', 'delivery_failed')),
+  delivered_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT battle_pass_user_prizes_pkey PRIMARY KEY (id),
+  CONSTRAINT battle_pass_user_prizes_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE,
+  CONSTRAINT battle_pass_user_prizes_prize_id_fkey FOREIGN KEY (prize_id) REFERENCES public.battle_pass_prizes(id) ON DELETE CASCADE,
+  CONSTRAINT battle_pass_user_prizes_user_prize_unique UNIQUE (user_id, prize_id)
+);
 CREATE TABLE public.direct_debit_details (
   id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   booking_id bigint NOT NULL UNIQUE,

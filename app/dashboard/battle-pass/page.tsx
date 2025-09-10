@@ -17,7 +17,7 @@ function BattlePassContent() {
 
 	if (error) {
 		return (
-			<div className="space-y-6">
+			<div className="space-y-6 h-screen">
 				<div className="text-center">
 					<h1 className="text-3xl font-bold text-white mt-5 mb-2 flex items-center justify-center gap-3 transform transition-transform duration-300 hover:scale-105">
 						<Gamepad2 className="w-8 h-8 text-padel-primary" />

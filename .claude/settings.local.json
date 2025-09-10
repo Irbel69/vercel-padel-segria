@@ -9,7 +9,10 @@
       "mcp__context7__resolve-library-id",
       "mcp__context7__get-library-docs",
       "mcp__sequentialthinking__sequentialthinking",
-      "mcp__playwright__browser_evaluate"
+      "mcp__playwright__browser_evaluate",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_type",
+      "mcp__playwright__browser_console_messages"
     ],
     "deny": [],
     "ask": []

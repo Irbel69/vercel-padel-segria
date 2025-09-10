@@ -25,7 +25,7 @@ export default function RankingsPage() {
 					</div>
 
 			{/* Reuse RankingsSection component - hide its internal header because the page provides the header */}
-			<RankingsSection showHeader={false} />
+			<RankingsSection showHeader={false} showNavButtons={false} />
 		</div>
 	);
 }
