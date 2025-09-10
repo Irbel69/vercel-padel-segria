@@ -269,6 +269,7 @@ CREATE TABLE public.users (
   name text,
   surname text,
   phone text,
+  shirt_size text,
   avatar_url text,
   is_admin boolean NOT NULL DEFAULT false,
   skill_level integer NOT NULL DEFAULT 0,

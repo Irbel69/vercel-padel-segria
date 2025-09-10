@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
 	Card,
 	CardContent,
@@ -31,6 +32,8 @@ export default function CompleteProfile() {
 	const [observations, setObservations] = useState("");
 	const [imageRightsAccepted, setImageRightsAccepted] = useState(false);
 	const [privacyPolicyAccepted, setPrivacyPolicyAccepted] = useState(false);
+	const [shirtSize, setShirtSize] = useState<string | null>(null);
+	const [shirtSizes, setShirtSizes] = useState<string[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 	const router = useRouter();
@@ -39,6 +42,19 @@ export default function CompleteProfile() {
 	const { current, next, prev } = useStepper(steps.length);
 
 	useEffect(() => {
+		// Fetch dynamic shirt sizes for the select
+		(async () => {
+			try {
+				const res = await fetch('/api/public/shirt-sizes');
+				if (res.ok) {
+					const json = await res.json();
+					if (Array.isArray(json.sizes)) setShirtSizes(json.sizes);
+				}
+			} catch (err) {
+				console.error('Error loading shirt sizes:', err);
+			}
+		})();
+
 		const checkAuth = async () => {
 			const {
 				data: { user },
@@ -121,6 +137,7 @@ export default function CompleteProfile() {
 									? String(phone).trim().replace(/[\s\-().]/g, "")
 									: null,
 							observations: observations.trim() || null,
+							shirt_size: shirtSize || null,
 							imageRightsAccepted,
 							privacyPolicyAccepted,
 						}),
@@ -280,6 +297,31 @@ export default function CompleteProfile() {
 											<PhoneInput id="phone" ref={phoneRef} value={phone} onChange={setPhone} disabled={isLoading} />
 											<p id="phone-hint" className="text-xs text-muted-foreground">Opcional. Format: +34 600 123 456</p>
 										</div>
+											{/* Shirt size — optional select field */}
+										<div className="space-y-2">
+											<Label htmlFor="shirtSize" className="text-sm font-medium">Talla samarreta</Label>
+												<div className="gradient-border rounded-lg">
+													<Select
+														onValueChange={(v) => setShirtSize(v === "none" ? null : v)}
+														value={shirtSize ?? ""}
+													>
+														<SelectTrigger
+															id="shirtSize"
+															className="w-full border-0 bg-background/80 p-3 text-sm text-left"
+															disabled={isLoading}
+														>
+															<SelectValue placeholder="Selecciona (opcional)" />
+														</SelectTrigger>
+														<SelectContent>
+															{/* Radix Select disallows an Item with empty string value. Use a sentinel value if we want an explicit 'none' option. */}
+															<SelectItem value="none">Cap (opcional)</SelectItem>
+															{shirtSizes.map((s) => (
+																<SelectItem key={s} value={s}>{s}</SelectItem>
+															))}
+														</SelectContent>
+													</Select>
+											</div>
+										</div>
 										<div className="space-y-2">
 											<Label htmlFor="observations" className="text-sm font-medium">Observacions</Label>
 											<div className="gradient-border rounded-lg">
@@ -294,6 +336,7 @@ export default function CompleteProfile() {
 												/>
 											</div>
 										</div>
+										
 									</div>
 
 									<div className="flex justify-between pt-4">
@@ -374,6 +417,8 @@ export default function CompleteProfile() {
 												</Label>
 											</div>
 										</div>
+
+									
 									</div>
 
 									<div className="flex justify-between pt-6">

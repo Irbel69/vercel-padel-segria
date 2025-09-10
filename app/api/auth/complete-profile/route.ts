@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
 			observations,
 			imageRightsAccepted,
 			privacyPolicyAccepted,
+			shirt_size,
 		} = await req.json();
 
 		// Validate input
@@ -84,6 +85,7 @@ export async function POST(req: NextRequest) {
 					name: name.trim(),
 					surname: surname.trim(),
 					phone: phone?.trim() || null,
+					shirt_size: shirt_size || null,
 					observations: observations?.trim() || null,
 					image_rights_accepted: imageRightsAccepted,
 					privacy_policy_accepted: privacyPolicyAccepted,
@@ -106,6 +108,7 @@ export async function POST(req: NextRequest) {
 				name: name.trim(),
 				surname: surname.trim(),
 				phone: phone?.trim() || null,
+				shirt_size: shirt_size || null,
 				observations: observations?.trim() || null,
 				image_rights_accepted: imageRightsAccepted,
 				privacy_policy_accepted: privacyPolicyAccepted,
