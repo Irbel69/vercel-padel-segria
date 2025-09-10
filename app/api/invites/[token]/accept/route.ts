@@ -83,7 +83,9 @@ async function handler(request: NextRequest) {
     }
 
     // Check if inviter is already registered
-    const { data: existingInviterReg } = await supabase
+    // Use serviceSupabase here because RLS will prevent the current user from
+    // seeing another user's registration. We already validated permissions above.
+    const { data: existingInviterReg } = await serviceSupabase
       .from("registrations")
       .select("id")
       .eq("event_id", event.id)
@@ -92,7 +94,9 @@ async function handler(request: NextRequest) {
       .maybeSingle();
 
     // Capacity check (for potentially two new registrations if inviter is not registered)
-    const { count: currentParticipants } = await supabase
+    // Count current confirmed participants using service role so we get a
+    // complete view (RLS could hide rows from the anon/auth client).
+    const { count: currentParticipants } = await serviceSupabase
       .from("registrations")
       .select("*", { count: "exact", head: true })
       .eq("event_id", event.id)
@@ -103,54 +107,38 @@ async function handler(request: NextRequest) {
       return NextResponse.json({ error: "No hi ha prou places per a la parella" }, { status: 400 });
     }
 
-    // Create a shared pair_id and create/update registrations for both users
-    const pair_id = crypto.randomUUID();
-
-    // Helper to detect unique violation
-    const isUniqueViolation = (err: any) => err && typeof err === "object" && err.code === "23505";
-
-    // For the inviter, ensure they have a registration with the pair_id
-    if (!existingInviterReg) {
-      const { error: reg1Err } = await supabase
-        .from("registrations")
-        .insert({ user_id: invite.inviter_id, event_id: event.id, status: "confirmed", pair_id });
-      if (reg1Err && !isUniqueViolation(reg1Err)) {
-        console.error("Error creating inviter registration", reg1Err);
-        return NextResponse.json({ error: "Error creant la inscripció de l'invitador" }, { status: 500 });
-      }
-    } else {
-      // Update existing inviter registration with pair_id
-      const { error: updateErr } = await supabase
-        .from("registrations")
-        .update({ pair_id })
-        .eq("id", existingInviterReg.id);
-      if (updateErr) {
-        console.warn("Error updating inviter registration with pair_id", updateErr);
-      }
+    // Use DB RPC to perform the accept atomically and with proper RLS bypass
+    // The RPC reads JWT claims injected by Supabase to know the caller.
+    const { data: rpcRes, error: rpcErr } = await supabase.rpc("accept_pair_invite", { token_text: token });
+    if (rpcErr) {
+      console.error("RPC accept_pair_invite error", rpcErr);
+      return NextResponse.json({ error: "Error intern del servidor" }, { status: 500 });
     }
 
-    // For the invitee (current user), upsert to ensure pair_id is set even if a row exists already
-    const { error: reg2Err } = await supabase
-      .from("registrations")
-      .upsert(
-        { user_id: user.id, event_id: event.id, status: "confirmed", pair_id },
-        { onConflict: "user_id,event_id" }
-      );
-    if (reg2Err) {
-      console.error("Error creating/updating invitee registration", reg2Err);
-      return NextResponse.json({ error: "Error creant la inscripció" }, { status: 500 });
+    // rpcRes is expected to be jsonb { ok: true/false, message/error, pair_id }
+    const ok = rpcRes?.ok ?? false;
+    if (!ok) {
+      const errMsg = rpcRes?.error || "Error acceptant la invitació";
+      // Map DB errors to HTTP status codes conservatively
+      const statusMap: Record<string, number> = {
+        missing_auth: 401,
+        invite_not_found_or_not_sent: 404,
+        invite_expired: 400,
+        not_invitee: 403,
+        invite_invalid_no_target: 400,
+        email_mismatch: 403,
+        event_not_found: 404,
+        event_closed: 400,
+        registration_deadline_passed: 400,
+        invitee_already_registered: 400,
+        not_enough_capacity: 400,
+        internal_error: 500,
+      };
+      const status = statusMap[errMsg] || 400;
+      return NextResponse.json({ error: errMsg }, { status });
     }
 
-    // Mark invite accepted using Service Role client
-    const { error: updErr } = await serviceSupabase
-      .from("pair_invites")
-      .update({ status: "accepted", accepted_at: new Date().toISOString() })
-      .eq("id", invite.id);
-    if (updErr) {
-      console.warn("Failed updating invite status to accepted", updErr);
-    }
-
-    return NextResponse.json({ message: "Inscripció en parella confirmada" });
+    return NextResponse.json({ message: "Inscripció en parella confirmada", pair_id: rpcRes.pair_id });
   } catch (err) {
     console.error("Error in POST /api/invites/[token]/accept", err);
     return NextResponse.json({ error: "Error intern del servidor" }, { status: 500 });
