@@ -250,7 +250,7 @@ export default function SeasonsPattern({
 				onOpenChange={(open) => !open && setSelectedEntry(null)}>
 				<SheetContent
 					side={isMobile ? "bottom" : "right"}
-					className={isMobile ? "h-[70vh]" : "w-96"}>
+					className={`${isMobile ? "h-[70vh]" : "w-96"} flex flex-col`}>
 					<div className="flex items-start justify-between">
 						<div>
 							<div className="text-sm text-muted-foreground">Entrada</div>
@@ -266,7 +266,7 @@ export default function SeasonsPattern({
 					</div>
 
 					{sel && (
-						<div>
+						<div className="flex-1 overflow-y-auto pr-2">
 							<div className="mt-4">
 								<div className="text-xs text-muted-foreground">Duració</div>
 								<div className="font-medium">
@@ -314,7 +314,7 @@ export default function SeasonsPattern({
 											return (
 												<div
 													key={a.id}
-													className="p-2 rounded border bg-background/50">
+													className="p-2 rounded border bg-background/50 mb-10">
 													<div className="font-medium">
 														{a.user?.name} {a.user?.surname}
 													</div>

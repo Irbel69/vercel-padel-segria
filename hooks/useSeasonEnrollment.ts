@@ -228,19 +228,57 @@ export function useSeasonEnrollment() {
 			if (selectedEntries.size === 0) {
 				throw new Error("Selecciona al menys una classe potencial.");
 			}
+
+			// Ensure authenticated user has a surname (required)
+			if (!profile || !profile.surname || !profile.surname.trim()) {
+				throw new Error(
+					"Si us plau, completa el teu cognom al perfil abans d'enviar la sol·licitud."
+				);
+			}
+
+			// Validate additional participants: require name and DNI
+			for (let i = 0; i < participants.length; i++) {
+				const p = participants[i];
+				if (!p.name || !p.name.trim()) {
+					throw new Error(`Introdueix el nom del participant ${i + 2}.`);
+				}
+				if (!p.dni || !p.dni.trim()) {
+					throw new Error(`Introdueix el DNI del participant ${i + 2}.`);
+				}
+			}
+
+			// Validate payment selection
+			if (!paymentMethod || !paymentMethod.trim()) {
+				throw new Error("Si us plau, selecciona un mètode de pagament.");
+			}
+
+			// If direct debit selected, require IBAN, holder name and holder DNI
+			if (paymentMethod === "direct_debit") {
+				if (!directDebit || !directDebit.iban || !directDebit.iban.trim()) {
+					throw new Error("Introdueix l'IBAN per a la domiciliació bancària.");
+				}
+				if (!directDebit.holder_name || !directDebit.holder_name.trim()) {
+					throw new Error(
+						"Introdueix el nom del titular per a la domiciliació."
+					);
+				}
+				if (!directDebit.holder_dni || !directDebit.holder_dni.trim()) {
+					throw new Error(
+						"Introdueix el DNI del titular per a la domiciliació."
+					);
+				}
+			}
 			const payload: RequestPayload = {
 				season_id: season.id,
 				group_size: groupSize,
 				allow_fill: allowFill,
 				payment_method: paymentMethod,
 				observations: observations || undefined,
-				participants: participants.map(
-					(p: AdditionalParticipant, i: number) => ({
-						name: p.name || `Participant ${i + 2}`,
-						dni: p.dni || undefined,
-						phone: normalizePhone(p.phone),
-					})
-				),
+				participants: participants.map((p: AdditionalParticipant) => ({
+					name: p.name,
+					dni: p.dni,
+					phone: normalizePhone(p.phone),
+				})),
 				choices: Array.from(selectedEntries),
 				direct_debit:
 					paymentMethod === "direct_debit" ? directDebit : undefined,

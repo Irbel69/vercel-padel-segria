@@ -99,22 +99,32 @@ export function EnrollmentForm({
 									<label className="text-xs font-medium">
 										Participant {i + 2}
 									</label>
+									<div className="flex items-center gap-1">
+										<label className="text-xs">Nom</label>
+										<span className="text-rose-500 text-sm">*</span>
+									</div>
 									<Input
 										value={p.name}
 										onChange={(e) =>
 											updateParticipant(i, "name", e.target.value)
 										}
 										placeholder="Nom"
+										aria-required
+										required
 									/>
 								</div>
 								<div>
-									<label className="text-xs font-medium">DNI</label>
+									<label className="text-xs font-medium">
+										DNI <span className="text-rose-500">*</span>
+									</label>
 									<Input
 										value={p.dni}
 										onChange={(e) =>
 											updateParticipant(i, "dni", e.target.value)
 										}
 										placeholder="DNI"
+										aria-required
+										required
 									/>
 								</div>
 								<div className="sm:col-span-2">
@@ -151,6 +161,8 @@ export function EnrollmentForm({
 										setDirectDebit({ ...directDebit, iban: e.target.value })
 									}
 									placeholder="ES.."
+									aria-required
+									required
 								/>
 							</div>
 							<div>
@@ -163,6 +175,8 @@ export function EnrollmentForm({
 											holder_name: e.target.value,
 										})
 									}
+									aria-required
+									required
 								/>
 							</div>
 							<div>
@@ -187,6 +201,8 @@ export function EnrollmentForm({
 											holder_dni: e.target.value,
 										})
 									}
+									aria-required
+									required
 								/>
 							</div>
 							<div className="flex items-center gap-2 text-[11px] text-muted-foreground">
