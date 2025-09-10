@@ -455,9 +455,6 @@ export default function SeasonEnrollmentPage() {
 								</CardDescription>
 							</div>
 							<div className="flex items-center gap-2">
-								<Button size="sm" variant="secondary" onClick={() => load()}>
-									Refrescar
-								</Button>
 								{assignedEntry?.location && (
 									<a
 										href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
@@ -651,11 +648,7 @@ export default function SeasonEnrollmentPage() {
 							assignació quan estigui disponible.
 						</CardDescription>
 					</CardHeader>
-					<CardContent>
-						<Button onClick={() => load()} size="sm" variant="outline">
-							Refrescar
-						</Button>
-					</CardContent>
+					<CardContent />
 				</Card>
 			</div>
 		);

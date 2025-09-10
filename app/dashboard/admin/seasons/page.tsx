@@ -208,7 +208,7 @@ export default function AdminSeasonsPage() {
 								</div>
 							</div>
 							{s.enrollments_open && (
-								<span className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 rounded bg-green-500/20 text-green-500">
+								<span className="absolute top-2 right-10 text-[10px] px-1.5 py-0.5 rounded bg-green-500/20 text-green-500">
 									Obertes
 								</span>
 							)}
