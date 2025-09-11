@@ -113,7 +113,7 @@ export default function UserSeasonsPattern({
 																entry.start_time,
 																entry.end_time
 															)}
-															'
+															{"'"}
 														</span>
 													</div>
 												</button>

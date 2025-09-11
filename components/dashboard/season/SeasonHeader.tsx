@@ -107,7 +107,7 @@ export function SeasonHeader({
 							size="lg"
 							className="rounded-full px-6 py-3 bg-gradient-to-r from-padel-primary via-padel-primary-light to-padel-primary text-black font-bold shadow-[0_12px_30px_rgba(229,240,0,0.3)] hover:shadow-[0_18px_40px_rgba(229,240,0,0.4)] transform-gpu transition-all hover:-translate-y-1 hover:scale-105 motion-safe:animate-btn-float border border-padel-primary/50"
 							aria-label="Iniciar inscripció temporada">
-							Inscriure'm
+							{"Inscriure'm"}
 						</Button>
 					)}
 				</div>

@@ -62,22 +62,7 @@ export default function AssignRequestPage() {
 		[request]
 	);
 
-	function paymentMethodLabel(pm?: string | null) {
-		switch (pm) {
-			case "direct_debit":
-				return "Domiciliació";
-			case "cash":
-				return "Efectiu";
-			case "bizum":
-				return "Bizum";
-			default:
-				return pm || "-";
-		}
-	}
-
-	function allowFillLabel(allow: boolean) {
-		return allow ? "Admet omplir" : "No admet omplir";
-	}
+	// helper labels were removed because they were unused in this page
 
 	const load = useCallback(async () => {
 		if (!seasonId || !requestId) return;
@@ -122,8 +107,13 @@ export default function AssignRequestPage() {
 						.maybeSingle();
 					if (single.data) {
 						const d = single.data as any;
-						// normalize direct_debit property name if nested
-						if (d.direct_debit) d.direct_debit = d.direct_debit;
+						// normalize direct_debit property name if nested (supabase may return it under season_direct_debit_details)
+						if (!d.direct_debit && d.season_direct_debit_details) {
+							// season_direct_debit_details may be an array or object
+							d.direct_debit = Array.isArray(d.season_direct_debit_details)
+								? d.season_direct_debit_details[0]
+								: d.season_direct_debit_details;
+						}
 						setRequest(d);
 					}
 				}
