@@ -28,7 +28,7 @@ import {
 	DialogDescription,
 	DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, RefreshCw, Trash2, Edit3 } from "lucide-react";
+import { Plus, Trash2, Edit3 } from "lucide-react";
 
 interface Season {
 	id: number;
@@ -162,10 +162,6 @@ export default function AdminSeasonsPage() {
 					</p>
 				</div>
 				<div className="flex gap-2">
-					<Button variant="outline" onClick={load} disabled={loading}>
-						<RefreshCw className="h-4 w-4 mr-1" />
-						{loading ? "..." : "Refrescar"}
-					</Button>
 					<Dialog open={dialogOpen} onOpenChange={(o) => setDialogOpen(o)}>
 						<DialogTrigger asChild>
 							<Button>
