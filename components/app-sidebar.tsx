@@ -18,103 +18,98 @@ import {
 import { useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import {
-  Settings,
-  Home,
-  Users,
-  BarChart3,
-  FileText,
-  Shield,
-  Palette,
-  Bell,
-  Database,
-  LogOut,
-  Trophy,
-  Calendar,
-  Target,
-  User,
-  Award,
-  Gamepad2,
+	Settings,
+	Home,
+	Users,
+	BarChart3,
+	FileText,
+	Shield,
+	Palette,
+	Bell,
+	Database,
+	LogOut,
+	Trophy,
+	Calendar,
+	Target,
+	User,
+	Award,
+	Gamepad2,
 } from "lucide-react";
 import { useUser } from "@/hooks/use-user";
 
 const menuItems = [
-  {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: Home,
-    description: "Pàgina principal",
-  },
-  {
-    title: "Battle Pass",
-    url: "/dashboard/battle-pass",
-    icon: Gamepad2,
-    description: "Desbloqueja premis",
-  },
-  {
-    title: "Classes",
-    url: "/dashboard/lessons",
-    icon: Calendar,
-    description: "Reserva classes",
-  },
-  {
-    title: "Tornejos",
-    url: "/dashboard/tournaments",
-    icon: Target,
-    description: "Participa en competicions",
-  },
-  {
-    title: "Classificació",
-    url: "/dashboard/rankings",
-    icon: Trophy,
-    description: "Rànking de jugadors",
-  },
-  {
-    title: "Temporada",
-    url: "/dashboard/season",
-    icon: Calendar,
-    description: "Inscripció setmanal",
-  },
+	{
+		title: "Dashboard",
+		url: "/dashboard",
+		icon: Home,
+		description: "Pàgina principal",
+	},
+	{
+		title: "Temporada",
+		url: "/dashboard/season",
+		icon: Calendar,
+		description: "Inscripció setmanal",
+	},
+	{
+		title: "Tornejos",
+		url: "/dashboard/tournaments",
+		icon: Target,
+		description: "Participa en competicions",
+	},
+	{
+		title: "Battle Pass",
+		url: "/dashboard/battle-pass",
+		icon: Gamepad2,
+		description: "Desbloqueja premis",
+	},
+	{
+		title: "Classificació",
+		url: "/dashboard/rankings",
+		icon: Trophy,
+		description: "Rànking de jugadors",
+	},
 ];
 
 const adminItems = [
-  {
-    title: "Tornejos",
-    url: "/dashboard/admin/events",
-    icon: Calendar,
-    description: "Gestió de tornejos",
-  },
-  {
-    title: "Classes",
-    url: "/dashboard/admin/lessons",
-    icon: Calendar,
-    description: "Gestió de classes",
-  },
-  {
-    title: "Battle Pass",
-    url: "/dashboard/admin/battle-pass",
-    icon: Gamepad2,
-    description: "Gestió de premis",
-  },
-  {
-    title: "Usuaris",
-    url: "/dashboard/users",
-    icon: Users,
-    description: "Gestió d'usuaris",
-  },
-  {
-    title: "Qualitats",
-    url: "/dashboard/admin/qualities",
-    icon: Award,
-    description: "Gestió de qualitats",
-  },
-  {
-    title: "Temporades",
-    url: "/dashboard/admin/seasons",
-    icon: Calendar,
-    description: "Gestió de temporades",
-  },
+	{
+		title: "Tornejos",
+		url: "/dashboard/admin/events",
+		icon: Calendar,
+		description: "Gestió de tornejos",
+	},
+	/* Classes (admin) link temporarily hidden per request - commented out
+	{
+		title: "Classes",
+		url: "/dashboard/admin/lessons",
+		icon: Calendar,
+		description: "Gestió de classes",
+	},
+	*/
+	{
+		title: "Temporades",
+		url: "/dashboard/admin/seasons",
+		icon: Calendar,
+		description: "Gestió de temporades",
+	},
+	{
+		title: "Battle Pass",
+		url: "/dashboard/admin/battle-pass",
+		icon: Gamepad2,
+		description: "Gestió de premis",
+	},
+	{
+		title: "Usuaris",
+		url: "/dashboard/users",
+		icon: Users,
+		description: "Gestió d'usuaris",
+	},
+	{
+		title: "Qualitats",
+		url: "/dashboard/admin/qualities",
+		icon: Award,
+		description: "Gestió de qualitats",
+	},
 ];
-
 
 export function AppSidebar() {
 	const pathname = usePathname();
