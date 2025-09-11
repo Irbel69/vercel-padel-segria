@@ -21,12 +21,12 @@ interface Props {
 	onContinue: () => void;
 }
 
-export default function UserSeasonsPattern({ 
-	entries, 
-	startTimes, 
-	selectedEntries, 
+export default function UserSeasonsPattern({
+	entries,
+	startTimes,
+	selectedEntries,
 	onToggleEntry,
-	onContinue 
+	onContinue,
 }: Props) {
 	return (
 		<Card>
@@ -65,12 +65,14 @@ export default function UserSeasonsPattern({
 											return <div key={dayIdx + time} className="p-1" />;
 
 										const total = entry.capacity ?? null;
-										const remaining = typeof (entry as any).remaining_capacity === "number" 
-											? (entry as any).remaining_capacity 
-											: null;
-										const used = total !== null && remaining !== null 
-											? total - remaining 
-											: null;
+										const remaining =
+											typeof (entry as any).remaining_capacity === "number"
+												? (entry as any).remaining_capacity
+												: null;
+										const used =
+											total !== null && remaining !== null
+												? total - remaining
+												: null;
 
 										const isSelected = selectedEntries.has(entry.id);
 
@@ -91,21 +93,28 @@ export default function UserSeasonsPattern({
 														</span>
 													</div>
 
-													<div className="flex justify-between items-center">
-														<span className="inline-flex items-center gap-1">
-															<Users className="h-3 w-3" />
-															<span className="font-medium text-[10px]">
-																Cap: {total ?? "-"}
-															</span>
-														</span>
-														<span className="text-[10px] text-muted-foreground">
-															{typeof remaining === "number" && (
-																<span>Disp: {remaining}</span>
+													<div
+														className={cn(
+															"text-[10px] mt-1 inline-flex items-center gap-1",
+															isSelected
+																? "text-black"
+																: "text-muted-foreground"
+														)}>
+														<Clock
+															className={cn(
+																"h-3 w-3",
+																isSelected
+																	? "text-black"
+																	: "text-muted-foreground"
 															)}
+														/>
+														<span>
+															{durationMinutes(
+																entry.start_time,
+																entry.end_time
+															)}
+															'
 														</span>
-													</div>
-													<div className="text-[10px] text-muted-foreground mt-1">
-														{durationMinutes(entry.start_time, entry.end_time)}'
 													</div>
 												</button>
 											</div>
@@ -116,7 +125,7 @@ export default function UserSeasonsPattern({
 						</div>
 					</div>
 				</div>
-				
+
 				<div className="flex justify-end">
 					<Button
 						variant="secondary"
