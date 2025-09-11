@@ -13,7 +13,7 @@ import {
 import RequestDetails, {
 	type RequestRowDetails,
 } from "@/components/seasons-admin/RequestDetails";
-import { Clock, Users, ArrowLeft, Check } from "lucide-react";
+import { Clock, Users, ArrowLeft, Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Entry {
@@ -210,8 +210,9 @@ export default function AssignRequestPage() {
 			router.push(`/dashboard/admin/seasons/${seasonId}?tab=assignments`);
 		} catch (e: any) {
 			setMessage(e.message);
+			// Only reset assigning on error; keep loader until navigation unmounts this page
+			setAssigning(false);
 		}
-		setAssigning(false);
 	}
 
 	const startTimes = useMemo(() => {
@@ -245,14 +246,6 @@ export default function AssignRequestPage() {
 					</CardHeader>
 					<CardContent className="text-xs space-y-3">
 						<RequestDetails req={request} />
-						<div className="flex flex-wrap gap-2">
-							<span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400">
-								Preferències:{" "}
-								{request.choices?.length
-									? request.choices.map((c) => c.entry_id).join(", ")
-									: "—"}
-							</span>
-						</div>
 					</CardContent>
 				</Card>
 			)}
@@ -264,8 +257,14 @@ export default function AssignRequestPage() {
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					{loading && <div className="text-xs">Carregant...</div>}
-					{!loading && (
+					{assigning ? (
+						<div className="py-12 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+							<Loader2 className="h-4 w-4 animate-spin" />
+							<span>Assignant...</span>
+						</div>
+					) : loading ? (
+						<div className="text-xs">Carregant...</div>
+					) : (
 						<div className="min-w-[840px]">
 							<div
 								className="grid"
@@ -305,12 +304,17 @@ export default function AssignRequestPage() {
 													disabled={assigning || insufficient}
 													onClick={() => assign(entry)}
 													className={cn(
-														"relative rounded border p-2 text-[11px] text-left shadow-sm group w-full h-full transition",
+														// Base visuals
+														"relative rounded border p-2 text-[11px] text-left shadow-sm group w-full h-full",
+														// Smooth hover feedback (only enlarge class slots)
+														"transform-gpu transition-transform duration-150 ease-out will-change-transform",
 														entry.kind === "class"
-															? "bg-emerald-500/10 border-emerald-500/30"
+															? "bg-emerald-500/10 border-emerald-500/30 hover:scale-[1.04] hover:shadow-md hover:z-10 focus-visible:scale-[1.02]"
 															: "bg-amber-500/10 border-amber-500/30",
 														highlight && "ring-2 ring-padel-primary",
-														insufficient && "opacity-40 cursor-not-allowed"
+														insufficient && "opacity-40 cursor-not-allowed",
+														// Avoid hover interaction when disabled
+														"disabled:pointer-events-none disabled:hover:scale-100"
 													)}>
 													<div className="flex justify-between mb-1">
 														<span className="font-medium flex items-center gap-1">

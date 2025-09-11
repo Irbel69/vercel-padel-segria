@@ -1,7 +1,7 @@
 "use client";
 import SeasonsPattern from "@/components/seasons/SeasonsPattern";
 import type { Entry } from "@/components/seasons/types";
-import { Dispatch, SetStateAction } from "react";
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -41,6 +41,26 @@ export default function SeasonPatternTab({
 	// (provided by the parent admin page)
 	requests,
 }: SeasonPatternTabProps) {
+	const [isMobile, setIsMobile] = useState(false);
+
+	useEffect(() => {
+		const mq = window.matchMedia("(max-width: 640px)");
+		const onChange = (e: MediaQueryListEvent | MediaQueryList) =>
+			setIsMobile((e as any).matches);
+		onChange(mq);
+		try {
+			mq.addEventListener("change", onChange as any);
+		} catch {
+			mq.addListener(onChange as any);
+		}
+		return () => {
+			try {
+				mq.removeEventListener("change", onChange as any);
+			} catch {
+				mq.removeListener(onChange as any);
+			}
+		};
+	}, []);
 	function computeStartTime(idx: number) {
 		const base = builder?.base_start as string | undefined;
 		if (!base || !/^\d{2}:\d{2}$/.test(base)) return "";
@@ -100,8 +120,10 @@ export default function SeasonPatternTab({
 			/>
 
 			<Sheet open={builderOpen} onOpenChange={(o) => setBuilderOpen(o)}>
-				<SheetContent side="right" className="w-96">
-					<div className="space-y-4">
+				<SheetContent
+					side={isMobile ? "bottom" : "right"}
+					className={`flex flex-col ${isMobile ? "h-[70vh]" : "w-96"}`}>
+					<div className="flex-1 overflow-y-auto pr-2 space-y-4">
 						<div>
 							<div className="text-sm text-muted-foreground">Patró modular</div>
 							<div className="font-semibold">Constructor de patró</div>

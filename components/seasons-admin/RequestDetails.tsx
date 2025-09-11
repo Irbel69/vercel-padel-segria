@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { Users } from "lucide-react";
 
 interface DirectDebit {
 	iban?: string | null;
@@ -95,8 +96,14 @@ export default function RequestDetails({ req }: { req: RequestRowDetails }) {
 			)}
 
 			<div className="flex flex-wrap gap-2">
-				<span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400">
-					{allowFillLabel(req.allow_fill)} · Grup {req.group_size}
+				<span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400 inline-flex items-center gap-2">
+					{allowFillLabel(req.allow_fill)}
+					<span
+						className="flex items-center gap-1 text-[11px] text-muted-foreground"
+						aria-label={`Grup: ${req.group_size}`}>
+						<Users className="h-3 w-3" aria-hidden="true" />
+						<span>{req.group_size}</span>
+					</span>
 				</span>
 			</div>
 
