@@ -69,9 +69,9 @@ export default function SeasonEnrollmentPage() {
 						Sense temporada disponible
 					</h2>
 					<p className="text-sm md:text-base text-gray-300/80 max-w-xl mt-3 leading-relaxed">
-						Estem preparant la propera temporada. Quan s&apos;obrin les inscripcions,
-						aquí podràs seleccionar les teves preferències d&apos;horari i enviar la
-						teva sol·licitud.
+						Estem preparant la propera temporada. Quan s&apos;obrin les
+						inscripcions, aquí podràs seleccionar les teves preferències
+						d&apos;horari i enviar la teva sol·licitud.
 					</p>
 					<div className="mt-6 inline-flex items-center gap-2 text-xs text-gray-400/80 font-medium">
 						<CalendarPlus className="h-4 w-4 text-padel-primary" />
@@ -94,7 +94,6 @@ export default function SeasonEnrollmentPage() {
 					season={season}
 					assignment={assignment}
 					assignedEntry={assignedEntry}
-					classmates={classmates}
 					classmatesUnavailable={classmatesUnavailable}
 				/>
 			</div>
